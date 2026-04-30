@@ -2,12 +2,22 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
-import { HomePage } from './pages/HomePage';
+import { Hero } from './components/Hero';
+import { RestaurantGrid } from './components/RestaurantGrid';
 import { RestaurantDetail } from './pages/RestaurantDetail';
 import { MyOrders } from './pages/MyOrders';
-import { DriverApp } from './pages/DriverApp';nimport { RestaurantDashboard } from './pages/RestaurantDashboard';
+import { DriverApp } from './pages/DriverApp';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { useCart } from './hooks/useCart';
+
+function HomePage({ onAddToCart }: { onAddToCart: any }) {
+  return (
+    <main>
+      <Hero />
+      <RestaurantGrid onAddToCart={onAddToCart} />
+    </main>
+  );
+}
 
 function App() {
   const cart = useCart();
@@ -20,7 +30,7 @@ function App() {
           <Route path="/" element={<HomePage onAddToCart={cart.addToCart} />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
           <Route path="/orders" element={<MyOrders />} />
-          <Route path="/driver" element={<DriverApp />} />n          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
+          <Route path="/driver" element={<DriverApp />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
         </Routes>
         <Footer />
