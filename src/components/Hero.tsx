@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Hero = () => {
   return (
@@ -23,12 +24,12 @@ export const Hero = () => {
               Discover the best restaurants near you and order with ease. From local favorites to national chains, we bring the food you love to your door.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="inline-flex items-center justify-center px-8 py-4 rounded-full gradient-hero text-white font-semibold text-lg shadow-glow hover:shadow-lg hover:scale-105 transition-all">
+              <Link to="/" className="inline-flex items-center justify-center px-8 py-4 rounded-full gradient-hero text-white font-semibold text-lg shadow-glow hover:shadow-lg hover:scale-105 transition-all">
                 Order Now <ArrowRight className="ml-2 w-5 h-5" />
-              </button>
-              <button className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-secondary text-secondary-foreground font-semibold text-lg hover:bg-secondary/80 transition-all">
+              </Link>
+              <Link to="/" className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-secondary text-secondary-foreground font-semibold text-lg hover:bg-secondary/80 transition-all">
                 View Restaurants
-              </button>
+              </Link>
             </div>
             <div className="mt-12 flex items-center gap-8 text-sm text-muted-foreground">
               <div><span className="block text-2xl font-bold text-foreground">500+</span>Restaurants</div>

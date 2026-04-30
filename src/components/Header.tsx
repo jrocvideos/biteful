@@ -1,5 +1,6 @@
-import { ShoppingBag, Search, MapPin, Menu, X, Moon, Sun } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, Menu, X, Moon, Sun, Bike } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeaderProps {
@@ -11,6 +12,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -18,6 +20,10 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
     if (document.documentElement.classList.contains('dark')) setIsDark(true);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
 
   const toggleDark = () => {
     document.documentElement.classList.toggle('dark');
@@ -28,17 +34,19 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-md shadow-soft py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center shadow-glow">
               <span className="text-white font-bold text-xl">B</span>
             </div>
             <span className="font-bold text-2xl tracking-tight text-foreground">Biteful</span>
-          </div>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Restaurants</a>
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Deals</a>
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">My Orders</a>
+            <Link to="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Restaurants</Link>
+            <Link to="/orders" className="text-sm font-medium text-foreground hover:text-primary transition-colors">My Orders</Link>
+            <Link to="/driver" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <Bike className="w-4 h-4" /> Driver
+            </Link>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
               <span>New York, NY</span>
@@ -76,9 +84,11 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="md:hidden bg-background border-t mt-3">
             <nav className="flex flex-col p-4 gap-4">
-              <a href="#" className="text-base font-medium">Restaurants</a>
-              <a href="#" className="text-base font-medium">Deals</a>
-              <a href="#" className="text-base font-medium">My Orders</a>
+              <Link to="/" className="text-base font-medium">Restaurants</Link>
+              <Link to="/orders" className="text-base font-medium">My Orders</Link>
+              <Link to="/driver" className="text-base font-medium flex items-center gap-2">
+                <Bike className="w-4 h-4" /> Driver App
+              </Link>
               <div className="flex items-center gap-2 text-muted-foreground pt-2 border-t">
                 <MapPin className="w-4 h-4" />
                 <span>New York, NY</span>

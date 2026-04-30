@@ -1,30 +1,37 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { RestaurantGrid } from './components/RestaurantGrid';
-import { CartDrawer } from './components/CartDrawer';
 import { Footer } from './components/Footer';
+import { CartDrawer } from './components/CartDrawer';
+import { HomePage } from './pages/HomePage';
+import { RestaurantDetail } from './pages/RestaurantDetail';
+import { MyOrders } from './pages/MyOrders';
+import { DriverApp } from './pages/DriverApp';
 import { useCart } from './hooks/useCart';
 
 function App() {
   const cart = useCart();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
-      <main>
-        <Hero />
-        <RestaurantGrid onAddToCart={cart.addToCart} />
-      </main>
-      <Footer />
-      <CartDrawer 
-        isOpen={cart.isOpen}
-        onClose={() => cart.setIsOpen(false)}
-        items={cart.items}
-        onUpdateQuantity={cart.updateQuantity}
-        onRemove={cart.removeFromCart}
-        total={cart.total}
-      />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen bg-background text-foreground">
+        <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
+        <Routes>
+          <Route path="/" element={<HomePage onAddToCart={cart.addToCart} />} />
+          <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
+          <Route path="/orders" element={<MyOrders />} />
+          <Route path="/driver" element={<DriverApp />} />
+        </Routes>
+        <Footer />
+        <CartDrawer 
+          isOpen={cart.isOpen}
+          onClose={() => cart.setIsOpen(false)}
+          items={cart.items}
+          onUpdateQuantity={cart.updateQuantity}
+          onRemove={cart.removeFromCart}
+          total={cart.total}
+        />
+      </div>
+    </BrowserRouter>
   );
 }
 
