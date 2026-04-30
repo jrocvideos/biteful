@@ -5,7 +5,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { HomePage } from './pages/HomePage';
 import { RestaurantDetail } from './pages/RestaurantDetail';
 import { MyOrders } from './pages/MyOrders';
-import { DriverApp } from './pages/DriverApp';
+import { DriverApp } from './pages/DriverApp';nimport { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { useCart } from './hooks/useCart';
 
@@ -20,7 +20,7 @@ function App() {
           <Route path="/" element={<HomePage onAddToCart={cart.addToCart} />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
           <Route path="/orders" element={<MyOrders />} />
-          <Route path="/driver" element={<DriverApp />} />
+          <Route path="/driver" element={<DriverApp />} />n          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
         </Routes>
         <Footer />
