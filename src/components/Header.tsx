@@ -49,7 +49,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             </Link>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
-              <span>New York, NY</span>
+              <span>Vancouver, BC</span>
             </div>
           </nav>
 
@@ -91,7 +91,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
               </Link>
               <div className="flex items-center gap-2 text-muted-foreground pt-2 border-t">
                 <MapPin className="w-4 h-4" />
-                <span>New York, NY</span>
+                <span>Vancouver, BC</span>
               </div>
             </nav>
           </motion.div>

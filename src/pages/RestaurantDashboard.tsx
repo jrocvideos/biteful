@@ -34,7 +34,7 @@ const MOCK_ORDERS: Order[] = [
     id: "ORD-2048",
     customer_name: "Alex M.",
     customer_phone: "(555) 123-4567",
-    customer_address: "245 E 45th St, Apt 12B",
+    customer_address: "888 Burrard St, Apt 12B",
     items: [
       { name: "Classic Cheeseburger", quantity: 1, unit_price: 12.99 },
       { name: "Truffle Fries", quantity: 1, unit_price: 6.99 },
@@ -53,7 +53,7 @@ const MOCK_ORDERS: Order[] = [
     id: "ORD-2049",
     customer_name: "Sarah K.",
     customer_phone: "(555) 987-6543",
-    customer_address: "450 Lexington Ave, Floor 8",
+    customer_address: "555 W Hastings St, Floor 8",
     items: [
       { name: "Dragon Roll", quantity: 1, unit_price: 16.99 },
       { name: "Spicy Tuna Roll", quantity: 2, unit_price: 8.99 },
