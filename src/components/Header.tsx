@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { MapPin, ShoppingCart, Search, Moon, Sun, ChefHat, Bike } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { MapPin, ShoppingCart, Search, ChefHat, Bike, LayoutDashboard } from 'lucide-react';
 import { useCity } from '../hooks/useCity';
 
 interface HeaderProps {
@@ -9,6 +9,8 @@ interface HeaderProps {
 
 export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const { city } = useCity();
+  const location = useLocation();
+  const isRestaurantPage = location.pathname.startsWith('/restaurant-dashboard');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -24,13 +26,29 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
 
           {/* Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link to="/restaurants" className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors">Restaurants</Link>
-            <Link to="/orders" className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors">My Orders</Link>
-            <Link to="/driver" className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5">
+            <Link 
+              to="/restaurants" 
+              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors ${location.pathname === '/restaurants' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+            >
+              Restaurants
+            </Link>
+            <Link 
+              to="/orders" 
+              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors ${location.pathname === '/orders' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+            >
+              My Orders
+            </Link>
+            <Link 
+              to="/driver" 
+              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${location.pathname === '/driver' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+            >
               <Bike className="w-4 h-4" /> Driver
             </Link>
-            <Link to="/restaurant-dashboard" className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5">
-              <ChefHat className="w-4 h-4" /> Restaurant
+            <Link 
+              to="/restaurant-dashboard" 
+              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${isRestaurantPage ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+            >
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
             </Link>
           </nav>
 
