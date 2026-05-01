@@ -1,4 +1,4 @@
-import { ShoppingBag, Search, MapPin, Menu, X, Moon, Sun, Bike } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, Menu, X, Moon, Sun, Bike, UtensilsCrossed } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,11 +41,14 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             <span className="font-bold text-2xl tracking-tight text-foreground">Biteful</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             <Link to="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Restaurants</Link>
             <Link to="/orders" className="text-sm font-medium text-foreground hover:text-primary transition-colors">My Orders</Link>
             <Link to="/driver" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1">
               <Bike className="w-4 h-4" /> Driver
+            </Link>
+            <Link to="/restaurant-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1 bg-primary/10 px-3 py-1.5 rounded-full">
+              <UtensilsCrossed className="w-4 h-4" /> Restaurant
             </Link>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
@@ -88,6 +91,9 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
               <Link to="/orders" className="text-base font-medium">My Orders</Link>
               <Link to="/driver" className="text-base font-medium flex items-center gap-2">
                 <Bike className="w-4 h-4" /> Driver App
+              </Link>
+              <Link to="/restaurant-dashboard" className="text-base font-medium flex items-center gap-2 text-primary font-bold">
+                <UtensilsCrossed className="w-4 h-4" /> Restaurant Dashboard
               </Link>
               <div className="flex items-center gap-2 text-muted-foreground pt-2 border-t">
                 <MapPin className="w-4 h-4" />
