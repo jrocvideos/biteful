@@ -1,8 +1,23 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+
+type City = {
+  id: string;
+  name: string;
+  neighborhoods: string;
+};
+
+const cities: City[] = [
+  { id: 'van', name: 'Vancouver', neighborhoods: 'Olympic Village & Yaletown' },
+  { id: 'sea', name: 'Seattle', neighborhoods: 'Capitol Hill & Ballard' },
+];
 
 export const Hero = () => {
+  const [activeCity, setActiveCity] = useState<City>(cities[0]);
+  const [showCityMenu, setShowCityMenu] = useState(false);
+
   return (
     <section className="relative pt-32 pb-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
@@ -13,10 +28,32 @@ export const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <MapPin className="w-4 h-4" />
-              Vancouver — Olympic Village & Yaletown
+            <div className="relative mb-6">
+              <button
+                onClick={() => setShowCityMenu(!showCityMenu)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                {activeCity.name} — {activeCity.neighborhoods}
+                <ChevronDown className={`w-3 h-3 transition-transform ${showCityMenu ? 'rotate-180' : ''}`} />
+n              </button>
+n              
+              {showCityMenu && (
+n                <div className="absolute top-full left-0 mt-2 bg-card rounded-xl border border-border shadow-xl p-2 z-50 min-w-[220px]">
+n                  {cities.map((city) => (
+n                    <button
+n                      key={city.id}
+n                      onClick={() => { setActiveCity(city); setShowCityMenu(false); }}
+n                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${activeCity.id === city.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
+n                    >
+n                      <p className="font-medium">{city.name}</p>
+n                      <p className="text-xs opacity-70">{city.neighborhoods}</p>
+n                    </button>
+n                  ))}
+n                </div>
+              )}
             </div>
+
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
               Your favorite{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">
@@ -53,8 +90,8 @@ export const Hero = () => {
               </div>
               <div className="w-px bg-border" />
               <div>
-                <p className="text-3xl font-bold">VAN</p>
-                <p className="text-sm text-muted-foreground">Local First</p>
+                <p className="text-3xl font-bold">2</p>
+                <p className="text-sm text-muted-foreground">Cities</p>
               </div>
             </div>
           </motion.div>
@@ -78,7 +115,7 @@ export const Hero = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-sm">Now Delivering</p>
-                    <p className="text-xs text-muted-foreground">Olympic Village & Yaletown</p>
+                    <p className="text-xs text-muted-foreground">{activeCity.name} — {activeCity.neighborhoods}</p>
                   </div>
                 </div>
               </div>
