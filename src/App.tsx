@@ -5,9 +5,12 @@ import { CartDrawer } from './components/CartDrawer';
 import { Hero } from './components/Hero';
 import { RestaurantGrid } from './components/RestaurantGrid';
 import { RestaurantDetail } from './pages/RestaurantDetail';
-import { MyOrders } from './pages/MyOrders';
+import { OrderHistory } from './pages/OrderHistory';
 import { DriverApp } from './pages/DriverApp';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
+import { RestaurantsPage } from './pages/RestaurantsPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrderTracking } from './pages/OrderTracking';
 import { useCart } from './hooks/useCart';
 
 function HomePage({ onAddToCart }: { onAddToCart: any }) {
@@ -28,8 +31,19 @@ function App() {
         <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
         <Routes>
           <Route path="/" element={<HomePage onAddToCart={cart.addToCart} />} />
+          <Route path="/restaurants" element={<RestaurantsPage onAddToCart={cart.addToCart} />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
-          <Route path="/orders" element={<MyOrders />} />
+          <Route path="/checkout" element={
+            <CheckoutPage 
+              items={cart.items} 
+              total={cart.total} 
+              onUpdateQuantity={cart.updateQuantity}
+              onRemove={cart.removeFromCart}
+              onClearCart={cart.clearCart}
+            />
+          } />
+          <Route path="/order/:id" element={<OrderTracking />} />
+          <Route path="/orders" element={<OrderHistory />} />
           <Route path="/driver" element={<DriverApp />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
         </Routes>
