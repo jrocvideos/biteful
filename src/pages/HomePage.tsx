@@ -1,16 +1,16 @@
+import { useCart } from '../hooks/useCart';
 import { Hero } from '../components/Hero';
 import { RestaurantGrid } from '../components/RestaurantGrid';
-import { MenuItem } from '../types';
+import { RecommendationsSection } from '../components/RecommendationsSection';
 
-interface HomePageProps {
-  onAddToCart: (item: MenuItem, restaurantId: string, restaurantName: string) => void;
-}
+export const HomePage = () => {
+  const cart = useCart();
 
-export const HomePage = ({ onAddToCart }: HomePageProps) => {
   return (
     <main>
       <Hero />
-      <RestaurantGrid onAddToCart={onAddToCart} />
+      <RecommendationsSection onAddToCart={cart.addToCart} />
+      <RestaurantGrid onAddToCart={cart.addToCart} />
     </main>
   );
 };

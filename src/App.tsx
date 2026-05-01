@@ -2,8 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
-import { Hero } from './components/Hero';
-import { RestaurantGrid } from './components/RestaurantGrid';
+import { HomePage } from './pages/HomePage';
 import { RestaurantDetail } from './pages/RestaurantDetail';
 import { OrderHistory } from './pages/OrderHistory';
 import { DriverApp } from './pages/DriverApp';
@@ -30,7 +29,7 @@ function App() {
       <div className="min-h-screen bg-background text-foreground">
         <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
         <Routes>
-          <Route path="/" element={<HomePage onAddToCart={cart.addToCart} />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/restaurants" element={<RestaurantsPage onAddToCart={cart.addToCart} />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
           <Route path="/checkout" element={
