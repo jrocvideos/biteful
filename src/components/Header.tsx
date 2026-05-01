@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { MapPin, ShoppingCart, Search, ChefHat, Bike, LayoutDashboard } from 'lucide-react';
+import { MapPin, ShoppingCart, Search, ChefHat, Bike, LayoutDashboard, Store } from 'lucide-react';
 import { useCity } from '../hooks/useCity';
 
 interface HeaderProps {
@@ -34,9 +34,9 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             </Link>
             <Link 
               to="/orders" 
-              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors ${location.pathname === '/orders' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+              className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${location.pathname === '/orders' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
             >
-              My Orders
+              <Store className="w-4 h-4" /> My Restaurant
             </Link>
             <Link 
               to="/driver" 
