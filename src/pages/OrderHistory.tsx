@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, MapPin, Star, RotateCcw, ChevronRight, Package, Zap, Bike, Receipt, Calendar, Search } from 'lucide-react';
+import { Clock, MapPin, Star, RotateCcw, ChevronRight, Package, Zap, Bike, Receipt, Calendar, Search, LayoutDashboard } from 'lucide-react';
 import { restaurants } from '../data/restaurants';
 import { CartItem } from '../types';
 
@@ -102,7 +102,12 @@ export const OrderHistory = () => {
   return (
     <div className="min-h-screen pt-24 pb-12 bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-2">Order History</h1>
+        <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold">Order History</h1>
+            <Link to="/restaurant-dashboard" className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
+          </div>
         <p className="text-muted-foreground mb-8">View past orders and reorder your favorites</p>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
