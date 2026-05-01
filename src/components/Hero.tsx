@@ -36,21 +36,21 @@ export const Hero = () => {
                 <MapPin className="w-4 h-4" />
                 {activeCity.name} — {activeCity.neighborhoods}
                 <ChevronDown className={`w-3 h-3 transition-transform ${showCityMenu ? 'rotate-180' : ''}`} />
-n              </button>
-n              
+              </button>
+
               {showCityMenu && (
-n                <div className="absolute top-full left-0 mt-2 bg-card rounded-xl border border-border shadow-xl p-2 z-50 min-w-[220px]">
-n                  {cities.map((city) => (
-n                    <button
-n                      key={city.id}
-n                      onClick={() => { setActiveCity(city); setShowCityMenu(false); }}
-n                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${activeCity.id === city.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
-n                    >
-n                      <p className="font-medium">{city.name}</p>
-n                      <p className="text-xs opacity-70">{city.neighborhoods}</p>
-n                    </button>
-n                  ))}
-n                </div>
+                <div className="absolute top-full left-0 mt-2 bg-card rounded-xl border border-border shadow-xl p-2 z-50 min-w-[220px]">
+                  {cities.map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => { setActiveCity(city); setShowCityMenu(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${activeCity.id === city.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
+                    >
+                      <p className="font-medium">{city.name}</p>
+                      <p className="text-xs opacity-70">{city.neighborhoods}</p>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
