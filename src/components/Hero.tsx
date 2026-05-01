@@ -2,20 +2,10 @@ import { motion } from 'framer-motion';
 import { ArrowRight, MapPin, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-
-type City = {
-  id: string;
-  name: string;
-  neighborhoods: string;
-};
-
-const cities: City[] = [
-  { id: 'van', name: 'Vancouver', neighborhoods: 'Olympic Village & Yaletown' },
-  { id: 'sea', name: 'Seattle', neighborhoods: 'Capitol Hill & Ballard' },
-];
+import { useCity } from '../hooks/useCity';
 
 export const Hero = () => {
-  const [activeCity, setActiveCity] = useState<City>(cities[0]);
+  const { city, setCity, cities } = useCity();
   const [showCityMenu, setShowCityMenu] = useState(false);
 
   return (
@@ -34,20 +24,20 @@ export const Hero = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
               >
                 <MapPin className="w-4 h-4" />
-                {activeCity.name} — {activeCity.neighborhoods}
+                {city.name} — {city.neighborhoods}
                 <ChevronDown className={`w-3 h-3 transition-transform ${showCityMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showCityMenu && (
                 <div className="absolute top-full left-0 mt-2 bg-card rounded-xl border border-border shadow-xl p-2 z-50 min-w-[220px]">
-                  {cities.map((city) => (
+                  {cities.map((c) => (
                     <button
-                      key={city.id}
-                      onClick={() => { setActiveCity(city); setShowCityMenu(false); }}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${activeCity.id === city.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
+                      key={c.id}
+                      onClick={() => { setCity(c); setShowCityMenu(false); }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${city.id === c.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                      <p className="font-medium">{city.name}</p>
-                      <p className="text-xs opacity-70">{city.neighborhoods}</p>
+                      <p className="font-medium">{c.name}</p>
+                      <p className="text-xs opacity-70">{c.neighborhoods}</p>
                     </button>
                   ))}
                 </div>
@@ -115,7 +105,7 @@ export const Hero = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-sm">Now Delivering</p>
-                    <p className="text-xs text-muted-foreground">{activeCity.name} — {activeCity.neighborhoods}</p>
+                    <p className="text-xs text-muted-foreground">{city.name} — {city.neighborhoods}</p>
                   </div>
                 </div>
               </div>
