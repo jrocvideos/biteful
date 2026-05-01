@@ -12,15 +12,6 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
 import { useCart } from './hooks/useCart';
 
-function HomePage({ onAddToCart }: { onAddToCart: any }) {
-  return (
-    <main>
-      <Hero />
-      <RestaurantGrid onAddToCart={onAddToCart} />
-    </main>
-  );
-}
-
 function App() {
   const cart = useCart();
 
