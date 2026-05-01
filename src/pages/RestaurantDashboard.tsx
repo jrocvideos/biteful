@@ -451,7 +451,6 @@ export const RestaurantDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
                       <Area type="monotone" dataKey="revenue" stroke="hsl(16 85% 55%)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -487,7 +486,6 @@ export const RestaurantDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} formatter={(value: number) => [`$${value}`, 'Sales']} />
                       <Bar dataKey="sales" fill="hsl(16 85% 55%)" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
