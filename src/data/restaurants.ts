@@ -119,4 +119,7 @@ export const categories = [
   { id: 'healthy', name: 'Healthy', icon: 'Salad' },
   { id: 'mexican', name: 'Mexican', icon: 'Flame' },
   { id: 'indian', name: 'Indian', icon: 'Soup' },
+  { id: 'korean', name: 'Korean', icon: 'Flame' },
+  { id: 'vietnamese', name: 'Vietnamese', icon: 'Soup' },
+  { id: 'chinese', name: 'Chinese', icon: 'UtensilsCrossed' },
 ];
