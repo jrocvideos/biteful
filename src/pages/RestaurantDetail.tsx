@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, Bike, ArrowLeft, Plus, Heart, Share2, MapPin } from 'lucide-react';
 import { restaurants } from '../data/restaurants';
-import { getRestaurants } from '../lib/api';
+import { getRestaurants, getMenu } from '../lib/api';
 import { MenuItem } from '../types';
 
 interface RestaurantDetailProps {
@@ -13,6 +13,7 @@ interface RestaurantDetailProps {
 export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<any>(
     restaurants.find(r => r.id === id) || null
   );
@@ -24,6 +25,11 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
         if (found) setRestaurant(found);
       }
     });
+    if (id) {
+      getMenu(id).then(data => {
+        if (data && data.length > 0) setMenuItems(data);
+      });
+    }
   }, [id]);
 
   const [activeCategory, setActiveCategory] = useState('all');
@@ -37,8 +43,9 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
     );
   }
 
-  const popularItems = restaurant.menu.filter((m: any) => m.popular);
-  const regularItems = restaurant.menu.filter((m: any) => !m.popular);
+  const allItems = menuItems.length > 0 ? menuItems : (restaurant.menu || []);
+  const popularItems = allItems.filter((m: any) => m.popular || m.is_popular);
+  const regularItems = allItems.filter((m: any) => !m.popular && !m.is_popular);
 
   return (
     <main className="pt-24 pb-20">
