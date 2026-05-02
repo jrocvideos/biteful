@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.boufet.com';
+const API_URL = ( import.meta as any).env.VITE_API_URL || 'https://api.boufet.com';
 
 export async function getRestaurants() {
   try {
