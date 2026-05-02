@@ -223,14 +223,14 @@ async function matchDriver(orderId) {
     
     // Find nearest online driver not on delivery
     const driverResult = await pool.query(
-      "SELECT u.id as driver_id, d.lat, d.lng FROM users u JOIN driver_locations d ON u.id = d.user_id WHERE u.role = 'driver' AND u.is_online = true AND u.on_delivery = false ORDER BY point(d.lng, d.lat) <-> point($2, $1) LIMIT 1",
+      "SELECT u.id as driver_id, d.lat, d.lng FROM users u JOIN driver_locations d ON u.id = d.driver_id WHERE u.role = 'driver' AND u.is_online = true AND u.on_delivery = false ORDER BY point(d.lng, d.lat) <-> point($2, $1) LIMIT 1",
       [restaurant.lat, restaurant.lng]
     );
     
     if (driverResult.rows.length > 0) {
       const driver = driverResult.rows[0];
       await pool.query("UPDATE orders SET driver_id = $1, status = 'driver_assigned' WHERE id = $2", [driver.driver_id, orderId]);
-      await pool.query("UPDATE driver_locations SET is_on_delivery = true WHERE driver_id = ", [driver.driver_id]);
+      await pool.query("UPDATE driver_locations SET is_on_delivery = true WHERE driver_id = $1", [driver.driver_id]);
       io.emit("driver_update", { type: "new_job", order_id: orderId });
       io.emit("order_update", { status: "driver_assigned", driver_id: driver.driver_id });
     }
@@ -255,7 +255,7 @@ app.post("/api/drivers/location", auth, async (req, res) => {
   const { lat, lng, is_online } = req.body;
   try {
     await pool.query(
-      "INSERT INTO driver_locations (user_id, lat, lng, is_online, updated_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (user_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4, updated_at=NOW()",
+      "INSERT INTO driver_locations (driver_id, lat, lng, is_online, updated_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4, updated_at=NOW()",
       [req.user.id, lat, lng, is_online]
     );
     
@@ -289,7 +289,7 @@ app.post("/api/orders/:id/status", auth, async (req, res) => {
     await pool.query(query, params);
     
     if (status === 'delivered') {
-      await pool.query("UPDATE driver_locations SET is_on_delivery = false WHERE driver_id = (SELECT driver_id FROM orders WHERE id = )", [req.params.id]);
+      await pool.query("UPDATE driver_locations SET is_on_delivery = false WHERE driver_id = (SELECT driver_id FROM orders WHERE id = $1)", [req.params.id]);
     }
     
     io.emit("order_update", { status });
@@ -303,7 +303,7 @@ app.post("/api/orders/:id/status", auth, async (req, res) => {
 app.get("/api/orders/:id/track", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT o.*, u.first_name as driver_first_name, d.lat as driver_lat, d.lng as driver_lng FROM orders o LEFT JOIN users u ON o.driver_id = u.id LEFT JOIN driver_locations d ON o.driver_id = d.user_id WHERE o.id = $1",
+      "SELECT o.*, u.first_name as driver_first_name, d.lat as driver_lat, d.lng as driver_lng FROM orders o LEFT JOIN users u ON o.driver_id = u.id LEFT JOIN driver_locations d ON o.driver_id = d.driver_id WHERE o.id = $1",
       [req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Order not found" });
