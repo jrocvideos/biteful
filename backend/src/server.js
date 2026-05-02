@@ -43,7 +43,7 @@ app.post("/api/auth/register", async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      "INSERT INTO users (id, email, password_hash, phone, first_name, last_name, role) VALUES (, , , , , , ) RETURNING id, email, role",
+      "INSERT INTO users (id, email, password_hash, phone, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, email, role",
       [uuidv4(), email, hash, phone, first_name, last_name, role || "customer"]
     );
     const user = result.rows[0];
@@ -105,7 +105,7 @@ app.post("/api/orders", auth, async (req, res) => {
     let subtotal = 0;
     const orderItems = [];
     for (const item of items) {
-      const menuResult = await client.query("SELECT price FROM menu_items WHERE id = ", [item.menu_item_id]);
+      const menuResult = await client.query("SELECT price FROM menu_items WHERE id = $1", [item.menu_item_id]);
       if (menuResult.rows.length === 0) throw new Error("Menu item not found");
       const price = menuResult.rows[0].price;
       subtotal += price * item.quantity;
@@ -118,7 +118,7 @@ app.post("/api/orders", auth, async (req, res) => {
     const total = subtotal + tax + delivery_fee + service_fee + tip;
     
     // Get restaurant commission rate
-    const restResult = await client.query("SELECT commission_rate FROM restaurants WHERE id = ", [restaurant_id]);
+    const restResult = await client.query("SELECT commission_rate FROM restaurants WHERE id = $1", [restaurant_id]);
     const commission = restResult.rows[0]?.commission_rate || 20.00;
     const commission_amount = subtotal * (commission / 100);
     
@@ -129,14 +129,14 @@ app.post("/api/orders", auth, async (req, res) => {
     
     const orderId = uuidv4();
     await client.query(
-      ,
+      `INSERT INTO orders (id, user_id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total, driver_base_pay, driver_total_pay, commission_amount, biteful_net, status, customer_address, customer_lat, customer_lng, special_instructions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [orderId, req.user.id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total,
        driver_base, driver_total, commission_amount, biteful_net, "pending_payment", customer_address, customer_lat, customer_lng, special_instructions]
     );
     
     for (const item of orderItems) {
       await client.query(
-        "INSERT INTO order_items (id, order_id, menu_item_id, quantity, unit_price, special_instructions) VALUES (, , , , , )",
+        "INSERT INTO order_items (id, order_id, menu_item_id, quantity, unit_price, special_instructions) VALUES ($1, $2, $3, $4, $5, $6)",
         [uuidv4(), orderId, item.menu_item_id, item.quantity, item.unit_price, item.special_instructions || null]
       );
     }
@@ -154,7 +154,7 @@ app.post("/api/orders", auth, async (req, res) => {
 // Stripe payment intent
 app.post("/api/orders/:id/pay", auth, async (req, res) => {
   try {
-    const orderResult = await pool.query("SELECT * FROM orders WHERE id = ", [req.params.id]);
+    const orderResult = await pool.query("SELECT * FROM orders WHERE id = $1", [req.params.id]);
     if (orderResult.rows.length === 0) return res.status(404).json({ error: "Order not found" });
     const order = orderResult.rows[0];
     
@@ -164,7 +164,7 @@ app.post("/api/orders/:id/pay", auth, async (req, res) => {
       metadata: { order_id: order.id },
     });
     
-    await pool.query("INSERT INTO payments (id, order_id, stripe_payment_intent_id, amount, status) VALUES (, , , , )",
+    await pool.query("INSERT INTO payments (id, order_id, stripe_payment_intent_id, amount, status) VALUES ($1, $2, $3, $4, $5)",
       [uuidv4(), order.id, paymentIntent.id, order.total, "pending"]);
     
     res.json({ client_secret: paymentIntent.client_secret });
@@ -176,9 +176,9 @@ app.post("/api/orders/:id/pay", auth, async (req, res) => {
 // Confirm payment & notify restaurant
 app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'paid' WHERE id = ", [req.params.id]);
+    await pool.query("UPDATE orders SET status = 'paid' WHERE id = $1", [req.params.id]);
     // Notify restaurant via WebSocket
-    io.emit(, { type: "new_order", order_id: req.params.id });
+    io.emit("new_order", { type: "new_order", order_id: req.params.id });
     res.json({ status: "paid" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -188,8 +188,8 @@ app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
 // Restaurant accepts order
 app.post("/api/orders/:id/accept", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'confirmed', accepted_at = NOW() WHERE id = ", [req.params.id]);
-    io.emit(, { status: "confirmed" });
+    await pool.query("UPDATE orders SET status = 'confirmed', accepted_at = NOW() WHERE id = $1", [req.params.id]);
+    io.emit("order_update", { status: "confirmed" });
     res.json({ status: "confirmed" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -199,7 +199,7 @@ app.post("/api/orders/:id/accept", auth, async (req, res) => {
 // Restaurant marks ready
 app.post("/api/orders/:id/ready", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'ready_for_pickup' WHERE id = ", [req.params.id]);
+    await pool.query("UPDATE orders SET status = 'ready_for_pickup' WHERE id = $1", [req.params.id]);
     // Trigger driver matching
     matchDriver(req.params.id);
     res.json({ status: "ready_for_pickup" });
@@ -211,24 +211,24 @@ app.post("/api/orders/:id/ready", auth, async (req, res) => {
 // ==================== DRIVER MATCHING ====================
 async function matchDriver(orderId) {
   try {
-    const orderResult = await pool.query("SELECT * FROM orders WHERE id = ", [orderId]);
+    const orderResult = await pool.query("SELECT * FROM orders WHERE id = $1", [orderId]);
     const order = orderResult.rows[0];
     
-    const restResult = await pool.query("SELECT lat, lng FROM restaurants WHERE id = ", [order.restaurant_id]);
+    const restResult = await pool.query("SELECT lat, lng FROM restaurants WHERE id = $1", [order.restaurant_id]);
     const restaurant = restResult.rows[0];
     
     // Find nearest online driver not on delivery
     const driverResult = await pool.query(
-      ,
+      "SELECT u.id as driver_id, d.lat, d.lng FROM users u JOIN driver_locations d ON u.id = d.user_id WHERE u.role = 'driver' AND u.is_online = true AND u.on_delivery = false ORDER BY point(d.lng, d.lat) <-> point($2, $1) LIMIT 1",
       [restaurant.lat, restaurant.lng]
     );
     
     if (driverResult.rows.length > 0) {
       const driver = driverResult.rows[0];
-      await pool.query("UPDATE orders SET driver_id = , status = 'driver_assigned' WHERE id = ", [driver.driver_id, orderId]);
+      await pool.query("UPDATE orders SET driver_id = $1, status = 'driver_assigned' WHERE id = $2", [driver.driver_id, orderId]);
       await pool.query("UPDATE driver_locations SET is_on_delivery = true WHERE driver_id = ", [driver.driver_id]);
-      io.emit(, { type: "new_job", order_id: orderId });
-      io.emit(, { status: "driver_assigned", driver_id: driver.driver_id });
+      io.emit("driver_update", { type: "new_job", order_id: orderId });
+      io.emit("order_update", { status: "driver_assigned", driver_id: driver.driver_id });
     }
   } catch (err) {
     console.error("Match driver error:", err);
@@ -238,8 +238,8 @@ async function matchDriver(orderId) {
 // Driver accepts job
 app.post("/api/orders/:id/driver-accept", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'driver_en_route' WHERE id = ", [req.params.id]);
-    io.emit(, { status: "driver_en_route" });
+    await pool.query("UPDATE orders SET status = 'driver_en_route' WHERE id = $1", [req.params.id]);
+    io.emit("order_update", { status: "driver_en_route" });
     res.json({ status: "driver_en_route" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -251,7 +251,7 @@ app.post("/api/drivers/location", auth, async (req, res) => {
   const { lat, lng, is_online } = req.body;
   try {
     await pool.query(
-      ,
+      "INSERT INTO driver_locations (user_id, lat, lng, is_online, updated_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (user_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4, updated_at=NOW()",
       [req.user.id, lat, lng, is_online]
     );
     
@@ -259,8 +259,8 @@ app.post("/api/drivers/location", auth, async (req, res) => {
     const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id =  AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [req.user.id]);
     if (orderResult.rows.length > 0) {
       const orderId = orderResult.rows[0].id;
-      await pool.query("UPDATE orders SET driver_lat = , driver_lng =  WHERE id = ", [lat, lng, orderId]);
-      io.emit(, { lat, lng });
+      await pool.query("UPDATE orders SET driver_lat = $1, driver_lng = $2 WHERE id = $3", [lat, lng, orderId]);
+      io.emit("driver_location", { lat, lng });
     }
     
     res.json({ success: true });
@@ -288,7 +288,7 @@ app.post("/api/orders/:id/status", auth, async (req, res) => {
       await pool.query("UPDATE driver_locations SET is_on_delivery = false WHERE driver_id = (SELECT driver_id FROM orders WHERE id = )", [req.params.id]);
     }
     
-    io.emit(, { status });
+    io.emit("order_update", { status });
     res.json({ status });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -299,7 +299,7 @@ app.post("/api/orders/:id/status", auth, async (req, res) => {
 app.get("/api/orders/:id/track", async (req, res) => {
   try {
     const result = await pool.query(
-      ,
+      "SELECT o.*, u.first_name as driver_first_name, d.lat as driver_lat, d.lng as driver_lng FROM orders o LEFT JOIN users u ON o.driver_id = u.id LEFT JOIN driver_locations d ON o.driver_id = d.user_id WHERE o.id = $1",
       [req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Order not found" });
