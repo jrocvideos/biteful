@@ -94,7 +94,7 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Popular Items</h2>
             <div className="space-y-4">
-              {popularItems.map((item) => (
+              {popularItems.map((item: any) => (
                 <MenuItemCard key={item.id} item={item} restaurant={restaurant} onAddToCart={onAddToCart} />
               ))}
             </div>
@@ -105,7 +105,7 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
         <div>
           <h2 className="text-2xl font-bold mb-6">Full Menu</h2>
           <div className="space-y-4">
-            {regularItems.map((item) => (
+            {regularItems.map((item: any) => (
               <MenuItemCard key={item.id} item={item} restaurant={restaurant} onAddToCart={onAddToCart} />
             ))}
           </div>
