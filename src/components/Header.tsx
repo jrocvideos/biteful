@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
 import { MapPin, ShoppingCart, Search, Bike, Store } from 'lucide-react';
 import { useCity } from '../hooks/useCity';
 

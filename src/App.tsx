@@ -8,6 +8,9 @@ import { OrderHistory } from './pages/OrderHistory';
 import { DriverApp } from './pages/DriverApp';
 import { DriverSignup } from './pages/DriverSignup';
 import { BusinessSignup } from './pages/BusinessSignup';
+import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
+import { AuthProvider } from './lib/auth';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -39,6 +42,8 @@ function App() {
           <Route path="/driver" element={<DriverApp />} />
           <Route path="/driver/signup" element={<DriverSignup />} />
           <Route path="/business" element={<BusinessSignup />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
         </Routes>
         <Footer />
