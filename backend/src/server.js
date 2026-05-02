@@ -87,7 +87,7 @@ app.get("/api/restaurants", async (req, res) => {
 
 app.get("/api/restaurants/:id/menu", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id =  AND is_available = true", [req.params.id]);
+    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id = $1 AND is_available = true", [req.params.id]);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
