@@ -444,14 +444,14 @@ export const RestaurantDashboard = () => {
                     <AreaChart data={weeklyRevenue}>
                       <defs>
                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(16 85% 55%)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(16 85% 55%)" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(174 90% 29%)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(174 90% 29%)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                      <Area type="monotone" dataKey="revenue" stroke="hsl(16 85% 55%)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
+                      <Area type="monotone" dataKey="revenue" stroke="hsl(174 90% 29%)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -486,7 +486,7 @@ export const RestaurantDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="sales" fill="hsl(16 85% 55%)" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="sales" fill="hsl(174 90% 29%)" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -767,7 +767,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
       )}
 
       {order.status === "confirmed" && (
-        <button onClick={(e) => { e.stopPropagation(); onUpdateStatus(order.id, "preparing"); }} className="w-full py-3 rounded-xl bg-orange-100 text-orange-700 font-bold text-sm hover:bg-orange-200 transition-all flex items-center justify-center gap-2">
+        <button onClick={(e) => { e.stopPropagation(); onUpdateStatus(order.id, "preparing"); }} className="w-full py-3 rounded-xl bg-teal-100 text-teal-700 font-bold text-sm hover:bg-teal-200 transition-all flex items-center justify-center gap-2">
           <ChefHat className="w-4 h-4" /> Start Cooking
         </button>
       )}
