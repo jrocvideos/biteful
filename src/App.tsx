@@ -7,6 +7,7 @@ import { RestaurantDetail } from './pages/RestaurantDetail';
 import { OrderHistory } from './pages/OrderHistory';
 import { DriverApp } from './pages/DriverApp';
 import { DriverSignup } from './pages/DriverSignup';
+import { BusinessSignup } from './pages/BusinessSignup';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -37,6 +38,7 @@ function App() {
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/driver" element={<DriverApp />} />
           <Route path="/driver/signup" element={<DriverSignup />} />
+          <Route path="/business" element={<BusinessSignup />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
         </Routes>
         <Footer />
