@@ -11,6 +11,7 @@ export const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -22,13 +23,30 @@ export const SignupPage = () => {
     setError('');
     try {
       await signup({ ...form, role: 'customer' });
-      navigate('/');
+      setSubmitted(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (submitted) return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-4xl">📧</span>
+        </div>
+        <h1 className="text-3xl font-bold mb-4">Check your email!</h1>
+        <p className="text-muted-foreground mb-2">We sent a confirmation to</p>
+        <p className="font-bold text-teal-600 mb-6">{form.email}</p>
+        <p className="text-muted-foreground text-sm mb-8">Click the link in the email to activate your account. Check your spam folder if you don't see it.</p>
+        <button onClick={() => navigate('/login')} className="px-8 py-3 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-colors">
+          Go to Sign In
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
