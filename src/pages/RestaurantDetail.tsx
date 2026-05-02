@@ -37,8 +37,8 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
     );
   }
 
-  const popularItems = restaurant.menu.filter(m => m.popular);
-  const regularItems = restaurant.menu.filter(m => !m.popular);
+  const popularItems = restaurant.menu.filter((m: any) => m.popular);
+  const regularItems = restaurant.menu.filter((m: any) => !m.popular);
 
   return (
     <main className="pt-24 pb-20">
