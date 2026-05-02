@@ -45,9 +45,9 @@ export const Hero = () => {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Your favorite{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">
-                food.
+              Food worth ordering.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-teal-400">
+                Delivery worth trusting.
               </span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-lg">
