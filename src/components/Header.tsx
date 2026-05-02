@@ -30,7 +30,8 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
               <Store className="w-4 h-4" /> My Restaurant
             </Link>
             <Link to="/driver" className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${location.pathname === '/driver' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}>
-              <Bike className="w-4 h-4" /> Driver
+              <Bike className="w-4 h-4" /> Driver</Link>
+            <Link to="/driver/signup" className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors">Drive with Boufet
             </Link>
           </nav>
 
