@@ -7,7 +7,7 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-hero flex items-center justify-center"><span className="text-white font-bold">B</span></div>
+              <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center"><span className="text-white font-bold">B</span></div>
               <span className="font-bold text-xl">Boufet</span>
             </div>
             <p className="text-muted-foreground text-sm mb-4">Your favorite food, delivered fast. Quality restaurants, quick delivery, zero hassle.</p>
