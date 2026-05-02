@@ -4,7 +4,21 @@ export async function getRestaurants() {
   try {
     const res = await fetch(`${API_URL}/api/restaurants`);
     if (!res.ok) throw new Error('Failed to fetch');
-    return await res.json();
+    const data = await res.json();
+    // Normalize API response to match frontend Restaurant type
+    return data.map((r: any) => ({
+      ...r,
+      description: r.description || 'Fresh, local cuisine delivered to your door',
+      rating: r.rating || 4.5,
+      reviewCount: r.review_count || 0,
+      deliveryTime: r.delivery_time || '25-35 min',
+      deliveryFee: r.delivery_fee || 2.99,
+      minOrder: r.min_order || 15.00,
+      image: r.image_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop',
+      featured: r.is_featured || false,
+      open: r.is_open,
+      menu: r.menu || [],
+    }));
   } catch {
     return null;
   }
