@@ -20,6 +20,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder"
 // PostgreSQL connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgres://localhost:5432/biteful",
+  max: 20,                // max 20 connections in pool
+  idleTimeoutMillis: 30000,   // close idle connections after 30s
+  connectionTimeoutMillis: 2000, // fail fast if no connection available
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 app.use(cors());
@@ -75,7 +79,7 @@ app.get("/api/restaurants", async (req, res) => {
     let query = "SELECT * FROM restaurants WHERE is_active = true AND is_open = true";
     let params = [];
     if (lat && lng) {
-      query += " AND (6371 * acos(cos(radians()) * cos(radians(lat)) * cos(radians(lng) - radians()) + sin(radians()) * sin(radians(lat)))) < ";
+      query += " AND (6371 * acos(cos(radians($1)) * cos(radians(lat)) * cos(radians(lng) - radians($2)) + sin(radians($1)) * sin(radians(lat)))) < $3";
       params = [lat, lng, radius];
     }
     const result = await pool.query(query, params);
