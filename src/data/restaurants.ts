@@ -122,4 +122,5 @@ export const categories = [
   { id: 'korean', name: 'Korean', icon: 'Flame' },
   { id: 'vietnamese', name: 'Vietnamese', icon: 'Soup' },
   { id: 'chinese', name: 'Chinese', icon: 'UtensilsCrossed' },
+  { id: 'bakery', name: 'Bakery', icon: 'Croissant' },
 ];
