@@ -130,13 +130,13 @@ app.post("/api/orders", auth, async (req, res) => {
     const driver_base = 2.50;
     const tip_skim = tip > 0 ? 2.50 : 0; // Operating fund: ads, infrastructure, growth
     const driver_total = driver_base + (tip - tip_skim);
-    const biteful_net = total - driver_total - commission_amount;
+    const boufet_net = total - driver_total - commission_amount;
     
     const orderId = uuidv4();
     await client.query(
-      `INSERT INTO orders (id, user_id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total, driver_base_pay, driver_total_pay, commission_amount, biteful_net, status, customer_address, customer_lat, customer_lng, special_instructions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+      `INSERT INTO orders (id, user_id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total, driver_base_pay, driver_total_pay, commission_amount, boufet_net, status, customer_address, customer_lat, customer_lng, special_instructions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [orderId, req.user.id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total,
-       driver_base, driver_total, commission_amount, biteful_net, "pending_payment", customer_address, customer_lat, customer_lng, special_instructions]
+       driver_base, driver_total, commission_amount, boufet_net, "pending_payment", customer_address, customer_lat, customer_lng, special_instructions]
     );
     
     for (const item of orderItems) {

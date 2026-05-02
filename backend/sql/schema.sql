@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS orders (
     driver_total DECIMAL(10,2) DEFAULT 0,
     
     commission_amount DECIMAL(10,2),
-    biteful_net DECIMAL(10,2),
+    boufet_net DECIMAL(10,2),
     
     status VARCHAR(50) DEFAULT 'pending_payment',
     
