@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, Bike, ArrowLeft, Plus, Heart, Share2, MapPin } from 'lucide-react';
 import { restaurants } from '../data/restaurants';
+import { getRestaurants } from '../lib/api';
 import { MenuItem } from '../types';
 
 interface RestaurantDetailProps {
