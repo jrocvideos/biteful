@@ -1,8 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { MapPin, ShoppingCart, Search, Bike, Store, User, LogOut } from 'lucide-react';
-import { useAuth } from '../lib/auth';
-import { Link } from 'react-router-dom';
 import { useCity } from '../hooks/useCity';
 
 interface HeaderProps {
