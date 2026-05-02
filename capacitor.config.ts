@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.biteful.app',
-  appName: 'Biteful',
+  appId: 'com.boufet.app',
+  appName: 'Boufet',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
