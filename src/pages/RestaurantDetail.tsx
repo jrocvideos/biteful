@@ -13,7 +13,19 @@ interface RestaurantDetailProps {
 export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const restaurant = restaurants.find(r => r.id === id);
+  const [restaurant, setRestaurant] = useState<any>(
+    restaurants.find(r => r.id === id) || null
+  );
+
+  useEffect(() => {
+    getRestaurants().then(data => {
+      if (data) {
+        const found = data.find((r: any) => r.id === id);
+        if (found) setRestaurant(found);
+      }
+    });
+  }, [id]);
+
   const [activeCategory, setActiveCategory] = useState('all');
 
   if (!restaurant) {
