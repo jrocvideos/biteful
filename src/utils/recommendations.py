@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Biteful Recommendation Engine v1.0
+Boufet Recommendation Engine v1.0
 Analyzes customer order patterns to predict what they'll crave next.
 """
 
@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from typing import List, Dict, Any, Tuple
 
-class BitefulRecommender:
+class BoufetRecommender:
     def __init__(self):
         self.cuisine_affinity = defaultdict(float)
         self.price_tolerance = {"min": 0, "max": 100, "avg": 25}
@@ -210,7 +210,7 @@ def main():
         }
     ]
 
-    engine = BitefulRecommender()
+    engine = BoufetRecommender()
     recs = engine.generate_recommendations("customer-123", sample_orders, [])
     
     print("=" * 60)

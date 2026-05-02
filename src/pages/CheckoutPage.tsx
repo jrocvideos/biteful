@@ -167,7 +167,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                 {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-${discount.toFixed(2)}</span></div>}
                 <div className="border-t border-border pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>${finalTotal.toFixed(2)}</span></div>
               </div>
-              <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /><span>Earn {(finalTotal * 0.05).toFixed(0)} Biteful points with this order</span></div>
+              <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /><span>Earn {(finalTotal * 0.05).toFixed(0)} Boufet points with this order</span></div>
             </div>
           </div>
         </div>

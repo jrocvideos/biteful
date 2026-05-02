@@ -8,7 +8,7 @@ export const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg gradient-hero flex items-center justify-center"><span className="text-white font-bold">B</span></div>
-              <span className="font-bold text-xl">Biteful</span>
+              <span className="font-bold text-xl">Boufet</span>
             </div>
             <p className="text-muted-foreground text-sm mb-4">Your favorite food, delivered fast. Quality restaurants, quick delivery, zero hassle.</p>
             <div className="flex gap-4">
@@ -45,7 +45,7 @@ export const Footer = () => {
           </div>
         </div>
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>&copy; 2024 Biteful. All rights reserved.</p>
+          <p>&copy; 2024 Boufet. All rights reserved.</p>
           <p>Made with ❤️ to dominate UberEats</p>
         </div>
       </div>

@@ -19,7 +19,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">B</span>
             </div>
-            <span className="font-bold text-xl tracking-tight">Biteful</span>
+            <span className="font-bold text-xl tracking-tight">Boufet</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

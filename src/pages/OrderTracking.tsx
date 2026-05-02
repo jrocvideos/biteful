@@ -130,7 +130,7 @@ export const OrderTracking = () => {
           {currentIndex >= 3 && currentIndex < 6 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-card rounded-2xl border border-border p-6 mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center text-white font-bold text-lg">JD</div>
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-teal-500 flex items-center justify-center text-white font-bold text-lg">JD</div>
                 <div className="flex-1"><h3 className="font-bold">John Doe</h3><p className="text-sm text-muted-foreground">Your Driver • 4.9 ★ • {orderData?.express ? 'Express Delivery' : 'Standard'}</p></div>
                 <div className="flex gap-2">
                   <button className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"><Phone className="w-5 h-5" /></button>

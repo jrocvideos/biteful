@@ -257,7 +257,7 @@ const MOCK_ORDERS: Order[] = [
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any; bg: string }> = {
   pending: { label: "NEW ORDER", color: "text-red-600", icon: Bell, bg: "bg-red-50 border-red-200" },
   confirmed: { label: "CONFIRMED", color: "text-amber-600", icon: CheckCircle, bg: "bg-amber-50 border-amber-200" },
-  preparing: { label: "PREPARING", color: "text-orange-600", icon: ChefHat, bg: "bg-orange-50 border-orange-200" },
+  preparing: { label: "PREPARING", color: "text-teal-700", icon: ChefHat, bg: "bg-orange-50 border-orange-200" },
   ready_for_pickup: { label: "READY", color: "text-green-600", icon: Package, bg: "bg-green-50 border-green-200" },
   processed: { label: "PROCESSED", color: "text-blue-600", icon: ClipboardCheck, bg: "bg-blue-50 border-blue-200" },
   cancelled: { label: "CANCELLED", color: "text-slate-500", icon: Ban, bg: "bg-slate-50 border-slate-200" },
@@ -302,7 +302,7 @@ const topItems = [
 
 const commissionBreakdown = [
   { name: "You Keep (80%)", value: 80, color: "#10b981" },
-  { name: "Biteful (20%)", value: 20, color: "#f97316" },
+  { name: "Boufet (20%)", value: 20, color: "#f97316" },
 ];
 
 export const RestaurantDashboard = () => {
@@ -340,7 +340,7 @@ export const RestaurantDashboard = () => {
 
   const tabConfig = [
     { id: "incoming", label: "Incoming", count: incomingOrders.length, color: "bg-red-500" },
-    { id: "active", label: "Active", count: activeOrders.length, color: "bg-orange-500" },
+    { id: "active", label: "Active", count: activeOrders.length, color: "bg-teal-600" },
     { id: "ready", label: "Ready", count: readyOrders.length, color: "bg-green-500" },
     { id: "processed", label: "Processed", count: processedOrders.length, color: "bg-blue-500" },
     { id: "cancelled", label: "Cancelled", count: cancelledOrders.length, color: "bg-slate-500" },
@@ -431,9 +431,9 @@ export const RestaurantDashboard = () => {
                   <p className="text-xs text-green-500 mt-1">After 20% commission</p>
                 </div>
                 <div className="bg-card rounded-2xl p-5 border border-border shadow-soft">
-                  <p className="text-sm text-muted-foreground mb-1">Biteful Fee</p>
-                  <p className="text-2xl font-bold text-orange-500">${totalCommission.toLocaleString()}</p>
-                  <p className="text-xs text-orange-500 mt-1">20% commission</p>
+                  <p className="text-sm text-muted-foreground mb-1">Boufet Fee</p>
+                  <p className="text-2xl font-bold text-teal-600">${totalCommission.toLocaleString()}</p>
+                  <p className="text-xs text-teal-600 mt-1">20% commission</p>
                 </div>
               </div>
 
@@ -471,8 +471,8 @@ export const RestaurantDashboard = () => {
                       <span className="font-bold text-emerald-600">${youKeep.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-orange-500" /><span className="text-sm">Biteful Fee (20%)</span></div>
-                      <span className="font-bold text-orange-500">${totalCommission.toLocaleString()}</span>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-teal-600" /><span className="text-sm">Boufet Fee (20%)</span></div>
+                      <span className="font-bold text-teal-600">${totalCommission.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -515,12 +515,12 @@ export const RestaurantDashboard = () => {
                     <TrendingUp className="w-6 h-6 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-green-800 dark:text-green-200 mb-1">You are saving with Biteful</h3>
+                    <h3 className="font-bold text-lg text-green-800 dark:text-green-200 mb-1">You are saving with Boufet</h3>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-3">
                       With DoorDash (30% commission), you would have paid <span className="font-bold">${(totalRevenue * 0.30).toFixed(0)}</span> in fees this week.
                     </p>
                     <p className="text-sm text-green-700 dark:text-green-300">
-                      With Biteful (20% commission), you paid only <span className="font-bold">${totalCommission.toFixed(0)}</span>. 
+                      With Boufet (20% commission), you paid only <span className="font-bold">${totalCommission.toFixed(0)}</span>. 
                       <span className="font-bold text-green-800 dark:text-green-200"> You saved ${((totalRevenue * 0.30) - totalCommission).toFixed(0)} this week!</span>
                     </p>
                   </div>

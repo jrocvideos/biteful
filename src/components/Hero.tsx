@@ -46,7 +46,7 @@ export const Hero = () => {
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
               Your favorite{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">
                 food.
               </span>
             </h1>

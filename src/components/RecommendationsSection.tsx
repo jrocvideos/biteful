@@ -227,7 +227,7 @@ export const RecommendationsSection = ({ onAddToCart }: Props) => {
       case 'Order Again': return 'bg-green-500/10 text-green-600';
       case 'New For You': return 'bg-blue-500/10 text-blue-600';
       case 'Lunch': return 'bg-yellow-500/10 text-yellow-600';
-      case 'Dinner': return 'bg-orange-500/10 text-orange-600';
+      case 'Dinner': return 'bg-teal-600/10 text-teal-700';
       case 'Breakfast': return 'bg-pink-500/10 text-pink-600';
       case 'Late Night': return 'bg-purple-500/10 text-purple-600';
       default: return 'bg-primary/10 text-primary';
