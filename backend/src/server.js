@@ -350,8 +350,36 @@ io.on("connection", (socket) => {
   });
 });
 
+
+// ==================== HEALTH + KEEPALIVE ====================
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+app.get("/", (req, res) => {
+  res.json({ name: "Boufet API", status: "running", version: "1.0.0" });
+});
+
+// Self-ping every 4 minutes to prevent Railway 10min timeout
+const SELF_URL = process.env.RAILWAY_PUBLIC_DOMAIN 
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/health`
+  : `http://localhost:${process.env.PORT || 3001}/health`;
+
+setInterval(async () => {
+  try {
+    const { default: https } = await import(SELF_URL.startsWith("https") ? "https" : "http");
+    https.get(SELF_URL, (res) => {
+      console.log(`[keepalive] ping ${res.statusCode} ${new Date().toISOString()}`);
+    }).on("error", (e) => console.error("[keepalive] error:", e.message));
+  } catch(e) {
+    console.error("[keepalive] failed:", e.message);
+  }
+}, 4 * 60 * 1000);
+
 // ==================== START ====================
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log();
+  console.log(`Boufet API running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
