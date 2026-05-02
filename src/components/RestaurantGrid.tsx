@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RestaurantCard } from './RestaurantCard';
 import { CategoryPill } from './CategoryPill';
-import { restaurants, categories } from '../data/restaurants';
+import { restaurants as mockRestaurants, categories } from '../data/restaurants';
+import { getRestaurants } from '../lib/api';
 import { MenuItem } from '../types';
 
 interface RestaurantGridProps {
@@ -10,8 +11,16 @@ interface RestaurantGridProps {
 
 export const RestaurantGrid = ({ onAddToCart }: RestaurantGridProps) => {
   const [activeCategory, setActiveCategory] = useState('all');
-  const filteredRestaurants = activeCategory === 'all' 
-    ? restaurants 
+  const [restaurants, setRestaurants] = useState(mockRestaurants);
+
+  useEffect(() => {
+    getRestaurants().then(data => {
+      if (data && data.length > 0) setRestaurants(data);
+    });
+  }, []);
+
+  const filteredRestaurants = activeCategory === 'all'
+    ? restaurants
     : restaurants.filter(r => r.cuisine.toLowerCase() === activeCategory);
 
   return (
