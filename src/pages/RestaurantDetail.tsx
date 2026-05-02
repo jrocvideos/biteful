@@ -26,7 +26,7 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
       }
     });
     if (id) {
-      getMenu(id).then(data => {
+      getMenu(id).then((data: any) => {
         if (data && data.length > 0) setMenuItems(data);
       });
     }

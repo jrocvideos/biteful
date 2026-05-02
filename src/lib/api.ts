@@ -23,3 +23,13 @@ export async function getRestaurants() {
     return null;
   }
 }
+
+export async function getMenu(restaurantId: string) {
+  try {
+    const res = await fetch(`${API_URL}/api/restaurants/${restaurantId}/menu`);
+    if (!res.ok) throw new Error('Failed to fetch menu');
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
