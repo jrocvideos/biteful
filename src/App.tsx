@@ -21,6 +21,7 @@ function App() {
   const cart = useCart();
 
   return (
+    <AuthProvider>
     <BrowserRouter>
       <div className="min-h-screen bg-background text-foreground">
         <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
@@ -57,6 +58,7 @@ function App() {
         />
       </div>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
 
