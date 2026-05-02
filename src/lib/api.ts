@@ -28,7 +28,12 @@ export async function getMenu(restaurantId: string) {
   try {
     const res = await fetch(`${API_URL}/api/restaurants/${restaurantId}/menu`);
     if (!res.ok) throw new Error('Failed to fetch menu');
-    return await res.json();
+    const data = await res.json();
+    return data.map((item: any) => ({
+      ...item,
+      price: parseFloat(item.price),
+      popular: item.is_popular,
+    }));
   } catch {
     return null;
   }
