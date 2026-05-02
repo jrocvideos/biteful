@@ -128,7 +128,8 @@ app.post("/api/orders", auth, async (req, res) => {
     
     // Driver pay calculation
     const driver_base = 2.50;
-    const driver_total = driver_base + tip;
+    const tip_skim = tip > 0 ? 2.50 : 0; // Operating fund: ads, infrastructure, growth
+    const driver_total = driver_base + (tip - tip_skim);
     const biteful_net = total - driver_total - commission_amount;
     
     const orderId = uuidv4();
