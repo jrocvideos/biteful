@@ -102,7 +102,10 @@ export function initIvrs(app) {
     const callId = await logCall(caller, "restaurant", intent, { restaurantId: rid });
     if (["delay_order", "driver_issue", "item_unavailable"].includes(intent) && rid) { const { data: order } = await supabase.from("orders").select("id").eq("restaurant_id", rid).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Update from Boufet: your order has a small delay. We are on it.").catch(() => {}); }
     await resolveCall(callId, intent);
-    res.json(speak(responseText, `${BASE_URL}/ivrs/incoming?from=${caller}`));
+    res.json([
+  { action: "talk", text: responseText, language: "en-US", style: 2 },
+  { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }
+]);
   });
 
   app.get("/ivrs/customer", async (req, res) => {
