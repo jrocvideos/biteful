@@ -84,7 +84,7 @@ if (!routes[key]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_U
     const { default: fetch } = await import("node-fetch");
     const response = await fetch(routes[key]);
     const ncco = await response.json();
-res.json(ncco); `${BASE_URL}/ivrs/incoming?from=${caller}`));
+res.json(ncco); 
     const https = await import("https");
     const url = new URL(routes[digit]);
     const data = await new Promise((resolve, reject) => {
