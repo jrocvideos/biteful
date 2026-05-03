@@ -13,10 +13,11 @@ function speak(text, eventUrl = null) {
   if (!eventUrl) return [talk];
   return [talk, {
     action: "input",
-    type: ["dtmf", "speech"],
+    type: ["dtmf"],
     dtmf: { maxDigits: 1, timeOut: 5 },
-    speech: { language: "en-US", endOnSilence: 1, saveAudio: false },
     eventUrl: [eventUrl],
+  }];
+}
   }];
 }
 
