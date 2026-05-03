@@ -1,5 +1,6 @@
 import { Vonage } from '@vonage/server-sdk';
 import { createClient } from '@supabase/supabase-js';
+import { dispatchNotification } from './notifications.js';
 
 const vonage = new Vonage({ apiKey: process.env.VONAGE_API_KEY, apiSecret: process.env.VONAGE_API_SECRET });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -10,7 +11,13 @@ const BASE_URL = process.env.BASE_URL || "https://api.boufet.com";
 function speak(text, eventUrl = null) {
   const talk = { action: "talk", text, language: "en-US", style: 2 };
   if (!eventUrl) return [talk];
-  return [talk, { action: "input", type: ["dtmf"], dtmf: { maxDigits: 1, timeOut: 5 }, eventUrl: [eventUrl] }];
+  return [talk, {
+    action: "input",
+    type: ["dtmf", "speech"],
+    dtmf: { maxDigits: 1, timeOut: 5 },
+    speech: { language: "en-US", endOnSilence: 1, saveAudio: false },
+    eventUrl: [eventUrl],
+  }];
 }
 
 function connectConcierge(note = "") {
@@ -70,8 +77,14 @@ export function initIvrs(app) {
   app.post("/ivrs/dtmf", async (req, res) => {
     const caller = req.query.caller || req.body?.from || "unknown";
     const digit = req.body?.dtmf?.digits || "";
+    const speech = req.body?.speech?.results?.[0]?.text?.toLowerCase() || "";
     const routes = { "1": `${BASE_URL}/ivrs/restaurant?caller=${caller}`, "2": `${BASE_URL}/ivrs/customer?caller=${caller}`, "3": `${BASE_URL}/ivrs/driver?caller=${caller}`, "4": `${BASE_URL}/ivrs/partnership?caller=${caller}`, "0": `${BASE_URL}/ivrs/concierge?caller=${caller}` };
-    if (!routes[digit]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
+    const key = digit || (speech.includes("restaurant") ? "1" : speech.includes("customer") || speech.includes("order") ? "2" : speech.includes("driver") ? "3" : speech.includes("partner") ? "4" : speech.includes("concierge") || speech.includes("help") ? "0" : "");
+if (!routes[key]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
+    const { default: fetch } = await import("node-fetch");
+    const response = await fetch(routes[key]);
+    const ncco = await response.json();
+res.json(ncco); `${BASE_URL}/ivrs/incoming?from=${caller}`));
     const https = await import("https");
     const url = new URL(routes[digit]);
     const data = await new Promise((resolve, reject) => {
@@ -101,7 +114,7 @@ export function initIvrs(app) {
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "restaurant", intent, { restaurantId: rid });
     if (["delay_order", "driver_issue", "item_unavailable"].includes(intent) && rid) { const { data: order } = await supabase.from("orders").select("id").eq("restaurant_id", rid).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Update from Boufet: your order has a small delay. We are on it.").catch(() => {}); }
-    await resolveCall(callId, intent);
+    await resolveCall(callId, intent);dispatchNotification(callId, "customer", intent, { orderId, callerPhone: caller }).catch(() => {});
     res.json([
   { action: "talk", text: responseText, language: "en-US", style: 2 },
   { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }
@@ -134,7 +147,7 @@ export function initIvrs(app) {
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "customer", intent, { orderId });
     if (["missing_item", "refund_request"].includes(intent)) await escalateCall(callId, `customer reported ${intent}`, false);
-    await resolveCall(callId, intent);
+    await resolveCall(callId, intent);dispatchNotification(callId, "driver", intent, { driverId, callerPhone: caller }).catch(() => {});
     res.json(speak(responseText));
   });
 
@@ -156,6 +169,8 @@ export function initIvrs(app) {
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "driver", intent, { driverId });
     await resolveCall(callId, intent);
+    dispatchNotification(callId, "restaurant", intent, { restaurantId, callerPhone: caller }).catch(() => {});
+
     res.json(speak(responseText));
   });
 
