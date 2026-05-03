@@ -72,7 +72,16 @@ export function initIvrs(app) {
     const digit = req.body?.dtmf?.digits || "";
     const routes = { "1": `${BASE_URL}/ivrs/restaurant?caller=${caller}`, "2": `${BASE_URL}/ivrs/customer?caller=${caller}`, "3": `${BASE_URL}/ivrs/driver?caller=${caller}`, "4": `${BASE_URL}/ivrs/partnership?caller=${caller}`, "0": `${BASE_URL}/ivrs/concierge?caller=${caller}` };
     if (!routes[digit]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
-    res.json([{ action: "input", type: ["dtmf"], dtmf: { maxDigits: 1, timeOut: 1 }, eventUrl: [routes[digit]] }]);
+    const https = await import("https");
+    const url = new URL(routes[digit]);
+    const data = await new Promise((resolve, reject) => {
+      https.default.get(url, (r) => {
+        let body = "";
+        r.on("data", chunk => body += chunk);
+        r.on("end", () => resolve(JSON.parse(body)));
+      }).on("error", reject);
+    });
+    res.json(data);
   });
 
   app.get("/ivrs/restaurant", async (req, res) => {
