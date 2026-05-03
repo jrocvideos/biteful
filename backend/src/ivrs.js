@@ -102,7 +102,7 @@ export function initIvrs(app) {
     const callId = await logCall(caller, "restaurant", intent, { restaurantId: rid });
     if (["delay_order", "driver_issue", "item_unavailable"].includes(intent) && rid) { const { data: order } = await supabase.from("orders").select("id").eq("restaurant_id", rid).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Update from Boufet: your order has a small delay. We are on it.").catch(() => {}); }
     await resolveCall(callId, intent);
-    res.json(speak(responseText));
+    res.json(speak(responseText, `${BASE_URL}/ivrs/incoming?from=${caller}`));
   });
 
   app.get("/ivrs/customer", async (req, res) => {
@@ -148,7 +148,7 @@ export function initIvrs(app) {
     const digit = req.body?.dtmf?.digits || "";
     if (digit === "4" || digit === "0") { const intent = digit === "4" ? "safety_concern" : "emergency_concierge"; const callId = await logCall(caller, "driver", intent, { driverId }); await escalateCall(callId, intent, true); return res.json(connectConcierge(digit === "4" ? "Safety is our priority. Connecting you now." : "One moment. Connecting you.")); }
     if (digit === "2") { const callId = await logCall(caller, "driver", "cannot_find_customer", { driverId }); if (driverId) { const { data: order } = await supabase.from("orders").select("id").eq("driver_id", driverId).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Your Boufet driver needs help finding you. Please check your delivery pin and step outside.").catch(() => {}); } await escalateCall(callId, "driver cannot locate customer", false); await resolveCall(callId, "pin_resent"); return res.json(speak("We have resent the customer their delivery pin and notified them to step outside.")); }
-    const intents = { "1": ["vehicle_problem", "Understood. We are pausing your delivery and dispatching support. Stay safe."], "3": ["restaurant_issue", "We are contacting the restaurant now. You will receive an update in 2 minutes."], "5": ["payment_issue", "Your payment concern has been logged. Our team will resolve it by end of day."] };
+    const intents = { "1": ["Are you having a problem with your vehicle", "Understood. We are pausing your delivery and dispatching support. Stay safe."], "3": ["restaurant_issue", "We are contacting the restaurant now. You will receive an update in 2 minutes.Returning you to the main menu."], "5": ["payment_issue", "Your payment concern has been logged. Our team will resolve this as soon as you send up an email and will try to get back to you by end of day or so."] };
     if (!intents[digit]) return res.json(speak("Invalid option.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "driver", intent, { driverId });
