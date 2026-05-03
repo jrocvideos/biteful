@@ -11,14 +11,7 @@ const BASE_URL = process.env.BASE_URL || "https://api.boufet.com";
 function speak(text, eventUrl = null) {
   const talk = { action: "talk", text, language: "en-US", style: 2 };
   if (!eventUrl) return [talk];
-  return [talk, {
-    action: "input",
-    type: ["dtmf"],
-    dtmf: { maxDigits: 1, timeOut: 5 },
-    eventUrl: [eventUrl],
-  }];
-}
-  }];
+  return [talk, { action: "input", type: ["dtmf"], dtmf: { maxDigits: 1, timeOut: 5 }, eventUrl: [eventUrl] }];
 }
 
 function connectConcierge(note = "") {
@@ -78,24 +71,18 @@ export function initIvrs(app) {
   app.post("/ivrs/dtmf", async (req, res) => {
     const caller = req.query.caller || req.body?.from || "unknown";
     const digit = req.body?.dtmf?.digits || "";
-    const speech = req.body?.speech?.results?.[0]?.text?.toLowerCase() || "";
-    const routes = { "1": `${BASE_URL}/ivrs/restaurant?caller=${caller}`, "2": `${BASE_URL}/ivrs/customer?caller=${caller}`, "3": `${BASE_URL}/ivrs/driver?caller=${caller}`, "4": `${BASE_URL}/ivrs/partnership?caller=${caller}`, "0": `${BASE_URL}/ivrs/concierge?caller=${caller}` };
-    const key = digit || (speech.includes("restaurant") ? "1" : speech.includes("customer") || speech.includes("order") ? "2" : speech.includes("driver") ? "3" : speech.includes("partner") ? "4" : speech.includes("concierge") || speech.includes("help") ? "0" : "");
-if (!routes[key]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
+    const routes = {
+      "1": `${BASE_URL}/ivrs/restaurant?caller=${caller}`,
+      "2": `${BASE_URL}/ivrs/customer?caller=${caller}`,
+      "3": `${BASE_URL}/ivrs/driver?caller=${caller}`,
+      "4": `${BASE_URL}/ivrs/partnership?caller=${caller}`,
+      "0": `${BASE_URL}/ivrs/concierge?caller=${caller}`,
+    };
+    if (!routes[digit]) return res.json(speak("Sorry, I didn't catch that.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
     const { default: fetch } = await import("node-fetch");
-    const response = await fetch(routes[key]);
+    const response = await fetch(routes[digit]);
     const ncco = await response.json();
-res.json(ncco); 
-    const https = await import("https");
-    const url = new URL(routes[digit]);
-    const data = await new Promise((resolve, reject) => {
-      https.default.get(url, (r) => {
-        let body = "";
-        r.on("data", chunk => body += chunk);
-        r.on("end", () => resolve(JSON.parse(body)));
-      }).on("error", reject);
-    });
-    res.json(data);
+    res.json(ncco);
   });
 
   app.get("/ivrs/restaurant", async (req, res) => {
@@ -115,11 +102,9 @@ res.json(ncco);
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "restaurant", intent, { restaurantId: rid });
     if (["delay_order", "driver_issue", "item_unavailable"].includes(intent) && rid) { const { data: order } = await supabase.from("orders").select("id").eq("restaurant_id", rid).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Update from Boufet: your order has a small delay. We are on it.").catch(() => {}); }
-    await resolveCall(callId, intent);dispatchNotification(callId, "customer", intent, { orderId, callerPhone: caller }).catch(() => {});
-    res.json([
-  { action: "talk", text: responseText, language: "en-US", style: 2 },
-  { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }
-]);
+    await resolveCall(callId, intent);
+    dispatchNotification(callId, "restaurant", intent, { restaurantId: rid, callerPhone: caller }).catch(() => {});
+    res.json([{ action: "talk", text: responseText, language: "en-US", style: 2 }, { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }]);
   });
 
   app.get("/ivrs/customer", async (req, res) => {
@@ -141,15 +126,16 @@ res.json(ncco);
       if (orderId) { const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single(); if (order) text = `${order.driver_name || "Your driver"} is on the way. Estimated arrival in ${order.eta_minutes || "a few"} minutes.`; }
       const callId = await logCall(caller, "customer", "order_track", { orderId });
       await resolveCall(callId, "eta_provided");
-      return res.json(speak(text));
+      return res.json([{ action: "talk", text, language: "en-US", style: 2 }, { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }]);
     }
     const intents = { "2": ["change_instructions", "Got it. We will update your delivery instructions now."], "3": ["missing_item", "We are sorry. Our team will follow up within the hour."], "4": ["refund_request", "Your refund request has been logged. Our team will process it within 24 hours."] };
     if (!intents[digit]) return res.json(speak("Invalid option.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "customer", intent, { orderId });
     if (["missing_item", "refund_request"].includes(intent)) await escalateCall(callId, `customer reported ${intent}`, false);
-    await resolveCall(callId, intent);dispatchNotification(callId, "driver", intent, { driverId, callerPhone: caller }).catch(() => {});
-    res.json(speak(responseText));
+    await resolveCall(callId, intent);
+    dispatchNotification(callId, "customer", intent, { orderId, callerPhone: caller }).catch(() => {});
+    res.json([{ action: "talk", text: responseText, language: "en-US", style: 2 }, { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }]);
   });
 
   app.get("/ivrs/driver", async (req, res) => {
@@ -164,15 +150,14 @@ res.json(ncco);
     const driverId = req.query.did || null;
     const digit = req.body?.dtmf?.digits || "";
     if (digit === "4" || digit === "0") { const intent = digit === "4" ? "safety_concern" : "emergency_concierge"; const callId = await logCall(caller, "driver", intent, { driverId }); await escalateCall(callId, intent, true); return res.json(connectConcierge(digit === "4" ? "Safety is our priority. Connecting you now." : "One moment. Connecting you.")); }
-    if (digit === "2") { const callId = await logCall(caller, "driver", "cannot_find_customer", { driverId }); if (driverId) { const { data: order } = await supabase.from("orders").select("id").eq("driver_id", driverId).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Your Boufet driver needs help finding you. Please check your delivery pin and step outside.").catch(() => {}); } await escalateCall(callId, "driver cannot locate customer", false); await resolveCall(callId, "pin_resent"); return res.json(speak("We have resent the customer their delivery pin and notified them to step outside.")); }
-    const intents = { "1": ["Are you having a problem with your vehicle", "That's too bad and totally Understood. We are pausing your delivery and dispatching support.Hope you can get it fixed as soon as possible. Stay safe."], "3": ["restaurant_issue", "We are contacting the restaurant now. You will receive an update in 2 minutes, if not follow up by calling back and let us know .Returning you to the main menu."], "5": ["payment_issue", "Your payment concern needs to be logged. Our team will resolve this as soon as you send up an email and will try to get back to you by end of day or so."] };
+    if (digit === "2") { const callId = await logCall(caller, "driver", "cannot_find_customer", { driverId }); if (driverId) { const { data: order } = await supabase.from("orders").select("id").eq("driver_id", driverId).eq("status", "active").maybeSingle(); if (order?.id) notifyCustomer(order.id, "Your Boufet driver needs help finding you. Please check your delivery pin and step outside.").catch(() => {}); } await escalateCall(callId, "driver cannot locate customer", false); await resolveCall(callId, "pin_resent"); return res.json([{ action: "talk", text: "We have resent the customer their delivery pin and notified them to step outside.", language: "en-US", style: 2 }, { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }]); }
+    const intents = { "1": ["vehicle_problem", "Understood. We are pausing your delivery and dispatching support. Stay safe."], "3": ["restaurant_issue", "We are contacting the restaurant now. You will receive an update in 2 minutes."], "5": ["payment_issue", "Your payment concern has been logged. Our team will resolve it by end of day."] };
     if (!intents[digit]) return res.json(speak("Invalid option.", `${BASE_URL}/ivrs/incoming?from=${caller}`));
     const [intent, responseText] = intents[digit];
     const callId = await logCall(caller, "driver", intent, { driverId });
     await resolveCall(callId, intent);
-    dispatchNotification(callId, "restaurant", intent, { restaurantId, callerPhone: caller }).catch(() => {});
-
-    res.json(speak(responseText));
+    dispatchNotification(callId, "driver", intent, { driverId, callerPhone: caller }).catch(() => {});
+    res.json([{ action: "talk", text: responseText, language: "en-US", style: 2 }, { action: "redirect", eventUrl: [`${BASE_URL}/ivrs/incoming?from=${caller}`] }]);
   });
 
   app.get("/ivrs/concierge", async (req, res) => {
@@ -181,12 +166,14 @@ res.json(ncco);
     await escalateCall(callId, "caller pressed 0 from main menu", true);
     res.json(connectConcierge());
   });
-app.post("/ivrs/concierge", async (req, res) => {
+
+  app.post("/ivrs/concierge", async (req, res) => {
     const caller = req.query.caller || req.body?.from || "unknown";
     const callId = await logCall(caller, "concierge", "direct_request");
     await escalateCall(callId, "caller pressed 0 from main menu", true);
     res.json(connectConcierge());
   });
+
   app.get("/ivrs/partnership", async (req, res) => {
     const caller = req.query.caller || "unknown";
     await logCall(caller, "partnership", "inquiry");
@@ -203,14 +190,13 @@ app.post("/ivrs/concierge", async (req, res) => {
 
   app.post("/ivrs/restaurant-response", (req, res) => {
     const digit = req.body?.dtmf?.digits;
-    res.json([{ action: "talk", text: digit === "1" ? "Order confirmed. Thank you. Please prepare the order promptly." : "Order declined. We will notify the customer. Thank you.", language: "en-US", style: 2 }]);
+    res.json([{ action: "talk", text: digit === "1" ? "Order confirmed. Thank you." : "Order declined. We will notify the customer.", language: "en-US", style: 2 }]);
   });
 
   app.post("/ivrs/driver-response", (req, res) => {
     const digit = req.body?.dtmf?.digits;
     res.json([{ action: "talk", text: digit === "1" ? "Job accepted. Please head to the restaurant now. Drive safe." : "Job declined. We will find another driver. Thank you.", language: "en-US", style: 2 }]);
   });
-
 }
 
 export async function callRestaurant(restaurantPhone, orderDetails) {
