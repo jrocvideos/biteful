@@ -1,6 +1,7 @@
 // ==================== BOUFET IVRS (Vonage Voice) ====================
 // Fairmont-grade support: restaurant / customer / driver / concierge
 import { Vonage } from '@vonage/server-sdk';
+import { app, pool } from './server.js';
 import { createClient } from '@supabase/supabase-js';
 
 const vonage = new Vonage({

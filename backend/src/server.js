@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 dotenv.config();
 const { Pool } = pkg;
 const app = express();
+export { app, pool, io };
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: "*" } });
 
@@ -377,6 +378,9 @@ setInterval(async () => {
     console.error("[keepalive] failed:", e.message);
   }
 }, 4 * 60 * 1000);
+
+// ==================== IVRS ====================
+import "./ivrs.js";
 
 // ==================== START ====================
 const PORT = process.env.PORT || 3001;
