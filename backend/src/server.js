@@ -380,7 +380,8 @@ setInterval(async () => {
 }, 4 * 60 * 1000);
 
 // ==================== IVRS ====================
-import "./ivrs.js";
+import { initIvrs } from "./ivrs.js";
+initIvrs(app);
 
 // ==================== START ====================
 const PORT = process.env.PORT || 3001;

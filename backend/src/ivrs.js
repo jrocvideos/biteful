@@ -1,7 +1,6 @@
 // ==================== BOUFET IVRS (Vonage Voice) ====================
 // Fairmont-grade support: restaurant / customer / driver / concierge
 import { Vonage } from '@vonage/server-sdk';
-import { app, pool } from './server.js';
 import { createClient } from '@supabase/supabase-js';
 
 const vonage = new Vonage({
@@ -13,7 +12,8 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
-
+let app;
+export function initIvrs(expressApp) { app = expressApp; }
 const VONAGE_NUMBER  = process.env.VONAGE_NUMBER;
 const CONCIERGE_NUMBER = process.env.CONCIERGE_NUMBER || "";
 const BASE_URL       = process.env.BASE_URL || "https://api.boufet.com";
