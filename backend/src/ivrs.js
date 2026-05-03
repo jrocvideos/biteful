@@ -162,7 +162,12 @@ export function initIvrs(app) {
     await escalateCall(callId, "caller pressed 0 from main menu", true);
     res.json(connectConcierge());
   });
-
+app.post("/ivrs/concierge", async (req, res) => {
+    const caller = req.query.caller || req.body?.from || "unknown";
+    const callId = await logCall(caller, "concierge", "direct_request");
+    await escalateCall(callId, "caller pressed 0 from main menu", true);
+    res.json(connectConcierge());
+  });
   app.get("/ivrs/partnership", async (req, res) => {
     const caller = req.query.caller || "unknown";
     await logCall(caller, "partnership", "inquiry");
