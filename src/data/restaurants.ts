@@ -138,7 +138,7 @@ export const restaurants: Restaurant[] = [
     deliveryTime: '20-30 min',
     deliveryFee: 2.99,
     minOrder: 10.00,
-    image: 'https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1571864989823-f6d3c2295c7b?w=800&auto=format&fit=crop',
     featured: true,
     open: true,
     menu: [

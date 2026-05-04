@@ -124,7 +124,12 @@ export const RestaurantDetail = ({ onAddToCart }: RestaurantDetailProps) => {
 
 const MenuItemCard = ({ item, restaurant, onAddToCart }: { item: MenuItem; restaurant: any; onAddToCart: any }) => (
   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-    className="flex items-center justify-between p-6 rounded-2xl bg-card border border-border hover:shadow-soft transition-all group">
+    className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border hover:shadow-soft transition-all group">
+    {item.image && (
+      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 mr-4 bg-muted">
+        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+      </div>
+    )}
     <div className="flex-1">
       <div className="flex items-center gap-2 mb-1">
         <h3 className="font-semibold text-foreground">{item.name}</h3>
