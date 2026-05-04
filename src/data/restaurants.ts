@@ -127,6 +127,28 @@ export const restaurants: Restaurant[] = [
       { id: 'pj3', name: 'BBQ Chicken Pizza', description: 'Grilled chicken, BBQ sauce, red onions, cilantro', price: 17.99 },
     ]
   },
+  {
+    id: '8',
+    name: 'Smoke2Snack',
+    description: 'Premium vapes, e-liquids, accessories and snacks delivered fast',
+    cuisine: 'Vape & Convenience',
+    rating: 4.7,
+    reviewCount: 412,
+    deliveryTime: '20-30 min',
+    deliveryFee: 2.99,
+    minOrder: 10.00,
+    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop',
+    featured: true,
+    open: true,
+    website: 'https://smoke2snack.com',
+    menu: [
+      { id: 'v1', name: 'Disposable Vape', description: 'Assorted flavours — ask driver for options', price: 19.99, popular: true },
+      { id: 'v2', name: 'E-Liquid 30ml', description: 'Premium e-juice, various nicotine levels', price: 14.99, popular: true },
+      { id: 'v3', name: 'Vape Pod Pack', description: 'Compatible pods, assorted flavours', price: 24.99 },
+      { id: 'v4', name: 'Snack Bundle', description: 'Chips, candy, energy drink — the essentials', price: 12.99 },
+      { id: 'v5', name: 'Rolling Papers + Tips', description: 'King size papers with filter tips', price: 4.99 },
+    ]
+  },
 ];
 
 export const categories = [
@@ -141,4 +163,26 @@ export const categories = [
   { id: 'vietnamese', name: 'Vietnamese', icon: 'Soup' },
   { id: 'chinese', name: 'Chinese', icon: 'UtensilsCrossed' },
   { id: 'bakery', name: 'Bakery', icon: 'Croissant' },
+  {
+    id: '8',
+    name: 'Smoke2Snack',
+    description: 'Premium vapes, e-liquids, accessories and snacks delivered fast',
+    cuisine: 'Vape & Convenience',
+    rating: 4.7,
+    reviewCount: 412,
+    deliveryTime: '20-30 min',
+    deliveryFee: 2.99,
+    minOrder: 10.00,
+    image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop',
+    featured: true,
+    open: true,
+    website: 'https://smoke2snack.com',
+    menu: [
+      { id: 'v1', name: 'Disposable Vape', description: 'Assorted flavours — ask driver for options', price: 19.99, popular: true },
+      { id: 'v2', name: 'E-Liquid 30ml', description: 'Premium e-juice, various nicotine levels', price: 14.99, popular: true },
+      { id: 'v3', name: 'Vape Pod Pack', description: 'Compatible pods, assorted flavours', price: 24.99 },
+      { id: 'v4', name: 'Snack Bundle', description: 'Chips, candy, energy drink — the essentials', price: 12.99 },
+      { id: 'v5', name: 'Rolling Papers + Tips', description: 'King size papers with filter tips', price: 4.99 },
+    ]
+  },
 ];
