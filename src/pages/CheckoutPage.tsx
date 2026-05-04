@@ -41,11 +41,11 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [showSavingsBreakdown, setShowSavingsBreakdown] = useState(false);
 
   const subtotal = total;
-  const adminFee = 2.09;
+  const adminFee = 2.09 + (subtotal * 0.08);
   const asapFee = getAsapFee();
   const deliveryFee = 8.29;
   const totalDelivery = deliveryTime === 'asap' ? deliveryFee + asapFee : deliveryFee;
-  const serviceFee = subtotal * 0.08;
+  const serviceFee = 0;
   const tax = subtotal * 0.12;
   const tipAmount = subtotal * tip;
   const discount = promoApplied ? subtotal * 0.10 : 0;
@@ -159,7 +159,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
                           <span className="text-green-800">Service Fee</span>
-                          <span className="text-center text-red-500 line-through">${uberServiceFee.toFixed(2)}</span>
                           <span className="text-right font-bold text-green-600">${serviceFee.toFixed(2)}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm pt-2 font-bold">
@@ -307,9 +306,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Admin Fee (5%)</span>
                   <div className="text-right">
-                    <span className="text-xs text-red-400 line-through mr-1">${uberServiceFee.toFixed(2)}</span>
                     <span className="font-medium">${serviceFee.toFixed(2)}</span>
                   </div>
                 </div>
