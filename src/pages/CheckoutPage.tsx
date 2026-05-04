@@ -41,8 +41,11 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [loading, setLoading] = useState(false);
   const [showSavingsBreakdown, setShowSavingsBreakdown] = useState(false);
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [showAgeGate, setShowAgeGate] = useState(false);
 
   const subtotal = total;
+  const hasSmoke2Snack = items.some(item => item.restaurantName === 'Smoke2Snack');
   const adminFee = 2.09 + (subtotal * 0.08);
   const asapFee = getAsapFee();
   const deliveryFee = 8.29;
@@ -172,7 +175,10 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     )}
                   </motion.div>
                 )}
-                <button onClick={() => setStep('delivery')} className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors">Proceed to Delivery →</button>
+                <button
+                  onClick={() => { if (hasSmoke2Snack && !ageVerified) { setShowAgeGate(true); } else { setStep('delivery'); } }}
+                  className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors"
+                >Proceed to Delivery →</button>
               </motion.div>
             )}
 
@@ -353,6 +359,35 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           </div>
         </div>
       </div>
+      {/* Age Verification Modal */}
+      {showAgeGate && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-border">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🔞</span>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Age Verification</h2>
+              <p className="text-muted-foreground text-sm">Your cart contains products from Smoke2Snack. You must be 19 or older to purchase vape and tobacco products in BC.</p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => { setAgeVerified(true); setShowAgeGate(false); setStep('delivery'); }}
+                className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors"
+              >
+                ✓ I am 19 or older
+              </button>
+              <button
+                onClick={() => setShowAgeGate(false)}
+                className="w-full py-3 border border-border rounded-xl font-medium hover:bg-muted transition-colors text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-4">By confirming, you agree that you are of legal age. False confirmation may result in order cancellation.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
