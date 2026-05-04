@@ -81,7 +81,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
       {/* Search bar */}
       {searchOpen && (
         <div className="border-t border-border bg-background px-4 py-3">
-          <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(\`/restaurants?search=\${encodeURIComponent(searchQuery)}\`); setSearchOpen(false); setSearchQuery(''); } }}>
+          <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(`/restaurants?search=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(''); } }}>
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
