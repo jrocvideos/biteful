@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bike, MapPin, Phone, Navigation, CheckCircle, X, 
@@ -139,6 +140,25 @@ export const DriverApp = () => {
   const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [earnings, setEarnings] = useState({ today: 87.50, week: 693, trips: 45, rating: 4.92 });
+
+  // Broadcast real GPS to backend every 5 seconds when online
+  useEffect(() => {
+    if (!isOnline) return;
+    const socket = io('https://api.boufet.com', { transports: ['websocket'] });
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        socket.emit('driver_location', { lat: pos.coords.latitude, lng: pos.coords.longitude });
+        fetch('https://api.boufet.com/api/drivers/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, is_online: true }),
+        }).catch(() => {});
+      },
+      (err) => console.warn('GPS error:', err),
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    );
+    return () => { navigator.geolocation.clearWatch(watchId); socket.disconnect(); };
+  }, [isOnline]);
 
   const acceptJob = (jobId: string) => {
     const job = jobs.find(j => j.id === jobId);
