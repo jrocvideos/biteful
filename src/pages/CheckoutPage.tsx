@@ -45,7 +45,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const asapFee = getAsapFee();
   const deliveryFee = 8.29;
   const totalDelivery = deliveryTime === 'asap' ? deliveryFee + asapFee : deliveryFee;
-  const serviceFee = subtotal * 0.05;
+  const serviceFee = subtotal * 0.08;
   const tax = subtotal * 0.12;
   const tipAmount = subtotal * tip;
   const discount = promoApplied ? subtotal * 0.10 : 0;
