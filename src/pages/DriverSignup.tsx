@@ -180,6 +180,21 @@ export const DriverSignup = () => {
                   Submit Application
                 </button>
               </div>
+
+              {/* Download App Section */}
+              <div className="mt-6 p-5 bg-teal-50 border border-teal-200 rounded-2xl">
+                <p className="text-sm font-bold text-teal-800 mb-1">📱 Download the Boufet Driver App</p>
+                <p className="text-xs text-teal-700 mb-3">Get the app on your phone to start receiving orders the moment you're approved.</p>
+                <div className="flex gap-3">
+                  <a href="/boufet-driver.apk" download="boufet-driver.apk" className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-bold text-sm text-center hover:bg-teal-700 transition-colors">
+                    ⬇ Android APK
+                  </a>
+                  <a href="/driver-download" className="flex-1 py-3 border border-teal-600 text-teal-600 rounded-xl font-bold text-sm text-center hover:bg-teal-50 transition-colors">
+                    View Instructions
+                  </a>
+                </div>
+                <p className="text-[10px] text-teal-600 mt-2 text-center">iPhone users: open boufet.com/driver in Safari → Share → Add to Home Screen</p>
+              </div>
             </motion.div>
           )}
         </div>
