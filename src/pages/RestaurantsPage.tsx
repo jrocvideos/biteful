@@ -1,16 +1,9 @@
-import { useSearchParams } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Star, Clock, MapPin, Bike, ChevronDown, X } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
 import { restaurants as mockRestaurants, categories } from '../data/restaurants';
-import { useSearchParams } from 'react-router-dom';
 import { getRestaurants } from '../lib/api';
-import { useSearchParams } from 'react-router-dom';
 import { MenuItem } from '../types';
 
 interface RestaurantsPageProps {
