@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { MapPin, ShoppingCart, Search, Bike, Store, User, LogOut } from 'lucide-react';
+import { MapPin, ShoppingCart, Search, Bike, Store, User, LogOut, Menu, X } from 'lucide-react';
 import { useCity } from '../hooks/useCity';
 
 interface HeaderProps {
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   const { city } = useCity();
   const location = useLocation();
 
@@ -58,6 +60,9 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
                 <Link to="/signup" className="px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">Sign Up</Link>
               </div>
             )}
+            <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
             <button className="p-2 rounded-lg hover:bg-muted transition-colors relative" onClick={onCartClick}>
               <ShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
@@ -69,6 +74,25 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
           </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-2">
+          <Link to="/restaurants" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors">Restaurants</Link>
+          <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"><Store className="w-4 h-4" /> My Restaurant</Link>
+          <Link to="/driver" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"><Bike className="w-4 h-4" /> Driver</Link>
+          <Link to="/driver/signup" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium border border-teal-600 text-teal-600 hover:bg-teal-50 transition-colors">Drive with Boufet</Link>
+          <Link to="/driver-download" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Download Driver App</Link>
+          {user ? (
+            <button onClick={() => { logout(); setMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors text-left"><LogOut className="w-4 h-4" /> Sign Out</button>
+          ) : (
+            <div className="flex gap-2 pt-2">
+              <Link to="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-muted transition-colors">Sign In</Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)} className="flex-1 text-center px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">Sign Up</Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 };
