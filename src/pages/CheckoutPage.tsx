@@ -17,6 +17,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
   const [address, setAddress] = useState('');
   const [apt, setApt] = useState('');
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [deliveryTime, setDeliveryTime] = useState<'asap' | 'schedule'>('asap');
   const [scheduledTime, setScheduledTime] = useState('');
   const [tip, setTip] = useState(0.15);
@@ -27,18 +28,15 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [showSavingsBreakdown, setShowSavingsBreakdown] = useState(false);
 
   const subtotal = total;
-
-  // Boufet fee structure
-  const deliveryFee = 8.99;           // 25% less than UberEats avg $11.99
-  const serviceFee = 2.00; // hidden platform fee
+  const isPickup = deliveryType === 'pickup';
+  const deliveryFee = isPickup ? 0 : 8.99;
+  const serviceFee = isPickup ? 0 : 2.00;
+  const uberDeliveryFee = 11.99;
+  const uberServiceFee = 2.55;
   const tax = subtotal * 0.12;
-  const tipAmount = subtotal * tip;
+  const tipAmount = isPickup ? 0 : subtotal * tip;
   const discount = promoApplied ? subtotal * 0.10 : 0;
   const finalTotal = subtotal + deliveryFee + serviceFee + tax + tipAmount - discount;
-
-  // UberEats comparison (what they would pay on UberEats)
-  const uberDeliveryFee = 11.99;
-  const uberServiceFee = subtotal * 0.15;
   const uberTotal = subtotal + uberDeliveryFee + uberServiceFee + tax + tipAmount - discount;
   const totalSavings = uberTotal - finalTotal;
 
@@ -72,7 +70,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   return (
     <div className="min-h-screen pt-24 pb-12 bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Steps */}
         <div className="flex items-center gap-4 mb-8">
           {['Cart', 'Delivery', 'Payment'].map((s, i) => {
             const steps = ['cart', 'delivery', 'payment'];
@@ -89,11 +86,25 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Left column */}
           <div className="lg:col-span-3 space-y-6">
+
             {step === 'cart' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <button onClick={() => setDeliveryType('delivery')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryType === 'delivery' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
+                    <Bike className="w-6 h-6 mx-auto mb-1 text-primary" />
+                    <p className="font-semibold text-sm">Delivery</p>
+                    <p className="text-xs text-muted-foreground">$8.99 flat fee</p>
+                  </button>
+                  <button onClick={() => setDeliveryType('pickup')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryType === 'pickup' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
+                    <Star className="w-6 h-6 mx-auto mb-1 text-primary" />
+                    <p className="font-semibold text-sm">Pickup</p>
+                    <p className="text-xs text-green-600 font-medium">Free</p>
+                  </button>
+                </div>
+
                 {Object.entries(restaurantGroups).map(([restaurantId, groupItems]) => (
                   <div key={restaurantId} className="bg-card rounded-2xl border border-border p-6 mb-4">
                     <h3 className="font-bold text-lg mb-4">{groupItems[0].restaurantName}</h3>
@@ -122,20 +133,15 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </div>
                 ))}
 
-                {/* Savings banner */}
-                {totalSavings > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4"
-                  >
+                {!isPickup && totalSavings > 0 && (
+                  <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
                           <TrendingDown className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="font-bold text-green-800">You're saving ${totalSavings.toFixed(2)} vs UberEats</p>
+                          <p className="font-bold text-green-800">Saving ${totalSavings.toFixed(2)} vs UberEats</p>
                           <p className="text-xs text-green-600">Lower fees, same great delivery</p>
                         </div>
                       </div>
@@ -143,27 +149,18 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         <Info className="w-5 h-5" />
                       </button>
                     </div>
-
                     {showSavingsBreakdown && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 pt-4 border-t border-green-200">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 pt-4 border-t border-green-200">
                         <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-green-700 mb-2">
-                          <span>Fee</span>
-                          <span className="text-center text-red-500">UberEats</span>
-                          <span className="text-right text-green-600">Boufet</span>
+                          <span>Fee</span><span className="text-center text-red-500">UberEats</span><span className="text-right text-green-600">Boufet</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
                           <span className="text-green-800">Delivery</span>
                           <span className="text-center text-red-500 line-through">${uberDeliveryFee.toFixed(2)}</span>
                           <span className="text-right font-bold text-green-600">${deliveryFee.toFixed(2)}</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
-                          <span className="text-green-800">Service Fee</span>
-                          <span className="text-center text-red-500 line-through">${uberServiceFee.toFixed(2)}</span>
-                          <span className="text-right font-bold text-green-600">${serviceFee.toFixed(2)}</span>
-                        </div>
                         <div className="grid grid-cols-3 gap-2 text-sm pt-2 font-bold">
-                          <span className="text-green-800">Total Saved</span>
-                          <span></span>
+                          <span className="text-green-800">Total Saved</span><span></span>
                           <span className="text-right text-green-600">${totalSavings.toFixed(2)}</span>
                         </div>
                       </motion.div>
@@ -171,31 +168,53 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </motion.div>
                 )}
 
+                {isPickup && (
+                  <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                      <Star className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-green-800">Pickup is completely free</p>
+                      <p className="text-xs text-green-600">No delivery fee, no service fee</p>
+                    </div>
+                  </div>
+                )}
+
                 <button onClick={() => setStep('delivery')} className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors">
-                  Proceed to Delivery →
+                  Proceed to {isPickup ? 'Pickup' : 'Delivery'} Details →
                 </button>
               </motion.div>
             )}
 
             {step === 'delivery' && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                <h1 className="text-2xl font-bold mb-6">Delivery Details</h1>
+                <h1 className="text-2xl font-bold mb-6">{isPickup ? 'Pickup Details' : 'Delivery Details'}</h1>
                 <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Delivery Address</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter your street address" className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  {!isPickup && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Delivery Address</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter your street address" className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                      </div>
+                      <input type="text" value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt, suite, floor (optional)" className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
                     </div>
-                    <input type="text" value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt, suite, floor (optional)" className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  </div>
+                  )}
+
+                  {isPickup && (
+                    <div className="p-4 bg-muted rounded-xl">
+                      <p className="font-semibold mb-1">Pickup Location</p>
+                      <p className="text-sm text-muted-foreground">Address will be shown after order is confirmed</p>
+                    </div>
+                  )}
+
                   <div>
-                    <label className="block text-sm font-semibold mb-3">Delivery Time</label>
+                    <label className="block text-sm font-semibold mb-3">{isPickup ? 'Pickup' : 'Delivery'} Time</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button onClick={() => setDeliveryTime('asap')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'asap' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">ASAP</p>
-                        <p className="text-xs text-muted-foreground">~25-35 min</p>
+                        <p className="text-xs text-muted-foreground">~{isPickup ? '15-20' : '25-35'} min</p>
                       </button>
                       <button onClick={() => setDeliveryTime('schedule')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'schedule' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
@@ -205,28 +224,33 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     </div>
                     {deliveryTime === 'schedule' && <input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />}
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">Driver Tip</label>
-                    <div className="grid grid-cols-5 gap-2">
-                      {[0, 0.10, 0.15, 0.20, 0.25].map((t) => (
-                        <button key={t} onClick={() => setTip(t)} className={`py-2 rounded-xl text-sm font-medium border transition-colors ${tip === t ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted border-border hover:bg-muted/80'}`}>
-                          {t === 0 ? 'None' : `${Math.round(t * 100)}%`}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)} — 100% goes to your driver</p>
-                  </div>
 
-                  
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                    <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                    <p className="text-xs text-blue-700">
-                      <span className="font-bold">Driver Guarantee:</span> Boufet ensures every driver earns a minimum of $21/hr during your delivery — BC law compliant.
-                    </p>
-                  </div>
+                  {!isPickup && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-3">Driver Tip</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[0, 0.10, 0.15, 0.20, 0.25].map((t) => (
+                          <button key={t} onClick={() => setTip(t)} className={`py-2 rounded-xl text-sm font-medium border transition-colors ${tip === t ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted border-border hover:bg-muted/80'}`}>
+                            {t === 0 ? 'None' : `${Math.round(t * 100)}%`}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)} — 100% goes to your driver</p>
+                    </div>
+                  )}
+
+                  {!isPickup && (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                      <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                      <p className="text-xs text-blue-700">
+                        <span className="font-bold">Driver Guarantee:</span> Boufet ensures every driver earns a minimum of $21/hr — BC law compliant.
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('cart')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
-                  <button onClick={() => setStep('payment')} disabled={!address} className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Continue to Payment →</button>
+                  <button onClick={() => setStep('payment')} disabled={!isPickup && !address} className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Continue to Payment →</button>
                 </div>
               </motion.div>
             )}
@@ -276,12 +300,9 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
             )}
           </div>
 
-          {/* Right column — Order Summary */}
           <div className="lg:col-span-2">
             <div className="sticky top-28 bg-card rounded-2xl border border-border p-6">
               <h3 className="font-bold text-lg mb-4">Order Summary</h3>
-
-              {/* Promo code */}
               <div className="mb-4">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -292,70 +313,63 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                 </div>
                 {promoApplied && <p className="text-xs text-green-600 mt-1">✓ 10% discount applied</p>}
               </div>
-
-              {/* Fee breakdown */}
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Item Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-
-                {/* Delivery fee with savings */}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Delivery Fee</span>
-                  <div className="text-right">
-                    <span className="text-xs text-red-400 line-through mr-1">${uberDeliveryFee.toFixed(2)}</span>
-                    <span className="font-medium">${deliveryFee.toFixed(2)}</span>
+                {!isPickup && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Delivery Fee</span>
+                    <div className="text-right">
+                      <span className="text-xs text-red-400 line-through mr-1">${uberDeliveryFee.toFixed(2)}</span>
+                      <span className="font-medium">${deliveryFee.toFixed(2)}</span>
+                    </div>
                   </div>
-                </div>
-
-                {/* Service fee with savings */}
-                <div className="flex justify-between">
-                  <span className="text-muted-foeground">Service Fee (5%)</span>
-                  <div className="text-right">
-                    <span className="text-xs text-red-400 line-through mr-1">${uberServiceFee.toFixed(2)}</span>
-                    <span className="font-medium">${serviceFee.toFixed(2)}</span>
+                )}
+                {isPickup && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Pickup Discount</span>
+                    <span>Free</span>
                   </div>
-                </div>
-
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (12% GST/PST)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
-
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Driver Tip</span>
-                  <span>${tipAmount.toFixed(2)}</span>
-                </div>
-
+                {!isPickup && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Driver Tip</span>
+                    <span>${tipAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Promo Discount</span>
                     <span>-${discount.toFixed(2)}</span>
                   </div>
                 )}
-
-                {/* Savings line */}
-                {totalSavings > 0 && (
+                {!isPickup && totalSavings > 0 && (
                   <div className="flex justify-between text-green-600 font-medium bg-green-50 rounded-lg px-2 py-1">
-                    <span className="flex items-center gap-1">
-                      <TrendingDown className="w-3 h-3" /> Saved vs UberEats
-                    </span>
+                    <span className="flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Saved vs UberEats</span>
                     <span>-${totalSavings.toFixed(2)}</span>
                   </div>
                 )}
-
                 <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>${finalTotal.toFixed(2)}</span>
                 </div>
               </div>
-
-              {/* Points */}
               <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                 <span>Earn {(finalTotal * 0.05).toFixed(0)} Boufet points with this order</span>
               </div>
+              {!isPickup && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2 text-xs text-blue-700">
+                  <Shield className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  <span><span className="font-bold">$21/hr driver guarantee</span> — BC law compliant</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
