@@ -108,7 +108,25 @@ export const restaurants: Restaurant[] = [
       { id: 'c1', name: 'Butter Chicken', description: 'Creamy tomato curry with tender chicken', price: 16.99, popular: true },
       { id: 'c2', name: 'Vegetable Biryani', description: 'Fragrant rice with mixed vegetables, raita', price: 14.99 },
     ]
-  }
+  }{
+    id: '7',
+    name: 'Papa Johns',
+    description: 'Fresh ingredients, better pizza',
+    cuisine: 'Italian',
+    rating: 4.5,
+    reviewCount: 0,
+    deliveryTime: '30-40 min',
+    deliveryFee: 2.99,
+    minOrder: 15.00,
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop',
+    featured: true,
+    open: true,
+    menu: [
+      { id: 'pj1', name: 'Pepperoni Pizza', description: 'Classic pepperoni with Papa Johns signature sauce', price: 16.99, popular: true },
+      { id: 'pj2', name: 'Cheese Pizza', description: 'Fresh mozzarella, signature tomato sauce', price: 13.99 },
+      { id: 'pj3', name: 'BBQ Chicken Pizza', description: 'Grilled chicken, BBQ sauce, red onions, cilantro', price: 17.99 },
+    ]
+  },
 ];
 
 export const categories = [
