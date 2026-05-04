@@ -21,6 +21,7 @@ export interface Restaurant {
   menu: MenuItem[];
   featured?: boolean;
   open: boolean;
+  website?: string;
 }
 
 export interface CartItem extends MenuItem {

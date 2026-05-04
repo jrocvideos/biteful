@@ -140,7 +140,6 @@ export const restaurants: Restaurant[] = [
     image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop',
     featured: true,
     open: true,
-    website: 'https://smoke2snack.com',
     menu: [
       { id: 'v1', name: 'Disposable Vape', description: 'Assorted flavours — ask driver for options', price: 19.99, popular: true },
       { id: 'v2', name: 'E-Liquid 30ml', description: 'Premium e-juice, various nicotine levels', price: 14.99, popular: true },
@@ -176,7 +175,6 @@ export const categories = [
     image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=800&auto=format&fit=crop',
     featured: true,
     open: true,
-    website: 'https://smoke2snack.com',
     menu: [
       { id: 'v1', name: 'Disposable Vape', description: 'Assorted flavours — ask driver for options', price: 19.99, popular: true },
       { id: 'v2', name: 'E-Liquid 30ml', description: 'Premium e-juice, various nicotine levels', price: 14.99, popular: true },
