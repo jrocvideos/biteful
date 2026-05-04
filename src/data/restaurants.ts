@@ -108,7 +108,7 @@ export const restaurants: Restaurant[] = [
       { id: 'c1', name: 'Butter Chicken', description: 'Creamy tomato curry with tender chicken', price: 16.99, popular: true },
       { id: 'c2', name: 'Vegetable Biryani', description: 'Fragrant rice with mixed vegetables, raita', price: 14.99 },
     ]
-  }{
+  },{
     id: '7',
     name: 'Papa Johns',
     description: 'Fresh ingredients, better pizza',
