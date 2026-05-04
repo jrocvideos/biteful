@@ -26,12 +26,14 @@ const getAsapLabel = (fee: number): string => {
   return '';
 };
 
+const getStandardFee = (subtotal: number): number => subtotal * 0.02;
+
 export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClearCart }: CheckoutPageProps) => {
   const navigate = useNavigate();
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
   const [address, setAddress] = useState('');
   const [apt, setApt] = useState('');
-  const [deliveryTime, setDeliveryTime] = useState<'asap' | 'schedule'>('asap');
+  const [deliveryTime, setDeliveryTime] = useState<'asap' | 'standard' | 'schedule'>('asap');
   const [scheduledTime, setScheduledTime] = useState('');
   const [tip, setTip] = useState(0.15);
   const [promoCode, setPromoCode] = useState('');
@@ -44,7 +46,8 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const adminFee = 2.09 + (subtotal * 0.08);
   const asapFee = getAsapFee();
   const deliveryFee = 8.29;
-  const totalDelivery = deliveryTime === 'asap' ? deliveryFee + asapFee : deliveryFee;
+  const standardFee = getStandardFee(subtotal);
+  const totalDelivery = deliveryTime === 'asap' ? deliveryFee + asapFee : deliveryTime === 'standard' ? deliveryFee + standardFee : deliveryFee;
   const serviceFee = 0;
   const tax = subtotal * 0.12;
   const tipAmount = subtotal * tip;
@@ -187,13 +190,20 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-3">Delivery Time</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <button onClick={() => setDeliveryTime('asap')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'asap' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">ASAP</p>
                         <p className="text-xs text-muted-foreground">~25–35 min</p>
                         <p className="text-xs font-semibold text-primary mt-1">+${asapFee.toFixed(2)}</p>
                         {getAsapLabel(asapFee) && <p className="text-[10px] text-orange-500 mt-0.5">{getAsapLabel(asapFee)}</p>}
+                      </button>
+                      <button onClick={() => setDeliveryTime('standard')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'standard' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
+                        <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
+                        <p className="font-semibold">Standard</p>
+                        <p className="text-xs text-muted-foreground">~45–60 min</p>
+                        <p className="text-xs font-semibold text-primary mt-1">+${standardFee.toFixed(2)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Shared delivery</p>
                       </button>
                       <button onClick={() => setDeliveryTime('schedule')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'schedule' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
