@@ -12,29 +12,6 @@ interface CheckoutPageProps {
   onClearCart: () => void;
 }
 
-// ASAP delivery fee tiers (Boufet keeps — not passed to driver)
-const getAsapFee = (): number => {
-  const now = new Date();
-  const totalMinutes = now.getHours() * 60 + now.getMinutes();
-
-  // Peak rush: 16:30 – 18:45
-  if (totalMinutes >= 16 * 60 + 30 && totalMinutes <= 18 * 60 + 45) return 6.14;
-
-  // Morning rush: 7:00 – 9:30 | Lunch rush: 11:30 – 13:30
-  if (
-    (totalMinutes >= 7 * 60 && totalMinutes <= 9 * 60 + 30) ||
-    (totalMinutes >= 11 * 60 + 30 && totalMinutes <= 13 * 60 + 30)
-  ) return 5.69;
-
-  return 5.49;
-};
-
-const getAsapLabel = (fee: number): string => {
-  if (fee === 6.14) return 'Peak rush pricing';
-  if (fee === 5.69) return 'Rush hour pricing';
-  return '';
-};
-
 export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClearCart }: CheckoutPageProps) => {
   const navigate = useNavigate();
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
@@ -52,16 +29,14 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const subtotal = total;
 
   // Boufet fee structure
-  const adminFee = 2.09;                        // Flat admin fee — Boufet keeps
-  const asapFee = getAsapFee();                 // Dynamic ASAP fee — Boufet keeps, not passed to driver
-  const deliveryFee = deliveryTime === 'asap' ? adminFee + asapFee : adminFee;
-  const serviceFee = subtotal * 0.05;           // 5% (UberEats ~15%)
+  const deliveryFee = 8.99;           // 25% less than UberEats avg $11.99
+  const serviceFee = subtotal * 0.05; // 5% service fee (UberEats charges ~15%)
   const tax = subtotal * 0.12;
   const tipAmount = subtotal * tip;
   const discount = promoApplied ? subtotal * 0.10 : 0;
   const finalTotal = subtotal + deliveryFee + serviceFee + tax + tipAmount - discount;
 
-  // UberEats comparison
+  // UberEats comparison (what they would pay on UberEats)
   const uberDeliveryFee = 11.99;
   const uberServiceFee = subtotal * 0.15;
   const uberTotal = subtotal + uberDeliveryFee + uberServiceFee + tax + tipAmount - discount;
@@ -168,6 +143,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         <Info className="w-5 h-5" />
                       </button>
                     </div>
+
                     {showSavingsBreakdown && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 pt-4 border-t border-green-200">
                         <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-green-700 mb-2">
@@ -213,38 +189,22 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     </div>
                     <input type="text" value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt, suite, floor (optional)" className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
-
                   <div>
                     <label className="block text-sm font-semibold mb-3">Delivery Time</label>
                     <div className="grid grid-cols-2 gap-3">
-                      {/* ASAP — dynamic pricing by time of day */}
-                      <button
-                        onClick={() => setDeliveryTime('asap')}
-                        className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'asap' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}
-                      >
+                      <button onClick={() => setDeliveryTime('asap')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'asap' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">ASAP</p>
-                        <p className="text-xs text-muted-foreground">~25–35 min</p>
-                        <p className="text-xs font-semibold text-primary mt-1">+${asapFee.toFixed(2)}</p>
-                        {getAsapLabel(asapFee) && (
-                          <p className="text-[10px] text-orange-500 mt-0.5">{getAsapLabel(asapFee)}</p>
-                        )}
+                        <p className="text-xs text-muted-foreground">~25-35 min</p>
                       </button>
-
-                      <button
-                        onClick={() => setDeliveryTime('schedule')}
-                        className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'schedule' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}
-                      >
+                      <button onClick={() => setDeliveryTime('schedule')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'schedule' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">Schedule</p>
                         <p className="text-xs text-muted-foreground">Pick a time</p>
                       </button>
                     </div>
-                    {deliveryTime === 'schedule' && (
-                      <input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                    )}
+                    {deliveryTime === 'schedule' && <input type="datetime-local" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="w-full mt-3 px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50" />}
                   </div>
-
                   <div>
                     <label className="block text-sm font-semibold mb-3">Driver Tip</label>
                     <div className="grid grid-cols-5 gap-2">
@@ -257,7 +217,13 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)} — 100% goes to your driver</p>
                   </div>
 
-                  {/* Driver Guarantee banner removed — internal policy only */}
+                  {/* Driver guarantee badge */}
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                    <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                    <p className="text-xs text-blue-700">
+                      <span className="font-bold">Driver Guarantee:</span> Boufet ensures every driver earns a minimum of $21/hr during your delivery — BC law compliant.
+                    </p>
+                  </div>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('cart')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
@@ -335,29 +301,16 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
 
-                {/* Admin fee — always shown */}
+                {/* Delivery fee with savings */}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Admin Fee</span>
-                  <span className="font-medium">${adminFee.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Delivery Fee</span>
+                  <div className="text-right">
+                    <span className="text-xs text-red-400 line-through mr-1">${uberDeliveryFee.toFixed(2)}</span>
+                    <span className="font-medium">${deliveryFee.toFixed(2)}</span>
+                  </div>
                 </div>
 
-                {/* Delivery fee — only when ASAP */}
-                {deliveryTime === 'asap' && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Delivery Fee
-                      {getAsapLabel(asapFee) && (
-                        <span className="ml-1 text-[10px] text-orange-500">({getAsapLabel(asapFee)})</span>
-                      )}
-                    </span>
-                    <div className="text-right">
-                      <span className="text-xs text-red-400 line-through mr-1">${uberDeliveryFee.toFixed(2)}</span>
-                      <span className="font-medium">${asapFee.toFixed(2)}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Service fee */}
+                {/* Service fee with savings */}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Service Fee (5%)</span>
                   <div className="text-right">
@@ -383,6 +336,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </div>
                 )}
 
+                {/* Savings line */}
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-green-600 font-medium bg-green-50 rounded-lg px-2 py-1">
                     <span className="flex items-center gap-1">
@@ -404,7 +358,11 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                 <span>Earn {(finalTotal * 0.05).toFixed(0)} Boufet points with this order</span>
               </div>
 
-              {/* Driver Guarantee badge removed — internal policy only */}
+              {/* Driver guarantee */}
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2 text-xs text-blue-700">
+                <Shield className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                <span><span className="font-bold">$21/hr driver guarantee</span> — BC law compliant</span>
+              </div>
             </div>
           </div>
         </div>
