@@ -30,7 +30,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
 
   // Boufet fee structure
   const deliveryFee = 8.99;           // 25% less than UberEats avg $11.99
-  const serviceFee = subtotal * 0.05; // 5% service fee (UberEats charges ~15%)
+  const serviceFee = 2.00; // hidden platform fee
   const tax = subtotal * 0.12;
   const tipAmount = subtotal * tip;
   const discount = promoApplied ? subtotal * 0.10 : 0;
@@ -312,7 +312,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
 
                 {/* Service fee with savings */}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service Fee (5%)</span>
+                  <span className="text-muted-foeground">Service Fee (5%)</span>
                   <div className="text-right">
                     <span className="text-xs text-red-400 line-through mr-1">${uberServiceFee.toFixed(2)}</span>
                     <span className="font-medium">${serviceFee.toFixed(2)}</span>
