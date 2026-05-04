@@ -128,8 +128,6 @@ export const restaurants: Restaurant[] = [
     ]
   },
 
-];
-
   {
     id: '8',
     name: 'Smoke2Snack',
@@ -151,6 +149,8 @@ export const restaurants: Restaurant[] = [
       { id: 'v5', name: 'Rolling Papers + Tips', description: 'King size papers with filter tips', price: 4.99 },
     ]
   },
+];
+
 export const categories: { id: string; name: string; icon: string }[] = [
   { id: 'all', name: 'All', icon: 'UtensilsCrossed' },
   { id: 'american', name: 'American', icon: 'Beef' },
