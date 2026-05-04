@@ -15,7 +15,8 @@ import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
-import { useCart } from './hooks/useCart';nimport { DriverDownload } from './pages/DriverDownload';
+import { useCart } from './hooks/useCart';
+import { DriverDownload } from './pages/DriverDownload';
 
 function App() {
   const cart = useCart();
