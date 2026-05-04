@@ -217,12 +217,13 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)} — 100% goes to your driver</p>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-b{/* Driver guarantee badge */}
+                  
                   <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                     <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
                     <p className="text-xs text-blue-700">
-                      <span className="font-bold">  </p>
-                </div>
+                      <span className="font-bold">Driver Guarantee:</span> Boufet ensures every driver earns a minimum of $21/hr during your delivery — BC law compliant.
+                    </p>
+                  </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('cart')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
                   <button onClick={() => setStep('payment')} disabled={!address} className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Continue to Payment →</button>
