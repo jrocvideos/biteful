@@ -217,13 +217,11 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)} — 100% goes to your driver</p>
                   </div>
 
-                  {/* Driver guarantee badge */}
+                  <div className="flex items-center gap-3 p-3 bg-b{/* Driver guarantee badge */}
                   <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                     <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
                     <p className="text-xs text-blue-700">
-                      <span className="font-bold">Driver Guarantee:</span> Boufet ensures every driver earns a minimum of $21/hr during your delivery — BC law compliant.
-                    </p>
-                  </div>
+                      <span className="font-bold">  </p>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('cart')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
@@ -356,12 +354,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
               <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                 <span>Earn {(finalTotal * 0.05).toFixed(0)} Boufet points with this order</span>
-              </div>
-
-              {/* Driver guarantee */}
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2 text-xs text-blue-700">
-                <Shield className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                <span><span className="font-bold">$21/hr driver guarantee</span> — BC law compliant</span>
               </div>
             </div>
           </div>
