@@ -15,7 +15,7 @@ import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
-import { useCart } from './hooks/useCart';
+import { useCart } from './hooks/useCart';nimport { DriverDownload } from './pages/DriverDownload';
 
 function App() {
   const cart = useCart();
@@ -45,7 +45,7 @@ function App() {
           <Route path="/business" element={<BusinessSignup />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
+          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
         </Routes>
         <Footer />
         <CartDrawer 
