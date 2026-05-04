@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { MapPin, ShoppingCart, Search, Bike, Store, User, LogOut, Menu, X } from 'lucide-react';
 import { useCity } from '../hooks/useCity';
@@ -11,7 +11,10 @@ interface HeaderProps {
 
 export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { city } = useCity();
   const location = useLocation();
 
@@ -44,7 +47,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
               <MapPin className="w-3.5 h-3.5" />
               <span className="font-medium">{city.shortName}</span>
             </div>
-            <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setSearchOpen(!searchOpen)}>
               <Search className="w-5 h-5" />
             </button>
             {user ? (
@@ -74,6 +77,26 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
           </div>
         </div>
       </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <div className="border-t border-border bg-background px-4 py-3">
+          <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(\`/restaurants?search=\${encodeURIComponent(searchQuery)}\`); setSearchOpen(false); setSearchQuery(''); } }}>
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search restaurants, cuisines, dishes..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+              />
+              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-lg text-xs font-medium">Search</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {menuOpen && (
