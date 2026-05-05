@@ -172,7 +172,6 @@ export const YolandaDashboard = () => {
   const [authed, setAuthed] = useState(false);
   const [memberName, setMemberName] = useState('');
   const [memberRole, setMemberRole] = useState('');
-  const [memberRole, setMemberRole] = useState('');
   const [tab, setTab] = useState<'kpi'|'pipeline'|'scripts'|'calculator'|'contacts'>('kpi');
   const [rests, setRests] = useState<Restaurant[]>(DATA);
   const [search, setSearch] = useState('');
