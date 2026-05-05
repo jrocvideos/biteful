@@ -48,7 +48,8 @@ function App() {
           <Route path="/business" element={<BusinessSignup />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
+          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
+          <Route path="/biz" element={<YolandaDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
           
         </Routes>
         {!isBiz && <Footer />}
