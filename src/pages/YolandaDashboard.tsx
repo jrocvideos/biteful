@@ -4,7 +4,7 @@ import {
   BarChart2, Users, FileText, Calculator, Phone, Mail, MapPin,
   Plus, Search, ChevronRight, CheckCircle, Clock, XCircle, Calendar,
   TrendingUp, DollarSign, Star, Target, Edit2, Trash2, X, Save,
-  AlertCircle, Award, Zap, ArrowUpRight, Building2, MessageSquare
+  AlertCircle, Award, Zap, ArrowUpRight, Building2, MessageSquare, Eye, EyeOff
 } from 'lucide-react';
 
 type PipelineStatus = 'contacted' | 'meeting_booked' | 'signed' | 'declined';
