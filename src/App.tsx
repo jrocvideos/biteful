@@ -17,6 +17,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
 import { useCart } from './hooks/useCart';
 import { DriverDownload } from './pages/DriverDownload';
+import { YolandaDashboard } from './pages/YolandaDashboard';
 
 function App() {
   const cart = useCart();
@@ -47,6 +48,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
+          <Route path="/biz" element={<YolandaDashboard />} />
         </Routes>
         <Footer />
         <CartDrawer 
