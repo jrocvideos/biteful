@@ -20,6 +20,7 @@ import { DriverDownload } from './pages/DriverDownload';
 import { YolandaDashboard } from './pages/YolandaDashboard';
 import { PeterDashboard } from './pages/PeterDashboard';
 import { CTODashboard } from './pages/CTODashboard';
+import { CTODashboard } from './pages/CTODashboard';
 
 function AppInner() {
   const cart = useCart();
@@ -53,6 +54,7 @@ function AppInner() {
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/biz" element={<YolandaDashboard />} />
           <Route path="/cgo" element={<PeterDashboard />} />
+          <Route path="/cto" element={<CTODashboard />} />
           <Route path="/cto" element={<CTODashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
           
               </Routes>
