@@ -100,8 +100,11 @@ const saveTeamAccounts = (accounts: any[]) => {
 // Seed Yolanda's account if not exists
 const seedYolanda = () => {
   const accounts = getTeamAccounts();
-  if (!accounts.find((a: any) => a.email === 'yolandacantusa@gmail.com')) {
+  const existing = accounts.find((a: any) => a.email === 'yolandacantusa@gmail.com');
+  if (!existing) {
     saveTeamAccounts([...accounts, { email: 'yolandacantusa@gmail.com', password: 'Boufet2026!', name: 'Yolanda Cantu', role: 'Co-Founder & Business Development Lead' }]);
+  } else if (existing.role !== 'Co-Founder & Business Development Lead') {
+    saveTeamAccounts(accounts.map((a: any) => a.email === 'yolandacantusa@gmail.com' ? { ...a, role: 'Co-Founder & Business Development Lead' } : a));
   }
 };
 seedYolanda();
