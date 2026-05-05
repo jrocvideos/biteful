@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Boufet',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    url: 'https://boufet.com/driver'
   }
 };
 
