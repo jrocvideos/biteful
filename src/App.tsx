@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -22,7 +22,8 @@ import { PeterDashboard } from './pages/PeterDashboard';
 
 function App() {
   const cart = useCart();
-  const isBiz = window.location.pathname === '/biz' || window.location.pathname === '/cgo';
+  const location = useLocation();
+  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo';
 
   return (
     <AuthProvider>
