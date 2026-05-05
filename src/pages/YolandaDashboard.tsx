@@ -87,14 +87,50 @@ const Calc = () => {
   );
 };
 
-const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
+const INVITE_CODE = 'BoufetTeam2026';
+
+const getTeamAccounts = () => {
+  try { return JSON.parse(localStorage.getItem('boufet_team') || '[]'); } catch { return []; }
+};
+
+const saveTeamAccounts = (accounts: any[]) => {
+  localStorage.setItem('boufet_team', JSON.stringify(accounts));
+};
+
+// Seed Yolanda's account if not exists
+const seedYolanda = () => {
+  const accounts = getTeamAccounts();
+  if (!accounts.find((a: any) => a.email === 'yolandacantusa@gmail.com')) {
+    saveTeamAccounts([...accounts, { email: 'yolandacantusa@gmail.com', password: 'Boufet2026!', name: 'Yolanda Cantu', role: 'Business Developer' }]);
+  }
+};
+seedYolanda();
+
+const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
+  const [mode, setMode] = useState<'login'|'register'>('login');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [name, setName] = useState('');
+  const [invite, setInvite] = useState('');
+  const [role, setRole] = useState('');
   const [err, setErr] = useState('');
   const [show, setShow] = useState(false);
+
   const attempt = () => {
-    if (email.trim().toLowerCase() === 'yolandacantusa@gmail.com' && pass === 'Boufet2026!') { onLogin(); }
+    const accounts = getTeamAccounts();
+    const found = accounts.find((a: any) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === pass);
+    if (found) { onLogin(found.name); }
     else { setErr('Incorrect email or password.'); }
+  };
+
+  const register = () => {
+    if (invite !== INVITE_CODE) { setErr('Invalid invite code. Ask Jose for the team invite code.'); return; }
+    if (!name || !email || !pass || !role) { setErr('Please fill in all fields.'); return; }
+    if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return; }
+    const accounts = getTeamAccounts();
+    if (accounts.find((a: any) => a.email.toLowerCase() === email.trim().toLowerCase())) { setErr('An account with this email already exists.'); return; }
+    saveTeamAccounts([...accounts, { email: email.trim().toLowerCase(), password: pass, name, role }]);
+    onLogin(name);
   };
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
@@ -102,15 +138,29 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-teal-600 flex items-center justify-center font-bold text-3xl mx-auto mb-4">B</div>
           <h1 className="text-2xl font-bold text-white">Boufet Business Hub</h1>
-          <p className="text-gray-400 text-sm mt-1">Business Developer Portal</p>
+          <p className="text-gray-400 text-sm mt-1">{mode === 'login' ? 'Team Login' : 'Create Team Account'}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-          <div><label className="text-xs text-gray-400 mb-1 block">Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key==='Enter' && attempt()} placeholder="yolandacantusa@gmail.com" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" /></div>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-3">
+          {mode === 'register' && (
+            <>
+              <div><label className="text-xs text-gray-400 mb-1 block">Full Name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Peter Smith" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" /></div>
+              <div><label className="text-xs text-gray-400 mb-1 block">Your Role</label><input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. Project Manager" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" /></div>
+            </>
+          )}
+          <div><label className="text-xs text-gray-400 mb-1 block">Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key==='Enter' && (mode==='login'?attempt():register())} placeholder="your@email.com" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" /></div>
           <div><label className="text-xs text-gray-400 mb-1 block">Password</label>
-            <div className="relative"><input type={show?'text':'password'} value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key==='Enter' && attempt()} placeholder="Password" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 pr-16" /><button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">{show?'Hide':'Show'}</button></div>
+            <div className="relative"><input type={show?'text':'password'} value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key==='Enter' && (mode==='login'?attempt():register())} placeholder="Password" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 pr-16" /><button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">{show?'Hide':'Show'}</button></div>
           </div>
+          {mode === 'register' && (
+            <div><label className="text-xs text-gray-400 mb-1 block">Team Invite Code</label><input value={invite} onChange={e => setInvite(e.target.value)} placeholder="Ask Jose for the invite code" className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" /></div>
+          )}
           {err && <p className="text-red-400 text-xs">{err}</p>}
-          <button onClick={attempt} className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors">Sign In</button>
+          <button onClick={mode==='login'?attempt:register} className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors">
+            {mode==='login' ? 'Sign In' : 'Create Account'}
+          </button>
+          <button onClick={() => { setMode(mode==='login'?'register':'login'); setErr(''); }} className="w-full py-2 text-sm text-teal-400 hover:text-teal-300">
+            {mode==='login' ? 'New team member? Create account →' : '← Back to login'}
+          </button>
           <p className="text-center text-xs text-gray-600">Boufet Internal — Authorized Access Only</p>
         </div>
       </div>
@@ -120,6 +170,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
 export const YolandaDashboard = () => {
   const [authed, setAuthed] = useState(false);
+  const [memberName, setMemberName] = useState('');
   const [tab, setTab] = useState<'kpi'|'pipeline'|'scripts'|'calculator'|'contacts'>('kpi');
   const [rests, setRests] = useState<Restaurant[]>(DATA);
   const [search, setSearch] = useState('');
@@ -127,7 +178,7 @@ export const YolandaDashboard = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [nr, setNr] = useState<Partial<Restaurant>>({ status: 'contacted' });
 
-  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
+  if (!authed) return <LoginScreen onLogin={(n) => { setAuthed(true); setMemberName(n); }} />;
 
   const signed = rests.filter(r => r.status === 'signed');
   const meetings = rests.filter(r => r.status === 'meeting_booked');
@@ -146,8 +197,8 @@ export const YolandaDashboard = () => {
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center font-bold text-lg">B</div><div><h1 className="font-bold text-lg">Boufet Business Hub</h1><p className="text-xs text-gray-400">Yolanda Cantu — Business Developer</p></div></div>
-          <div className="flex items-center gap-3"><div className="text-right"><p className="text-xs text-gray-400">Commission This Month</p><p className="font-bold text-teal-400">${commission.toFixed(0)}</p></div><div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold">YC</div></div>
+          <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center font-bold text-lg">B</div><div><h1 className="font-bold text-lg">Boufet Business Hub</h1><p className="text-xs text-gray-400">{memberName} — Boufet Team</p></div></div>
+          <div className="flex items-center gap-3"><div className="text-right"><p className="text-xs text-gray-400">Commission This Month</p><p className="font-bold text-teal-400">${commission.toFixed(0)}</p></div><div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold">{memberName.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</div></div>
         </div>
       </div>
 
