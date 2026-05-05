@@ -101,12 +101,12 @@ const saveTeamAccounts = (accounts: any[]) => {
 const seedYolanda = () => {
   const accounts = getTeamAccounts();
   if (!accounts.find((a: any) => a.email === 'yolandacantusa@gmail.com')) {
-    saveTeamAccounts([...accounts, { email: 'yolandacantusa@gmail.com', password: 'Boufet2026!', name: 'Yolanda Cantu', role: 'Business Developer' }]);
+    saveTeamAccounts([...accounts, { email: 'yolandacantusa@gmail.com', password: 'Boufet2026!', name: 'Yolanda Cantu', role: 'Co-Founder & Business Development Lead' }]);
   }
 };
 seedYolanda();
 
-const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
+const LoginScreen = ({ onLogin }: { onLogin: (name: string, role: string) => void }) => {
   const [mode, setMode] = useState<'login'|'register'>('login');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -119,7 +119,7 @@ const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const attempt = () => {
     const accounts = getTeamAccounts();
     const found = accounts.find((a: any) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === pass);
-    if (found) { onLogin(found.name); }
+    if (found) { onLogin(found.name, found.role); }
     else { setErr('Incorrect email or password.'); }
   };
 
@@ -130,7 +130,7 @@ const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
     const accounts = getTeamAccounts();
     if (accounts.find((a: any) => a.email.toLowerCase() === email.trim().toLowerCase())) { setErr('An account with this email already exists.'); return; }
     saveTeamAccounts([...accounts, { email: email.trim().toLowerCase(), password: pass, name, role }]);
-    onLogin(name);
+    onLogin(name, role);
   };
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
@@ -171,6 +171,8 @@ const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
 export const YolandaDashboard = () => {
   const [authed, setAuthed] = useState(false);
   const [memberName, setMemberName] = useState('');
+  const [memberRole, setMemberRole] = useState('');
+  const [memberRole, setMemberRole] = useState('');
   const [tab, setTab] = useState<'kpi'|'pipeline'|'scripts'|'calculator'|'contacts'>('kpi');
   const [rests, setRests] = useState<Restaurant[]>(DATA);
   const [search, setSearch] = useState('');
@@ -178,7 +180,7 @@ export const YolandaDashboard = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [nr, setNr] = useState<Partial<Restaurant>>({ status: 'contacted' });
 
-  if (!authed) return <LoginScreen onLogin={(n) => { setAuthed(true); setMemberName(n); }} />;
+  if (!authed) return <LoginScreen onLogin={(n, r) => { setAuthed(true); setMemberName(n); setMemberRole(r); }} />;
 
   const signed = rests.filter(r => r.status === 'signed');
   const meetings = rests.filter(r => r.status === 'meeting_booked');
@@ -197,7 +199,7 @@ export const YolandaDashboard = () => {
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center font-bold text-lg">B</div><div><h1 className="font-bold text-lg">Boufet Business Hub</h1><p className="text-xs text-gray-400">{memberName} — Boufet Team</p></div></div>
+          <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center font-bold text-lg">B</div><div><h1 className="font-bold text-lg">Boufet Business Hub</h1><p className="text-xs text-gray-400">{memberName} — {memberRole}</p></div></div>
           <div className="flex items-center gap-3"><div className="text-right"><p className="text-xs text-gray-400">Commission This Month</p><p className="font-bold text-teal-400">${commission.toFixed(0)}</p></div><div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold">{memberName.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</div></div>
         </div>
       </div>
