@@ -20,14 +20,12 @@ import { DriverDownload } from './pages/DriverDownload';
 import { YolandaDashboard } from './pages/YolandaDashboard';
 import { PeterDashboard } from './pages/PeterDashboard';
 
-function App() {
+function AppInner() {
   const cart = useCart();
   const location = useLocation();
   const isBiz = location.pathname === '/biz' || location.pathname === '/cgo';
 
   return (
-    <AuthProvider>
-    <BrowserRouter>
       <div className="min-h-screen bg-background text-foreground">
         {!isBiz && <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />}
         <Routes>
