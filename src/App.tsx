@@ -19,11 +19,12 @@ import { useCart } from './hooks/useCart';
 import { DriverDownload } from './pages/DriverDownload';
 import { YolandaDashboard } from './pages/YolandaDashboard';
 import { PeterDashboard } from './pages/PeterDashboard';
+import { CTODashboard } from './pages/CTODashboard';
 
 function AppInner() {
   const cart = useCart();
   const location = useLocation();
-  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo';
+  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -51,7 +52,8 @@ function AppInner() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/biz" element={<YolandaDashboard />} />
-          <Route path="/cgo" element={<PeterDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
+          <Route path="/cgo" element={<PeterDashboard />} />
+          <Route path="/cto" element={<CTODashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
           
               </Routes>
       {!isBiz && <Footer />}
