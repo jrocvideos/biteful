@@ -52,6 +52,19 @@ const initialRestaurants: Restaurant[] = [
   { id: 'm6_3', name: 'Kirin Restaurant Richmond', ownerName: 'Owner', phone: '(604) 303-8833', email: 'info@kirinrestaurant.com', address: '7900 Westminster Hwy, Richmond', cuisine: 'Chinese', status: 'contacted', followUpDate: '2026-10-03', notes: 'Fine Chinese dining. Good corporate lunch.', avgMonthlyOrders: 800, dateAdded: '2026-05-05' },
   { id: 'm6_4', name: 'Cactus Club Surrey', ownerName: 'GM', phone: '(604) 582-3278', email: 'surrey@cactusclub.ca', address: '10268 King George Blvd, Surrey', cuisine: 'Canadian', status: 'contacted', followUpDate: '2026-10-04', notes: 'High volume Surrey location.', avgMonthlyOrders: 1300, dateAdded: '2026-05-05' },
   { id: 'm6_5', name: 'Browns Socialhouse Surrey', ownerName: 'GM', phone: '(604) 503-9990', email: 'surrey@brownssocialhouse.com', address: '7550 120 St, Surrey', cuisine: 'Pub/Canadian', status: 'contacted', followUpDate: '2026-10-05', notes: 'Good Surrey suburban volume.', avgMonthlyOrders: 750, dateAdded: '2026-05-05' },
+  // ===== MEXICAN / LATIN =====
+  { id: 'lat1', name: 'La Taqueria Pinche Taco Shop', ownerName: 'Owner', phone: '(604) 568-4406', email: 'info@lataqueria.ca', address: '322 W Hastings St, Downtown', cuisine: 'Mexican', status: 'contacted', followUpDate: '2026-05-15', notes: 'Best tacos in Vancouver. Always busy lunch crowd. Walk in before noon.', avgMonthlyOrders: 750, dateAdded: '2026-05-05' },
+  { id: 'lat2', name: 'Sal y Limon', ownerName: 'Owner', phone: '(604) 428-4244', email: 'info@salylimon.ca', address: '1427 Commercial Dr, East Van', cuisine: 'Mexican', status: 'contacted', followUpDate: '2026-05-16', notes: 'Authentic Mexican. Commercial Drive neighbourhood favourite.', avgMonthlyOrders: 600, dateAdded: '2026-05-05' },
+  { id: 'lat3', name: 'Tacofino', ownerName: 'Owner', phone: '(604) 899-1070', email: 'info@tacofino.com', address: '2327 E Hastings St, Vancouver', cuisine: 'Mexican/Surf', status: 'contacted', followUpDate: '2026-05-17', notes: 'Popular chain. Approach corporate for multi-location deal.', avgMonthlyOrders: 900, dateAdded: '2026-05-05' },
+  { id: 'lat4', name: 'Chipotle Vancouver', ownerName: 'GM', phone: '(604) 620-0090', email: 'vancouver@chipotle.com', address: '1032 Alberni St, Downtown', cuisine: 'Mexican', status: 'contacted', followUpDate: '2026-05-18', notes: 'Corporate account. High volume. Already on competitors — pitch exclusivity window.', avgMonthlyOrders: 1400, dateAdded: '2026-05-05' },
+  { id: 'lat5', name: 'El Camino', ownerName: 'Owner', phone: '(604) 709-0072', email: 'info@elcaminovancouver.com', address: '3250 Main St, Main Street', cuisine: 'Latin American', status: 'contacted', followUpDate: '2026-05-19', notes: 'Trendy Latin spot on Main St. Great cocktail + food combo orders.', avgMonthlyOrders: 650, dateAdded: '2026-05-05' },
+  { id: 'lat6', name: 'Mambo Cafe', ownerName: 'Owner', phone: '(604) 742-0823', email: 'info@mambocafe.ca', address: '1812 Commercial Dr, East Van', cuisine: 'Cuban/Latin', status: 'contacted', followUpDate: '2026-05-20', notes: 'Cuban food on the Drive. Loyal neighbourhood following.', avgMonthlyOrders: 500, dateAdded: '2026-05-05' },
+
+  // ===== PET STORES =====
+  { id: 'pet1', name: 'Global Pet Foods Yaletown', ownerName: 'Owner', phone: '(604) 669-5551', email: 'yaletown@globalpetfoods.com', address: '1095 Homer St, Yaletown', cuisine: 'Pet Store', status: 'contacted', followUpDate: '2026-05-22', notes: 'Pet food delivery is huge. Dog owners in Yaletown = high disposable income. Same-day delivery pitch.', avgMonthlyOrders: 400, dateAdded: '2026-05-05' },
+  { id: 'pet2', name: 'Tisol Pet Nutrition', ownerName: 'Owner', phone: '(604) 875-8801', email: 'info@tisol.ca', address: '2476 Kingsway, Vancouver', cuisine: 'Pet Store', status: 'contacted', followUpDate: '2026-05-23', notes: 'Local pet supply chain. Multiple locations — go for multi-store deal.', avgMonthlyOrders: 500, dateAdded: '2026-05-05' },
+  { id: 'pet3', name: 'The Bone & Biscuit', ownerName: 'Owner', phone: '(604) 428-1999', email: 'info@boneandbiscuit.ca', address: '1590 W 2nd Ave, Kitsilano', cuisine: 'Pet Store', status: 'contacted', followUpDate: '2026-05-24', notes: 'Premium pet food boutique. Kits dog owners are loyal and spend big.', avgMonthlyOrders: 350, dateAdded: '2026-05-05' },
+  { id: 'pet4', name: 'Pet Valu Olympic Village', ownerName: 'Manager', phone: '(604) 879-0044', email: 'olympicvillage@petvalu.com', address: '180 W 2nd Ave, Olympic Village', cuisine: 'Pet Store', status: 'contacted', followUpDate: '2026-05-25', notes: 'Right in our core zone. Olympic Village has tons of dog owners. Easy pitch.', avgMonthlyOrders: 450, dateAdded: '2026-05-05' },
 ];
 
 const statusConfig = {
@@ -107,7 +120,74 @@ const RevenueCalculator = () => {
   );
 };
 
+const YOLANDA_EMAIL = 'yolandacantusa@gmail.com';
+const YOLANDA_PASSWORD = 'Boufet2026!';
+
 export const YolandaDashboard = () => {
+  const [authed, setAuthed] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [showPass, setShowPass] = useState(false);
+
+  const handleLogin = () => {
+    if (loginEmail.trim().toLowerCase() === YOLANDA_EMAIL && loginPassword === YOLANDA_PASSWORD) {
+      setAuthed(true);
+      setLoginError('');
+    } else {
+      setLoginError('Incorrect email or password. Try again.');
+    }
+  };
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-teal-600 flex items-center justify-center font-bold text-3xl mx-auto mb-4">B</div>
+            <h1 className="text-2xl font-bold text-white">Boufet Business Hub</h1>
+            <p className="text-gray-400 text-sm mt-1">Business Developer Portal</p>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Email</label>
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                placeholder="yolandacantusa@gmail.com"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Password</label>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 pr-12"
+                />
+                <button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">{showPass ? 'Hide' : 'Show'}</button>
+              </div>
+            </div>
+            {loginError && <p className="text-red-400 text-xs">{loginError}</p>}
+            <button
+              onClick={handleLogin}
+              className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
+            >
+              Sign In
+            </button>
+            <p className="text-center text-xs text-gray-600">Boufet Internal — Authorized Access Only</p>
+          </div>
+          <p className="text-center text-xs text-gray-700 mt-4">boufet.com/biz</p>
+        </div>
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState<'kpi'|'pipeline'|'scripts'|'calculator'|'contacts'>('kpi');
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
   const [search, setSearch] = useState('');
