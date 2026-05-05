@@ -26,9 +26,10 @@ function AppInner() {
   const isBiz = location.pathname === '/biz' || location.pathname === '/cgo';
 
   return (
-      <div className="min-h-screen bg-background text-foreground">
-        {!isBiz && <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />}
-        <Routes>
+    <div className="min-h-screen bg-background text-foreground">
+      {!isBiz && <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />}
+      <Routes>
+
           <Route path="/" element={<HomePage />} />
           <Route path="/restaurants" element={<RestaurantsPage onAddToCart={cart.addToCart} />} />
           <Route path="/restaurant/:id" element={<RestaurantDetail onAddToCart={cart.addToCart} />} />
@@ -52,18 +53,26 @@ function AppInner() {
           <Route path="/biz" element={<YolandaDashboard />} />
           <Route path="/cgo" element={<PeterDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
           
-        </Routes>
-        {!isBiz && <Footer />}
-        {!isBiz && <CartDrawer 
-          isOpen={cart.isOpen}
-          onClose={() => cart.setIsOpen(false)}
-          items={cart.items}
-          onUpdateQuantity={cart.updateQuantity}
-          onRemove={cart.removeFromCart}
-          total={cart.total}
-        />}
-      </div>
-    </BrowserRouter>
+              </Routes>
+      {!isBiz && <Footer />}
+      {!isBiz && <CartDrawer
+        isOpen={cart.isOpen}
+        onClose={() => cart.setIsOpen(false)}
+        items={cart.items}
+        onUpdateQuantity={cart.updateQuantity}
+        onRemove={cart.removeFromCart}
+        total={cart.total}
+      />}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppInner />
+      </BrowserRouter>
     </AuthProvider>
   );
 }
