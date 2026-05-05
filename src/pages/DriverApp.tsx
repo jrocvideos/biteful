@@ -1,575 +1,409 @@
-import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bike, MapPin, Phone, Navigation, CheckCircle, X, 
-  DollarSign, Clock, Star, TrendingUp, Package, 
-  ChevronRight, Power, Camera, MessageSquare, 
-  AlertCircle, ArrowUpRight, ArrowDownRight, User
+import { io } from 'socket.io-client';
+import {
+  Phone, CheckCircle, DollarSign, Clock, Star, Package, Power, Camera,
+  Menu, Home, Calendar, User, Settings, ChevronRight, Shield, Moon, Sun,
+  Bell, HelpCircle, LogOut, Award, BarChart2, Truck
 } from 'lucide-react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, BarChart, Bar 
-} from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-/* ===================== TYPES ===================== */
 interface DeliveryJob {
-  id: string;
-  restaurant: string;
-  restaurantAddress: string;
-  customer: string;
-  customerAddress: string;
-  distance: string;
-  earnings: number;
-  tip: number;
-  items: string[];
-  status: 'available' | 'accepted' | 'arrived-restaurant' | 'picked-up' | 'arrived-customer' | 'delivered' | 'cancelled';
-  timeLeft: string;
-  orderTime: string;
-  instructions?: string;
-  phone?: string;
+  id: string; restaurant: string; restaurantAddress: string;
+  customer: string; customerAddress: string; distance: string;
+  earnings: number; tip: number; items: string[];
+  status: "available"|"accepted"|"arrived-restaurant"|"picked-up"|"arrived-customer"|"delivered"|"cancelled";
+  timeLeft: string; orderTime: string; instructions?: string; phone?: string;
 }
 
-/* ===================== MOCK DATA ===================== */
 const weeklyEarnings = [
-  { day: 'Mon', earnings: 68, trips: 4 },
-  { day: 'Tue', earnings: 92, trips: 6 },
-  { day: 'Wed', earnings: 45, trips: 3 },
-  { day: 'Thu', earnings: 110, trips: 7 },
-  { day: 'Fri', earnings: 135, trips: 9 },
-  { day: 'Sat', earnings: 156, trips: 11 },
-  { day: 'Sun', earnings: 87, trips: 5 },
+  { day: "Mon", earnings: 68 }, { day: "Tue", earnings: 92 },
+  { day: "Wed", earnings: 45 }, { day: "Thu", earnings: 110 },
+  { day: "Fri", earnings: 135 }, { day: "Sat", earnings: 156 }, { day: "Sun", earnings: 87 },
 ];
 
 const todayBreakdown = [
-  { hour: '8am', earnings: 12 },
-  { hour: '10am', earnings: 28 },
-  { hour: '12pm', earnings: 45 },
-  { hour: '2pm', earnings: 32 },
-  { hour: '4pm', earnings: 18 },
-  { hour: '6pm', earnings: 56 },
+  { hour: "8am", earnings: 12 }, { hour: "10am", earnings: 28 },
+  { hour: "12pm", earnings: 45 }, { hour: "2pm", earnings: 32 },
+  { hour: "4pm", earnings: 18 }, { hour: "6pm", earnings: 56 },
 ];
 
 const initialJobs: DeliveryJob[] = [
-  {
-    id: 'JOB-2048',
-    restaurant: 'Burger Vault',
-    restaurantAddress: '1234 Robson St, Vancouver, BC',
-    customer: 'Alex M.',
-    customerAddress: '888 Burrard St, Apt 12B, Vancouver, BC',
-    distance: '0.4 mi',
-    earnings: 8.50,
-    tip: 4.00,
-    items: ['Classic Cheeseburger', 'Truffle Fries', 'Vanilla Shake'],
-    status: 'available',
-    timeLeft: '2 min',
-    orderTime: '12:45 PM',
-    instructions: 'Leave at door. Ring bell.',
-    phone: '(555) 123-4567',
-  },
-  {
-    id: 'JOB-2049',
-    restaurant: 'Sakura Sushi',
-    restaurantAddress: '456 Granville St, Vancouver, BC',
-    customer: 'Sarah K.',
-    customerAddress: '450 Lexington Ave, Floor 8, Vancouver, BC',
-    distance: '1.2 mi',
-    earnings: 12.75,
-    tip: 6.50,
-    items: ['Dragon Roll', 'Spicy Tuna Roll', 'Miso Soup'],
-    status: 'available',
-    timeLeft: '5 min',
-    orderTime: '12:38 PM',
-    instructions: 'Hand to customer. Office building.',
-    phone: '(555) 987-6543',
-  },
-  {
-    id: 'JOB-2050',
-    restaurant: 'Mama\'s Pizza',
-    restaurantAddress: '56 Mulberry St, Vancouver, BC',
-    customer: 'Mike R.',
-    customerAddress: '999 W Pender St, Apt 3C, Vancouver, BC',
-    distance: '0.8 mi',
-    earnings: 9.25,
-    tip: 3.00,
-    items: ['Margherita Pizza', 'Garlic Knots'],
-    status: 'available',
-    timeLeft: '8 min',
-    orderTime: '12:30 PM',
-    instructions: 'Call upon arrival.',
-    phone: '(555) 456-7890',
-  },
+  { id: "JOB-2048", restaurant: "Burger Vault", restaurantAddress: "1234 Robson St, Vancouver",
+    customer: "Alex M.", customerAddress: "888 Burrard St, Apt 12B", distance: "0.4 mi",
+    earnings: 8.50, tip: 4.00, items: ["Classic Cheeseburger", "Truffle Fries"],
+    status: "available", timeLeft: "2 min", orderTime: "12:45 PM",
+    instructions: "Leave at door. Ring bell.", phone: "(555) 123-4567" },
+  { id: "JOB-2049", restaurant: "Sakura Sushi", restaurantAddress: "456 Granville St, Vancouver",
+    customer: "Sarah K.", customerAddress: "450 Lexington Ave, Floor 8", distance: "1.2 mi",
+    earnings: 12.75, tip: 6.50, items: ["Dragon Roll", "Spicy Tuna Roll"],
+    status: "available", timeLeft: "5 min", orderTime: "12:38 PM",
+    instructions: "Hand to customer.", phone: "(555) 987-6543" },
 ];
 
 const completedJobs: DeliveryJob[] = [
-  {
-    id: 'JOB-2045',
-    restaurant: 'Green Bowl',
-    restaurantAddress: '200 Park Ave, Vancouver, BC',
-    customer: 'Jessica L.',
-    customerAddress: '350 5th Ave, Vancouver, BC',
-    distance: '0.6 mi',
-    earnings: 7.00,
-    tip: 5.00,
-    items: ['Buddha Bowl', 'Green Juice'],
-    status: 'delivered',
-    timeLeft: '0 min',
-    orderTime: '11:15 AM',
-  },
-  {
-    id: 'JOB-2046',
-    restaurant: 'Taco Loco',
-    restaurantAddress: '89 Canal St, Vancouver, BC',
-    customer: 'David W.',
-    customerAddress: '77 Bowery, Apt 5A, Vancouver, BC',
-    distance: '1.1 mi',
-    earnings: 10.50,
-    tip: 2.50,
-    items: ['Carne Asada Tacos', 'Chips & Guac'],
-    status: 'delivered',
-    timeLeft: '0 min',
-    orderTime: '10:45 AM',
-  },
+  { id: "JOB-2045", restaurant: "Green Bowl", restaurantAddress: "200 Park Ave",
+    customer: "Jessica L.", customerAddress: "350 5th Ave", distance: "0.6 mi",
+    earnings: 7.00, tip: 5.00, items: ["Buddha Bowl"], status: "delivered",
+    timeLeft: "0 min", orderTime: "11:15 AM" },
 ];
 
-/* ===================== COMPONENT ===================== */
+const ZoneMap = ({ isOnline, darkMode }: { isOnline: boolean; darkMode: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+    const map = L.map(containerRef.current, { zoomControl: false, attributionControl: false })
+      .setView([49.2650, -123.1800], 12);
+    L.tileLayer(
+      darkMode
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      { maxZoom: 18, subdomains: "abcd" }
+    ).addTo(map);
+
+    const zone: [number, number][] = [
+      [49.2827, -123.1207], [49.2827, -123.0800], [49.2600, -123.0800],
+      [49.2400, -123.1000], [49.2350, -123.1400], [49.2500, -123.2200],
+      [49.2600, -123.2500], [49.2750, -123.2500], [49.2900, -123.2000],
+      [49.2950, -123.1600], [49.2900, -123.1400], [49.2827, -123.1207],
+    ];
+    L.polygon(zone, { color: "#0d9488", weight: 3, fillColor: "#0d9488", fillOpacity: isOnline ? 0.18 : 0.08 }).addTo(map);
+
+    L.marker([49.265, -123.19], {
+      icon: L.divIcon({ className: "", html: `<div style="background:rgba(13,148,136,0.9);color:white;font-weight:bold;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap;">BC: Vancouver West</div>`, iconAnchor: [70, 10] })
+    }).addTo(map);
+
+    [[49.2827, -123.1207, "Downtown"], [49.2700, -123.1550, "Kitsilano"], [49.2680, -123.2460, "UBC"]].forEach(([lat, lng, name]: any) => {
+      L.marker([lat, lng], { icon: L.divIcon({ className: "", html: `<div style="background:#f97316;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(249,115,22,0.6);border:2px solid white;">🔥</div>`, iconSize: [36, 36], iconAnchor: [18, 18] }) }).addTo(map).bindPopup(`<b>${name}</b><br>Busy hotspot`);
+    });
+
+    mapRef.current = map;
+    return () => { map.remove(); mapRef.current = null; };
+  }, []);
+
+  return <div ref={containerRef} className="w-full h-full" />;
+};
+
 export const DriverApp = () => {
-  const [isOnline, setIsOnline] = useState(true);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'earnings' | 'history'>('jobs');
+  const [darkMode, setDarkMode] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
+  const [activeScreen, setActiveScreen] = useState<"home"|"schedule"|"account"|"earnings"|"ratings"|"preferences">("home");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [jobs, setJobs] = useState<DeliveryJob[]>(initialJobs);
   const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [earnings, setEarnings] = useState({ today: 87.50, week: 693, trips: 45, rating: 4.92 });
+  const [preferences, setPreferences] = useState({ vapeDelivery: false, cashOnDelivery: false });
 
-  // Broadcast real GPS to backend every 5 seconds when online
   useEffect(() => {
     if (!isOnline) return;
-    const socket = io('https://api.boufet.com', { transports: ['websocket'] });
+    const socket = io("https://api.boufet.com", { transports: ["websocket"] });
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        socket.emit('driver_location', { lat: pos.coords.latitude, lng: pos.coords.longitude });
-        fetch('https://api.boufet.com/api/drivers/location', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        socket.emit("driver_location", { lat: pos.coords.latitude, lng: pos.coords.longitude });
+        fetch("https://api.boufet.com/api/drivers/location", {
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, is_online: true }),
         }).catch(() => {});
       },
-      (err) => console.warn('GPS error:', err),
+      (err) => console.warn("GPS:", err),
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
     );
     return () => { navigator.geolocation.clearWatch(watchId); socket.disconnect(); };
   }, [isOnline]);
 
-  const acceptJob = (jobId: string) => {
-    const job = jobs.find(j => j.id === jobId);
-    if (job) {
-      setActiveJob({ ...job, status: 'accepted' });
-      setJobs(jobs.map(j => j.id === jobId ? { ...j, status: 'accepted' as const } : j));
-    }
+  const acceptJob = (id: string) => {
+    const job = jobs.find(j => j.id === id);
+    if (job) { setActiveJob({ ...job, status: "accepted" }); setJobs(jobs.map(j => j.id === id ? { ...j, status: "accepted" as const } : j)); }
   };
-
-  const declineJob = (jobId: string) => {
-    setJobs(jobs.filter(j => j.id !== jobId));
-  };
-
-  const updateJobStatus = (status: DeliveryJob['status']) => {
+  const declineJob = (id: string) => setJobs(jobs.filter(j => j.id !== id));
+  const updateJobStatus = (status: DeliveryJob["status"]) => {
     if (!activeJob) return;
     const updated = { ...activeJob, status };
-    setActiveJob(updated);
-    setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
-    
-    if (status === 'delivered') {
-      setEarnings({
-        ...earnings,
-        today: earnings.today + activeJob.earnings + activeJob.tip,
-        trips: earnings.trips + 1,
-      });
-      setActiveJob(null);
-    }
+    setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
+    if (status === "delivered") { setEarnings(e => ({ ...e, today: e.today + activeJob.earnings + activeJob.tip, trips: e.trips + 1 })); setActiveJob(null); }
   };
 
-  const availableJobs = jobs.filter(j => j.status === 'available');
-  const completedToday = jobs.filter(j => j.status === 'delivered');
+  const availableJobs = jobs.filter(j => j.status === "available");
+  const bg = darkMode ? "bg-gray-950 text-white" : "bg-gray-50 text-gray-900";
+  const cardBg = darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200";
+  const muted = darkMode ? "text-gray-400" : "text-gray-500";
+
+  const NavBtn = ({ icon: Icon, label, screen }: any) => (
+    <button onClick={() => setActiveScreen(screen)} className={`flex-1 flex flex-col items-center py-3 gap-1 ${activeScreen === screen ? "text-teal-400" : muted}`}>
+      <Icon className="w-5 h-5" /><span className="text-xs">{label}</span>
+    </button>
+  );
+
+  const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
+    <button onClick={onChange} className={`w-12 h-7 rounded-full transition-colors flex-shrink-0 ${value ? "bg-teal-600" : darkMode ? "bg-gray-700" : "bg-gray-300"} relative`}>
+      <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${value ? "translate-x-6" : "translate-x-1"}`} />
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Driver Status Header */}
-      <div className={`sticky top-0 z-40 transition-all duration-500 ${isOnline ? 'bg-green-500' : 'bg-slate-500'} text-white`}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-white animate-pulse' : 'bg-white/50'}`} />
-            <span className="font-semibold">{isOnline ? 'Online - Receiving Orders' : 'Offline'}</span>
-          </div>
-          <button 
-            onClick={() => setIsOnline(!isOnline)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all ${isOnline ? 'bg-white/20 hover:bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}
-          >
-            <Power className="w-4 h-4" />
-            {isOnline ? 'Go Offline' : 'Go Online'}
-          </button>
+    <div className={`min-h-screen ${bg} flex flex-col relative overflow-hidden`}>
+
+      {/* Slide-out menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-40" onClick={() => setMenuOpen(false)} />
+            <motion.div initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }} transition={{ type: "spring", damping: 25 }}
+              className={`fixed left-0 top-0 bottom-0 w-72 z-50 ${darkMode ? "bg-gray-900" : "bg-white"} shadow-2xl flex flex-col`}>
+              <div className="p-6 pt-12 bg-gradient-to-br from-teal-700 to-teal-500">
+                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-2xl mb-3">JY</div>
+                <h2 className="text-white font-bold text-xl">Jose Y.</h2>
+                <div className="flex items-center gap-2 mt-1"><Award className="w-4 h-4 text-yellow-300" /><span className="text-teal-100 text-sm">Platinum Driver</span></div>
+              </div>
+              <div className="flex-1 py-4">
+                {([["home","Home",Home],["schedule","Schedule",Calendar],["account","Account",User],["ratings","Ratings",Star],["earnings","Earnings",DollarSign],["preferences","Preferences",Settings]] as any[]).map(([screen,label,Icon]) => (
+                  <button key={screen} onClick={() => { setActiveScreen(screen); setMenuOpen(false); }}
+                    className={`w-full flex items-center gap-4 px-6 py-4 ${activeScreen === screen ? "bg-teal-600/20 text-teal-400" : darkMode ? "text-gray-300 hover:bg-gray-800" : "text-gray-700 hover:bg-gray-100"}`}>
+                    <Icon className="w-5 h-5" /><span className="font-medium">{label}</span>
+                    {activeScreen === screen && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  </button>
+                ))}
+              </div>
+              <div className={`p-4 border-t ${darkMode ? "border-gray-800" : "border-gray-200"}`}>
+                <button onClick={() => setDarkMode(!darkMode)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 ${darkMode ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+                  {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5" />}
+                  <span className="font-medium">{darkMode ? "Light Mode" : "Dark Mode"}</span>
+                  <Toggle value={darkMode} onChange={() => setDarkMode(!darkMode)} />
+                </button>
+                <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400`}><LogOut className="w-5 h-5" /><span>Log out</span></button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Top bar */}
+      <div className={`flex items-center justify-between px-4 py-3 ${cardBg} border-b z-30`}>
+        <button onClick={() => setMenuOpen(true)} className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}><Menu className="w-5 h-5" /></button>
+        <div className="text-center"><p className={`text-xs ${muted}`}>This week</p><p className="font-bold text-lg text-teal-400">${earnings.week.toFixed(2)}</p></div>
+        <div className="flex gap-2">
+          <button className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"} relative`}><Bell className="w-5 h-5" /><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" /></button>
+          <button className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}><HelpCircle className="w-5 h-5" /></button>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 pb-24">
-        {/* Earnings Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
-            <p className="text-xs text-muted-foreground mb-1">Today's Earnings</p>
-            <p className="text-2xl font-bold text-foreground">${earnings.today.toFixed(2)}</p>
-            <div className="flex items-center gap-1 text-green-500 text-xs mt-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>+12% vs yesterday</span>
+      {/* HOME */}
+      {activeScreen === "home" && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="relative" style={{ height: "55vh" }}>
+            <ZoneMap isOnline={isOnline} darkMode={darkMode} />
+            <div className="absolute top-3 left-0 right-0 flex justify-center z-[400]">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg ${isOnline ? "bg-teal-600" : darkMode ? "bg-gray-800" : "bg-white"}`}>
+                <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-white animate-pulse" : "bg-gray-400"}`} />
+                <span className={`text-sm font-bold ${isOnline ? "text-white" : muted}`}>{isOnline ? "Looking for offers" : "You're offline"}</span>
+              </div>
+            </div>
+            <div className="absolute bottom-3 left-3 z-[400]">
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-full ${darkMode ? "bg-gray-900/90" : "bg-white/90"} backdrop-blur-sm`}>
+                <Clock className="w-4 h-4 text-teal-400" /><span className="text-sm font-bold">est. 2–10 min</span>
+              </div>
             </div>
           </div>
-          <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
-            <p className="text-xs text-muted-foreground mb-1">Active Time</p>
-            <p className="text-2xl font-bold text-foreground">4h 12m</p>
-            <p className="text-xs text-muted-foreground mt-1">Since 8:30 AM</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
-            <p className="text-xs text-muted-foreground mb-1">Completed</p>
-            <p className="text-2xl font-bold text-foreground">{completedToday.length + completedJobs.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Deliveries today</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
-            <p className="text-xs text-muted-foreground mb-1">Rating</p>
-            <div className="flex items-center gap-1">
-              <p className="text-2xl font-bold text-foreground">{earnings.rating}</p>
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Top 10% in area</p>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 bg-card p-1 rounded-xl border border-border">
-          {[
-            { id: 'jobs', label: 'Delivery Jobs', icon: Package },
-            { id: 'earnings', label: 'Earnings', icon: DollarSign },
-            { id: 'history', label: 'History', icon: Clock },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium text-sm transition-all ${activeTab === tab.id ? 'gradient-hero text-white shadow-glow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
+          <div className={`flex-1 ${darkMode ? "bg-gray-900" : "bg-white"} rounded-t-3xl -mt-4 z-10 shadow-2xl px-4 pt-5 pb-4 overflow-y-auto`}>
+            <button onClick={() => setIsOnline(!isOnline)}
+              className={`w-full py-4 rounded-2xl font-bold text-lg mb-4 ${isOnline ? "bg-gray-700 text-white" : "bg-teal-600 text-white shadow-lg shadow-teal-500/30"}`}>
+              {isOnline ? "Go Offline" : "Go Online"}
             </button>
-          ))}
-        </div>
-
-        {/* ACTIVE DELIVERY - Full Screen Card */}
-        <AnimatePresence>
-          {activeJob && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-6 bg-card rounded-3xl border-2 border-primary shadow-elevated overflow-hidden"
-            >
-              {/* Progress Steps */}
-              <div className="bg-primary/5 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-primary">Active Delivery</span>
-                  <span className="text-xs text-muted-foreground">{activeJob.id}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {[
-                    { key: 'accepted', label: 'Accepted' },
-                    { key: 'arrived-restaurant', label: 'At Restaurant' },
-                    { key: 'picked-up', label: 'Picked Up' },
-                    { key: 'arrived-customer', label: 'At Customer' },
-                    { key: 'delivered', label: 'Delivered' },
-                  ].map((step, i, arr) => {
-                    const stepIndex = arr.findIndex(s => s.key === activeJob.status);
-                    const isActive = i === stepIndex;
-                    const isComplete = i < stepIndex;
-                    return (
-                      <div key={step.key} className="flex items-center flex-1">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isComplete ? 'bg-green-500 text-white' : isActive ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
-                          {isComplete ? <CheckCircle className="w-4 h-4" /> : i + 1}
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div className={`flex-1 h-1 mx-1 rounded-full ${isComplete ? 'bg-green-500' : 'bg-muted'}`} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="p-6">
-                {/* Route Visualization */}
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="flex flex-col items-center">
-                    <div className="w-4 h-4 rounded-full bg-primary" />
-                    <div className="w-0.5 h-12 bg-border my-1" />
-                    <div className="w-4 h-4 rounded-full bg-green-500" />
-                  </div>
-                  <div className="flex-1 space-y-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">PICKUP</p>
-                      <p className="font-bold text-foreground">{activeJob.restaurant}</p>
-                      <p className="text-sm text-muted-foreground">{activeJob.restaurantAddress}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">DROPOFF</p>
-                      <p className="font-bold text-foreground">{activeJob.customer}</p>
-                      <p className="text-sm text-muted-foreground">{activeJob.customerAddress}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">${(activeJob.earnings + activeJob.tip).toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">${activeJob.earnings} + ${activeJob.tip} tip</p>
-                  </div>
-                </div>
-
-                {/* Order Details */}
-                <div className="bg-muted rounded-xl p-4 mb-6">
-                  <p className="text-sm font-medium mb-2">Order Items:</p>
-                  {activeJob.items.map((item, i) => (
-                    <p key={i} className="text-sm text-muted-foreground">• {item}</p>
-                  ))}
-                  {activeJob.instructions && (
-                    <div className="mt-3 flex items-start gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-lg">
-                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                      <span>{activeJob.instructions}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  {activeJob.status === 'accepted' && (
-                    <>
-                      <button onClick={() => updateJobStatus('arrived-restaurant')}
-                        className="py-4 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all">
-                        Arrived at Restaurant
-                      </button>
-                      <a href={`tel:${activeJob.phone}`} className="py-4 rounded-xl bg-secondary text-secondary-foreground font-bold flex items-center justify-center gap-2 hover:bg-secondary/80 transition-all">
-                        <Phone className="w-5 h-5" /> Call
-                      </a>
-                    </>
-                  )}
-                  {activeJob.status === 'arrived-restaurant' && (
-                    <button onClick={() => updateJobStatus('picked-up')}
-                      className="col-span-2 py-4 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all">
-                      Confirm Pickup
-                    </button>
-                  )}
-                  {activeJob.status === 'picked-up' && (
-                    <>
-                      <button onClick={() => updateJobStatus('arrived-customer')}
-                        className="py-4 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all">
-                        Arrived at Customer
-                      </button>
-                      <a href={`tel:${activeJob.phone}`} className="py-4 rounded-xl bg-secondary text-secondary-foreground font-bold flex items-center justify-center gap-2 hover:bg-secondary/80 transition-all">
-                        <Phone className="w-5 h-5" /> Call Customer
-                      </a>
-                    </>
-                  )}
-                  {activeJob.status === 'arrived-customer' && (
-                    <button onClick={() => setShowPhotoModal(true)}
-                      className="col-span-2 py-4 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all flex items-center justify-center gap-2">
-                      <Camera className="w-5 h-5" /> Complete Delivery
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* TAB CONTENT */}
-        <AnimatePresence mode="wait">
-          {activeTab === 'jobs' && (
-            <motion.div key="jobs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {!isOnline ? (
-                <div className="text-center py-20 bg-card rounded-3xl border border-border">
-                  <Power className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-                  <h3 className="text-xl font-bold mb-2">You're Offline</h3>
-                  <p className="text-muted-foreground mb-6">Go online to see available delivery jobs</p>
-                  <button onClick={() => setIsOnline(true)}
-                    className="px-8 py-3 rounded-full gradient-hero text-white font-semibold shadow-glow">
-                    Go Online
-                  </button>
-                </div>
-              ) : availableJobs.length === 0 && !activeJob ? (
-                <div className="text-center py-20 bg-card rounded-3xl border border-border">
-                  <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-                  <h3 className="text-xl font-bold mb-2">No Jobs Available</h3>
-                  <p className="text-muted-foreground">Hang tight! New orders will appear here.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {availableJobs.map((job) => (
-                    <motion.div key={job.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      className="bg-card rounded-2xl border border-border p-5 shadow-soft">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                            <Package className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-foreground">{job.restaurant}</h3>
-                            <p className="text-sm text-muted-foreground">{job.restaurantAddress}</p>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1"><Navigation className="w-3 h-3" /> {job.distance}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {job.timeLeft}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-primary">${(job.earnings + job.tip).toFixed(2)}</p>
-                          <p className="text-xs text-muted-foreground">${job.earnings} + ${job.tip} tip</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-muted rounded-lg p-3 mb-4">
-                        <p className="text-xs text-muted-foreground mb-1">DELIVER TO</p>
-                        <p className="text-sm font-medium text-foreground">{job.customer}</p>
-                        <p className="text-xs text-muted-foreground">{job.customerAddress}</p>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <button onClick={() => acceptJob(job.id)}
-                          className="flex-1 py-3 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all">
-                          Accept
-                        </button>
-                        <button onClick={() => declineJob(job.id)}
-                          className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-bold hover:bg-secondary/80 transition-all">
-                          Decline
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'earnings' && (
-            <motion.div key="earnings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <h3 className="font-bold mb-4">Today's Earnings</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={todayBreakdown}>
-                    <defs>
-                      <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(16 85% 55%)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(16 85% 55%)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-                      labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    />
-                    <Area type="monotone" dataKey="earnings" stroke="hsl(16 85% 55%)" fillOpacity={1} fill="url(#colorEarnings)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <h3 className="font-bold mb-4">Weekly Overview</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={weeklyEarnings}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-                    />
-                    <Bar dataKey="earnings" fill="hsl(16 85% 55%)" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-card rounded-2xl p-5 border border-border">
-                  <p className="text-sm text-muted-foreground mb-1">Base Pay</p>
-                  <p className="text-xl font-bold">$62.50</p>
-                </div>
-                <div className="bg-card rounded-2xl p-5 border border-border">
-                  <p className="text-sm text-muted-foreground mb-1">Tips</p>
-                  <p className="text-xl font-bold text-green-500">$25.00</p>
-                </div>
-                <div className="bg-card rounded-2xl p-5 border border-border">
-                  <p className="text-sm text-muted-foreground mb-1">Peak Pay</p>
-                  <p className="text-xl font-bold text-primary">$12.00</p>
-                </div>
-                <div className="bg-card rounded-2xl p-5 border border-border">
-                  <p className="text-sm text-muted-foreground mb-1">Promotions</p>
-                  <p className="text-xl font-bold">$0.00</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'history' && (
-            <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-              {[...completedJobs, ...jobs.filter(j => j.status === 'delivered')].map((job) => (
-                <div key={job.id} className="bg-card rounded-2xl border border-border p-5 flex items-center justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground">{job.restaurant}</h4>
-                      <p className="text-sm text-muted-foreground">{job.customer} • {job.distance}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{job.orderTime}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-foreground">${(job.earnings + job.tip).toFixed(2)}</p>
-                    <div className="flex items-center gap-1 justify-end mt-1">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-muted-foreground">5.0</span>
-                    </div>
-                  </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[["Today", `$${earnings.today.toFixed(2)}`, "text-teal-400"], ["Trips", `${earnings.trips}`, ""], ["Rating", `${earnings.rating}★`, "text-yellow-400"]].map(([label, val, color]) => (
+                <div key={label} className={`${darkMode ? "bg-gray-800" : "bg-gray-50"} rounded-2xl p-3 text-center`}>
+                  <p className={`text-xs ${muted} mb-1`}>{label}</p><p className={`font-bold ${color}`}>{val}</p>
                 </div>
               ))}
-              {completedJobs.length === 0 && jobs.filter(j => j.status === 'delivered').length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>No completed deliveries yet today.</p>
+            </div>
+            {activeJob && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className={`${darkMode ? "bg-gray-800 border-teal-500" : "bg-teal-50 border-teal-400"} border-2 rounded-2xl p-4 mb-4`}>
+                <div className="flex justify-between mb-2"><span className="text-teal-400 font-bold text-sm">Active Delivery</span><span className={`text-xs ${muted}`}>{activeJob.id}</span></div>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="flex flex-col items-center"><div className="w-3 h-3 rounded-full bg-teal-500" /><div className="w-0.5 h-8 bg-gray-600 my-1" /><div className="w-3 h-3 rounded-full bg-orange-500" /></div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm">{activeJob.restaurant}</p><p className={`text-xs ${muted} mb-2`}>{activeJob.restaurantAddress}</p>
+                    <p className="font-bold text-sm">{activeJob.customer}</p><p className={`text-xs ${muted}`}>{activeJob.customerAddress}</p>
+                  </div>
+                  <div className="text-right"><p className="font-bold text-teal-400">${(activeJob.earnings + activeJob.tip).toFixed(2)}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
                 </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <div className="grid grid-cols-2 gap-2">
+                  {activeJob.status === "accepted" && <><button onClick={() => updateJobStatus("arrived-restaurant")} className="py-3 rounded-xl bg-teal-600 text-white font-bold text-sm">Arrived at Restaurant</button><a href={`tel:${activeJob.phone}`} className="py-3 rounded-xl bg-gray-700 text-white font-bold text-sm flex items-center justify-center gap-1"><Phone className="w-4 h-4" />Call</a></>}
+                  {activeJob.status === "arrived-restaurant" && <button onClick={() => updateJobStatus("picked-up")} className="col-span-2 py-3 rounded-xl bg-teal-600 text-white font-bold">Confirm Pickup</button>}
+                  {activeJob.status === "picked-up" && <><button onClick={() => updateJobStatus("arrived-customer")} className="py-3 rounded-xl bg-teal-600 text-white font-bold text-sm">Arrived at Customer</button><a href={`tel:${activeJob.phone}`} className="py-3 rounded-xl bg-gray-700 text-white font-bold text-sm flex items-center justify-center gap-1"><Phone className="w-4 h-4" />Call</a></>}
+                  {activeJob.status === "arrived-customer" && <button onClick={() => setShowPhotoModal(true)} className="col-span-2 py-3 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" />Complete Delivery</button>}
+                </div>
+              </motion.div>
+            )}
+            {isOnline && !activeJob && availableJobs.map(job => (
+              <motion.div key={job.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"} border rounded-2xl p-4 mb-3`}>
+                <div className="flex justify-between mb-2">
+                  <div><p className="font-bold">{job.restaurant}</p><p className={`text-xs ${muted}`}>{job.distance} · {job.timeLeft} to accept</p></div>
+                  <div className="text-right"><p className="font-bold text-teal-400 text-lg">${(job.earnings + job.tip).toFixed(2)}</p><p className={`text-xs ${muted}`}>${job.earnings} + ${job.tip} tip</p></div>
+                </div>
+                <p className={`text-xs ${muted} mb-3`}>{job.customer} · {job.customerAddress}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => acceptJob(job.id)} className="flex-1 py-3 rounded-xl bg-teal-600 text-white font-bold">Accept</button>
+                  <button onClick={() => declineJob(job.id)} className={`flex-1 py-3 rounded-xl ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-600"} font-bold`}>Decline</button>
+                </div>
+              </motion.div>
+            ))}
+            {!isOnline && <div className={`text-center py-8 ${muted}`}><Power className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>Go online to receive orders</p></div>}
+          </div>
+        </div>
+      )}
+
+      {/* SCHEDULE */}
+      {activeScreen === "schedule" && (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <h1 className="text-2xl font-bold mb-6">Schedule</h1>
+          <div className={`${cardBg} border rounded-2xl p-4 mb-5`}>
+            <div className="grid grid-cols-7 text-center mb-2">{["Mo","Tu","We","Th","Fr","Sa","Su"].map(d => <p key={d} className={`text-xs ${muted}`}>{d}</p>)}</div>
+            <div className="grid grid-cols-7 text-center">{[4,5,6,7,8,9,10].map((d,i) => <button key={d} className={`w-9 h-9 mx-auto rounded-full flex items-center justify-center font-bold text-sm ${i===0?"bg-teal-600 text-white":darkMode?"text-gray-300 hover:bg-gray-800":"text-gray-700 hover:bg-gray-100"}`}>{d}</button>)}</div>
+          </div>
+          <div className={`flex ${darkMode?"bg-gray-800":"bg-gray-100"} rounded-xl p-1 mb-5`}>
+            <button className="flex-1 py-2 rounded-lg bg-teal-600 text-white font-bold text-sm">Available</button>
+            <button className={`flex-1 py-2 rounded-lg font-bold text-sm ${muted}`}>Scheduled</button>
+          </div>
+          {["BC: Vancouver West","BC: Vancouver Downtown","BC: Vancouver East","BC: Vancouver North"].map((zone,i) => (
+            <div key={zone} className={`${cardBg} border rounded-2xl p-4 mb-3`}>
+              <p className={`text-xs ${muted} mb-1`}>{zone}</p>
+              <p className="font-bold mb-3">May {4+i}, 9:00 PM – May {5+i}, 4:00 AM</p>
+              <button className="px-4 py-2 rounded-xl bg-teal-600 text-white font-bold text-sm">Reserve Shift</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* EARNINGS */}
+      {activeScreen === "earnings" && (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <h1 className="text-2xl font-bold mb-4">Earnings</h1>
+          <div className={`${cardBg} border rounded-2xl p-5 mb-4`}>
+            <p className={`text-xs ${muted}`}>Today</p><p className="text-3xl font-bold text-teal-400 mb-3">${earnings.today.toFixed(2)}</p>
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={todayBreakdown}>
+                <defs><linearGradient id="teal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/><stop offset="95%" stopColor="#0d9488" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode?"#374151":"#e5e7eb"} />
+                <XAxis dataKey="hour" stroke={darkMode?"#6b7280":"#9ca3af"} fontSize={11} /><YAxis stroke={darkMode?"#6b7280":"#9ca3af"} fontSize={11} />
+                <Tooltip contentStyle={{ background: darkMode?"#111827":"#fff", border:"1px solid #374151", borderRadius:12 }} />
+                <Area type="monotone" dataKey="earnings" stroke="#0d9488" fillOpacity={1} fill="url(#teal)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className={`${cardBg} border rounded-2xl p-5 mb-4`}>
+            <p className={`text-xs ${muted} mb-3`}>This Week — $${earnings.week}</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={weeklyEarnings}>
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode?"#374151":"#e5e7eb"} />
+                <XAxis dataKey="day" stroke={darkMode?"#6b7280":"#9ca3af"} fontSize={11} /><YAxis stroke={darkMode?"#6b7280":"#9ca3af"} fontSize={11} />
+                <Tooltip contentStyle={{ background: darkMode?"#111827":"#fff", border:"1px solid #374151", borderRadius:12 }} />
+                <Bar dataKey="earnings" fill="#0d9488" radius={[6,6,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[["Base Pay","$62.50",""],["Tips","$25.00","text-teal-400"],["Peak Pay","$12.00","text-orange-400"],["Total",`$${earnings.today.toFixed(2)}`,"text-teal-400"]].map(([l,v,c])=>(
+              <div key={l} className={`${cardBg} border rounded-2xl p-4`}><p className={`text-xs ${muted} mb-1`}>{l}</p><p className={`text-xl font-bold ${c}`}>{v}</p></div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* RATINGS */}
+      {activeScreen === "ratings" && (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <h1 className="text-2xl font-bold mb-4">Ratings & Rewards</h1>
+          <div className="bg-gradient-to-r from-teal-700 to-teal-500 rounded-2xl p-5 mb-5 flex items-center justify-between">
+            <div><p className="text-teal-100 text-xs mb-1">Driver Rewards</p><p className="text-white font-bold text-2xl">Platinum Status</p></div>
+            <Award className="w-14 h-14 text-yellow-300" />
+          </div>
+          <div className={`${cardBg} border rounded-2xl mb-4`}>
+            <p className="font-bold px-5 pt-4 pb-2">Your Ratings</p>
+            {[["Acceptance Rate","95%"],["Completion Rate","100%"],["On-time Rate","76%"],["Customer Rating","4.92 ★"],["Deliveries (30 days)","287"],["Lifetime Deliveries","2,609"]].map(([l,v])=>(
+              <div key={l} className={`flex justify-between items-center px-5 py-3 border-t ${darkMode?"border-gray-800":"border-gray-100"}`}>
+                <span className={`text-sm ${muted}`}>{l}</span><div className="flex items-center gap-2"><span className="font-bold text-sm">{v}</span><ChevronRight className={`w-4 h-4 ${muted}`} /></div>
+              </div>
+            ))}
+          </div>
+          <div className={`${cardBg} border rounded-2xl`}>
+            <p className="font-bold px-5 pt-4 pb-2">Unlocked Perks</p>
+            {["Priority access to orders","Top priority for high-paying offers","Early scheduling access","VIP Driver Support"].map(p=>(
+              <div key={p} className={`flex justify-between items-center px-5 py-3 border-t ${darkMode?"border-gray-800":"border-gray-100"}`}>
+                <span className="text-sm">{p}</span><ChevronRight className={`w-4 h-4 ${muted}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ACCOUNT */}
+      {activeScreen === "account" && (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <h1 className="text-2xl font-bold mb-6">Account</h1>
+          {([["Profile",User],["Vehicle Management",Truck],["Account Data",BarChart2],["Safe Driving",Shield],["App Settings",Settings],["Help",HelpCircle]] as any[]).map(([label,Icon])=>(
+            <div key={label} className={`flex items-center justify-between px-4 py-4 border-b ${darkMode?"border-gray-800":"border-gray-100"}`}>
+              <div className="flex items-center gap-4"><Icon className={`w-5 h-5 ${muted}`} /><span className="font-medium">{label}</span></div>
+              <ChevronRight className={`w-4 h-4 ${muted}`} />
+            </div>
+          ))}
+          <button className="flex items-center gap-4 px-4 py-4 text-red-400"><LogOut className="w-5 h-5" /><span className="font-medium">Log out</span></button>
+        </div>
+      )}
+
+      {/* PREFERENCES */}
+      {activeScreen === "preferences" && (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <h1 className="text-2xl font-bold mb-2">Preferences</h1>
+          <p className={`text-sm ${muted} mb-6`}>Maximize the types of offers you receive</p>
+          {[
+            { key:"vapeDelivery", title:"Vape & Tobacco Delivery", desc:"Hand-deliver to 19+ customers after checking government ID. Required for Smoke2Snack orders." },
+            { key:"cashOnDelivery", title:"Cash on Delivery", desc:"Access more earning opportunities and keep all cash payments including tips." },
+          ].map(({ key, title, desc }) => (
+            <div key={key} className={`${cardBg} border rounded-2xl p-5 mb-4`}>
+              <div className="flex items-start justify-between">
+                <div className="flex-1 pr-4"><p className="font-bold mb-1">{title}</p><p className={`text-sm ${muted}`}>{desc}</p></div>
+                <Toggle value={(preferences as any)[key]} onChange={() => setPreferences(p => ({ ...p, [key]: !(p as any)[key] }))} />
+              </div>
+            </div>
+          ))}
+          <div className={`${cardBg} border rounded-2xl p-5`}>
+            <div className="flex items-center justify-between">
+              <div><p className="font-bold mb-1">Dark Mode</p><p className={`text-sm ${muted}`}>Switch between light and dark</p></div>
+              <Toggle value={darkMode} onChange={() => setDarkMode(!darkMode)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BOTTOM NAV */}
+      <div className={`${cardBg} border-t flex z-20`}>
+        <NavBtn icon={Home} label="Home" screen="home" />
+        <NavBtn icon={Calendar} label="Schedule" screen="schedule" />
+        <NavBtn icon={DollarSign} label="Earnings" screen="earnings" />
+        <NavBtn icon={Star} label="Ratings" screen="ratings" />
+        <NavBtn icon={User} label="Account" screen="account" />
       </div>
 
-      {/* Photo Proof Modal */}
+      {/* PHOTO MODAL */}
       <AnimatePresence>
         {showPhotoModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-card rounded-3xl p-6 max-w-md w-full shadow-2xl">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 z-50 flex items-end">
+            <motion.div initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }} className={`w-full ${darkMode?"bg-gray-900":"bg-white"} rounded-t-3xl p-6`}>
               <h3 className="text-xl font-bold mb-2">Confirm Delivery</h3>
-              <p className="text-muted-foreground mb-6">Take a photo or confirm handoff to customer</p>
-              
-              <div className="aspect-video bg-muted rounded-2xl flex items-center justify-center mb-6 border-2 border-dashed border-border">
-                <div className="text-center">
-                  <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-2 opacity-30" />
-                  <p className="text-sm text-muted-foreground">Photo proof (optional)</p>
-                </div>
+              <p className={`text-sm ${muted} mb-4`}>Take a photo or confirm handoff</p>
+              <div className={`aspect-video ${darkMode?"bg-gray-800":"bg-gray-100"} rounded-2xl flex items-center justify-center mb-4 border-2 border-dashed ${darkMode?"border-gray-700":"border-gray-300"}`}>
+                <div className="text-center"><Camera className={`w-10 h-10 mx-auto mb-2 ${muted}`} /><p className={`text-sm ${muted}`}>Photo proof (optional)</p></div>
               </div>
-
-              <div className="space-y-3">
-                <button onClick={() => { setShowPhotoModal(false); updateJobStatus('delivered'); }}
-                  className="w-full py-4 rounded-xl gradient-hero text-white font-bold hover:shadow-glow transition-all">
-                  <CheckCircle className="w-5 h-5 inline mr-2" /> Delivery Complete
-                </button>
-                <button onClick={() => setShowPhotoModal(false)}
-                  className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-all">
-                  Cancel
-                </button>
-              </div>
+              <button onClick={() => { setShowPhotoModal(false); updateJobStatus("delivered"); }} className="w-full py-4 rounded-2xl bg-teal-600 text-white font-bold mb-3 flex items-center justify-center gap-2"><CheckCircle className="w-5 h-5" />Delivery Complete</button>
+              <button onClick={() => setShowPhotoModal(false)} className={`w-full py-3 rounded-2xl ${darkMode?"bg-gray-800 text-gray-300":"bg-gray-100 text-gray-600"} font-medium`}>Cancel</button>
             </motion.div>
           </motion.div>
         )}
