@@ -123,8 +123,7 @@ const RevenueCalculator = () => {
 const YOLANDA_EMAIL = 'yolandacantusa@gmail.com';
 const YOLANDA_PASSWORD = 'Boufet2026!';
 
-export const YolandaDashboard = () => {
-  const [authed, setAuthed] = useState(false);
+const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -132,62 +131,67 @@ export const YolandaDashboard = () => {
 
   const handleLogin = () => {
     if (loginEmail.trim().toLowerCase() === YOLANDA_EMAIL && loginPassword === YOLANDA_PASSWORD) {
-      setAuthed(true);
-      setLoginError('');
+      onLogin();
     } else {
       setLoginError('Incorrect email or password. Try again.');
     }
   };
 
-  if (!authed) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-teal-600 flex items-center justify-center font-bold text-3xl mx-auto mb-4">B</div>
-            <h1 className="text-2xl font-bold text-white">Boufet Business Hub</h1>
-            <p className="text-gray-400 text-sm mt-1">Business Developer Portal</p>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Email</label>
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={e => setLoginEmail(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                placeholder="yolandacantusa@gmail.com"
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Password</label>
-              <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={loginPassword}
-                  onChange={e => setLoginPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 pr-12"
-                />
-                <button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">{showPass ? 'Hide' : 'Show'}</button>
-              </div>
-            </div>
-            {loginError && <p className="text-red-400 text-xs">{loginError}</p>}
-            <button
-              onClick={handleLogin}
-              className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
-            >
-              Sign In
-            </button>
-            <p className="text-center text-xs text-gray-600">Boufet Internal — Authorized Access Only</p>
-          </div>
-          <p className="text-center text-xs text-gray-700 mt-4">boufet.com/biz</p>
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-teal-600 flex items-center justify-center font-bold text-3xl mx-auto mb-4">B</div>
+          <h1 className="text-2xl font-bold text-white">Boufet Business Hub</h1>
+          <p className="text-gray-400 text-sm mt-1">Business Developer Portal</p>
         </div>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Email</label>
+            <input
+              type="email"
+              value={loginEmail}
+              onChange={e => setLoginEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              placeholder="yolandacantusa@gmail.com"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Password</label>
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={loginPassword}
+                onChange={e => setLoginPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 pr-16"
+              />
+              <button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs hover:text-gray-200">
+                {showPass ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+          {loginError && <p className="text-red-400 text-xs">{loginError}</p>}
+          <button
+            onClick={handleLogin}
+            className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
+          >
+            Sign In
+          </button>
+          <p className="text-center text-xs text-gray-600">Boufet Internal — Authorized Access Only</p>
+        </div>
+        <p className="text-center text-xs text-gray-700 mt-4">boufet.com/biz</p>
       </div>
-    );
-  }
+    </div>
+  );
+};
+
+export const YolandaDashboard = () => {
+  const [authed, setAuthed] = useState(false);
+
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
   const [activeTab, setActiveTab] = useState<'kpi'|'pipeline'|'scripts'|'calculator'|'contacts'>('kpi');
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
   const [search, setSearch] = useState('');
