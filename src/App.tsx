@@ -18,10 +18,11 @@ import { OrderTracking } from './pages/OrderTracking';
 import { useCart } from './hooks/useCart';
 import { DriverDownload } from './pages/DriverDownload';
 import { YolandaDashboard } from './pages/YolandaDashboard';
+import { PeterDashboard } from './pages/PeterDashboard';
 
 function App() {
   const cart = useCart();
-  const isBiz = window.location.pathname === '/biz';
+  const isBiz = window.location.pathname === '/biz' || window.location.pathname === '/cgo';
 
   return (
     <AuthProvider>
@@ -49,7 +50,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
-          <Route path="/biz" element={<YolandaDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
+          <Route path="/biz" element={<YolandaDashboard />} />
+          <Route path="/cgo" element={<PeterDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
           
         </Routes>
         {!isBiz && <Footer />}
