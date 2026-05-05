@@ -36,8 +36,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             <Link to="/orders" className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${location.pathname === '/orders' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}>
               <Store className="w-4 h-4" /> My Restaurant
             </Link>
-            <Link to="/driver" className={`px-3 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5 ${location.pathname === '/driver' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}>
-              <Bike className="w-4 h-4" /> Driver</Link>
+
             <Link to="/driver/signup" className="px-4 py-2 border border-teal-600 text-teal-600 rounded-lg text-sm font-bold hover:bg-teal-50 transition-colors">Drive with Boufet
             </Link>
           </nav>
@@ -103,7 +102,7 @@ export const Header = ({ cartCount, onCartClick }: HeaderProps) => {
         <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-2">
           <Link to="/restaurants" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors">Restaurants</Link>
           <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"><Store className="w-4 h-4" /> My Restaurant</Link>
-          <Link to="/driver" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"><Bike className="w-4 h-4" /> Driver</Link>
+
           <Link to="/driver/signup" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium border border-teal-600 text-teal-600 hover:bg-teal-50 transition-colors">Drive with Boufet</Link>
           <Link to="/driver-download" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Download Driver App</Link>
           {user ? (
