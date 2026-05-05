@@ -21,12 +21,13 @@ import { YolandaDashboard } from './pages/YolandaDashboard';
 
 function App() {
   const cart = useCart();
+  const isBiz = window.location.pathname === '/biz';
 
   return (
     <AuthProvider>
     <BrowserRouter>
       <div className="min-h-screen bg-background text-foreground">
-        <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />
+        {!isBiz && <Header cartCount={cart.itemCount} onCartClick={() => cart.setIsOpen(true)} />}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/restaurants" element={<RestaurantsPage onAddToCart={cart.addToCart} />} />
@@ -48,17 +49,17 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />n          <Route path="/driver-download" element={<DriverDownload />} />
-          <Route path="/biz" element={<YolandaDashboard />} />
+          
         </Routes>
-        <Footer />
-        <CartDrawer 
+        {!isBiz && <Footer />}
+        {!isBiz && <CartDrawer 
           isOpen={cart.isOpen}
           onClose={() => cart.setIsOpen(false)}
           items={cart.items}
           onUpdateQuantity={cart.updateQuantity}
           onRemove={cart.removeFromCart}
           total={cart.total}
-        />
+        />}
       </div>
     </BrowserRouter>
     </AuthProvider>
