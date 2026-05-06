@@ -228,6 +228,7 @@ export const RestaurantKDS = () => {
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [connected, setConnected] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<'kitchen'|'earnings'>('kitchen');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const socketRef = useRef<Socket | null>(null);
 
@@ -320,6 +321,12 @@ export const RestaurantKDS = () => {
   };
 
   // Column data
+  const todayOrders = orders.filter(o => o.status !== 'cancelled');
+  const completedOrders = orders.filter(o => o.status === 'processed');
+  const avgOrderValue = completedOrders.length > 0 ? completedOrders.reduce((a,o) => a + o.total, 0) / completedOrders.length : 0;
+  const boufetCommission = todayRevenue * 0.20;
+  const restaurantEarnings = todayRevenue * 0.80;
+
   const incoming = orders.filter(o => o.status === 'incoming');
   const preparing = orders.filter(o => o.status === 'preparing');
   const ready = orders.filter(o => o.status === 'ready');
@@ -362,8 +369,18 @@ export const RestaurantKDS = () => {
         </div>
       </div>
 
+      {/* Tab Bar */}
+      <div className="bg-gray-900 border-b border-gray-800 flex px-4 gap-2 py-2 flex-shrink-0">
+        <button onClick={() => setActiveTab('kitchen')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='kitchen' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          🍳 Kitchen
+        </button>
+        <button onClick={() => setActiveTab('earnings')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='earnings' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          💰 Earnings
+        </button>
+      </div>
+
       {/* 3-Column Staggered Grid */}
-      <div className="flex-1 grid grid-cols-3 gap-0 overflow-hidden">
+      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-3 gap-0 overflow-hidden">
 
         {/* COLUMN 1 — INCOMING */}
         <div className="border-r border-gray-800 flex flex-col overflow-hidden">
@@ -439,6 +456,59 @@ export const RestaurantKDS = () => {
           </div>
         </div>
       </div>
+
+      }
+
+      {/* Earnings Tab */}
+      {activeTab === 'earnings' && (
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Today Revenue', value: `$${todayRevenue.toFixed(2)}`, color: 'text-teal-400' },
+              { label: 'Your Earnings (80%)', value: `$${restaurantEarnings.toFixed(2)}`, color: 'text-emerald-400' },
+              { label: 'Boufet Fee (20%)', value: `$${boufetCommission.toFixed(2)}`, color: 'text-gray-400' },
+              { label: 'Orders Completed', value: `${completedOrders.length}`, color: 'text-blue-400' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                <p className="text-xs text-gray-400 mb-2">{label}</p>
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <h3 className="font-bold mb-4 text-gray-200">Completed Orders Today</h3>
+            <div className="space-y-2">
+              {completedOrders.length === 0 && <p className="text-gray-500 text-sm">No completed orders yet</p>}
+              {completedOrders.map(o => (
+                <div key={o.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
+                  <div>
+                    <p className="font-medium text-sm">{o.orderNumber}</p>
+                    <p className="text-xs text-gray-400">{o.customerName} · {o.items.length} items</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-teal-400">${o.total.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">${(o.total * 0.80).toFixed(2)} yours</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {completedOrders.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between font-bold">
+                <span>Total Your Earnings</span>
+                <span className="text-emerald-400">${restaurantEarnings.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gradient-to-r from-teal-900/40 to-gray-900 border border-teal-800/40 rounded-2xl p-5">
+            <p className="text-xs text-gray-400 mb-1">vs DoorDash (30% fee)</p>
+            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${(todayRevenue * 0.70).toFixed(2)}</span></p>
+            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${restaurantEarnings.toFixed(2)}</span></p>
+            <p className="text-teal-400 font-bold mt-2">You saved ${(todayRevenue * 0.10).toFixed(2)} today by using Boufet 🎉</p>
+          </div>
+        </div>
+      )}
 
       {/* Footer status bar */}
       <div className="bg-gray-900 border-t border-gray-800 px-6 py-2 flex items-center justify-between text-xs text-gray-500 flex-shrink-0">
