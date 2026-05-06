@@ -254,8 +254,36 @@ app.post("/api/orders/:id/pay", auth, async (req, res) => {
 app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
   try {
     await pool.query("UPDATE orders SET status = 'paid' WHERE id = $1", [req.params.id]);
-    // Notify restaurant via WebSocket
-    io.emit("new_order", { type: "new_order", order_id: req.params.id });
+    
+    // Fetch full order for KDS
+    const orderResult = await pool.query(
+      "SELECT o.*, r.name as restaurant_name FROM orders o JOIN restaurants r ON o.restaurant_id = r.id WHERE o.id = $1",
+      [req.params.id]
+    );
+    const order = orderResult.rows[0];
+    
+    // Fetch order items
+    const itemsResult = await pool.query(
+      "SELECT mi.name, oi.quantity FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = $1",
+      [req.params.id]
+    );
+    
+    // Emit to restaurant room only
+    io.to(`restaurant:${order.restaurant_id}`).emit("order:new", {
+      id: order.id,
+      orderNumber: order.order_number || `ORD-${order.id}`,
+      customerName: order.customer_name || "Customer",
+      customerPhone: order.customer_phone,
+      status: "incoming",
+      items: itemsResult.rows,
+      total: parseFloat(order.total),
+      tip: parseFloat(order.tip || 0),
+      createdAt: order.created_at,
+      address: order.customer_address,
+      orderType: order.order_type || "delivery",
+      isExpress: false,
+    });
+    
     res.json({ status: "paid" });
   } catch (err) {
     res.status(500).json({ error: err.message });
