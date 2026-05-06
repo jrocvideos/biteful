@@ -522,11 +522,18 @@ io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
   
   socket.on("join_order", (orderId) => {
-    socket.join();
+    socket.join("order:" + orderId);
+    console.log("Socket joined order room:", orderId);
   });
   
   socket.on("join_driver", (driverId) => {
-    socket.join();
+    socket.join("driver:" + driverId);
+    console.log("Socket joined driver room:", driverId);
+  });
+  
+  socket.on("join_restaurant", (restaurantId) => {
+    socket.join("restaurant:" + restaurantId);
+    console.log("Socket joined restaurant room:", restaurantId);
   });
   
   socket.on("disconnect", () => {
