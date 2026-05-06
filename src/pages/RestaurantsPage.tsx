@@ -38,13 +38,13 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(r => 
-        r.name.toLowerCase().includes(q) || 
-        r.cuisine.toLowerCase().includes(q) ||
-        (r as any).tags?.some((t: string) => t.toLowerCase().includes(q))
+        r.name?.toLowerCase().includes(q) || 
+        r.cuisine?.toLowerCase().includes(q) ||
+        r.tags?.some((t: string) => t?.toLowerCase().includes(q))
       );
     }
     if (activeCategory !== 'all') {
-      result = result.filter(r => r.cuisine.toLowerCase() === activeCategory);
+      result = result.filter(r => r.cuisine?.toLowerCase() === activeCategory.toLowerCase());
     }
     if (priceFilter.length > 0) {
       result = result.filter(r => priceFilter.includes((r as any).priceRange || '$$'));
