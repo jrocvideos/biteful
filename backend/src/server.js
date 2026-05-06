@@ -200,6 +200,25 @@ app.post("/api/orders", auth, async (req, res) => {
     }
     
     await client.query("COMMIT");
+
+    // Emit to KDS immediately — don't wait for payment confirmation
+    io.emit("new_order", {
+      type: "new_order",
+      order_id: orderId,
+      restaurant_id: restaurant_id,
+      customer_name: req.user?.first_name || "Customer",
+      total: total,
+      delivery_type: req.body.delivery_type || "asap",
+    });
+
+    // Also emit to admin dashboards
+    io.emit("order_update", {
+      order_id: orderId,
+      status: "incoming",
+      total: total,
+      restaurant_id: restaurant_id,
+    });
+
     res.json({ order_id: orderId, total, status: "pending_payment" });
   } catch (err) {
     await client.query("ROLLBACK");
