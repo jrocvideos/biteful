@@ -140,7 +140,7 @@ const KDSCard = ({ order, onAction }: { order: Order; onAction: (id: string, sta
         </div>
         <div className="text-right">
           <p className="text-xl font-bold text-white">${order.total.toFixed(2)}</p>
-          <p className="text-xs text-yellow-400">${order.tip.toFixed(2)} tip</p>
+
         </div>
       </div>
 
