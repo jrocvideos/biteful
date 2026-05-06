@@ -612,3 +612,31 @@ app.get("/api/add-restaurants-now", async (req, res) => {
   }
   res.json({ results });
 });
+
+// Seed Cuba Street Food menu
+app.get("/api/seed-cuba-menu", async (req, res) => {
+  const restaurantId = "bd67f62d-cdd9-4541-b6cd-d140be14fe1a";
+  const items = [
+    { name: "Cuban Sandwich", description: "Includes ham, cheese and roast pork. A Havana classic.", price: 15.00, category: "Mains", is_popular: true, image_url: "https://images.unsplash.com/photo-1553909489-cd47e0907980?w=800" },
+    { name: "Chicken Sandwich", description: "Juicy grilled chicken on a fresh pressed bun.", price: 15.00, category: "Mains", is_popular: false, image_url: "https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=800" },
+    { name: "Cuban Sandwich + Pop", description: "Cuban sandwich with ham, cheese and roast pork plus your choice of pop.", price: 18.00, category: "Combos", is_popular: true, image_url: "https://images.unsplash.com/photo-1553909489-cd47e0907980?w=800" },
+    { name: "Chicken Sandwich + Pop", description: "Grilled chicken sandwich plus your choice of pop.", price: 18.00, category: "Combos", is_popular: false, image_url: "https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=800" },
+    { name: "El Clasico Plate", description: "Rice, black beans, roast pork and sweet plantains. The full Cuban experience.", price: 19.00, category: "Mains", is_popular: true, image_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" },
+    { name: "La Habanera Plate", description: "Rice, black beans, grilled chicken, avocado and plantains.", price: 19.00, category: "Mains", is_popular: true, image_url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800" },
+    { name: "Roast Chicken Plate", description: "Quarter roast chicken with rice, beans and plantains.", price: 19.00, category: "Mains", is_popular: false, image_url: "https://images.unsplash.com/photo-1598103442097-8b74394b95c4?w=800" },
+    { name: "El Clasico + Pop", description: "El Clasico plate with your choice of pop. Add coffee for $3.", price: 22.00, category: "Combos", is_popular: false, image_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" },
+    { name: "La Habanera + Pop", description: "La Habanera plate with your choice of pop. Add coffee for $3.", price: 22.00, category: "Combos", is_popular: false, image_url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800" },
+    { name: "Roast Chicken + Pop", description: "Roast chicken plate with your choice of pop. Add coffee for $3.", price: 22.00, category: "Combos", is_popular: false, image_url: "https://images.unsplash.com/photo-1598103442097-8b74394b95c4?w=800" },
+  ];
+  const results = [];
+  for (const item of items) {
+    try {
+      const ex = await pool.query("SELECT id FROM menu_items WHERE restaurant_id=$1 AND name=$2", [restaurantId, item.name]);
+      if (ex.rows.length > 0) { results.push({ name: item.name, status: "exists" }); continue; }
+      await pool.query("INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_popular, is_available, image_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())",
+        [uuidv4(), restaurantId, item.name, item.description, item.price, item.category, item.is_popular, true, item.image_url]);
+      results.push({ name: item.name, status: "created" });
+    } catch(e) { results.push({ name: item.name, status: "error", error: e.message }); }
+  }
+  res.json({ results });
+});
