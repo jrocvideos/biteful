@@ -23,7 +23,7 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
     });
   }, []);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [searchParams] = useSearchParams();
   useEffect(() => { const q = searchParams.get('search'); if (q) setSearchQuery(q); }, [searchParams]);
  const [activeCategory, setActiveCategory] = useState('all');
@@ -87,7 +87,7 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input type="text" placeholder="Search restaurants, cuisines, dishes..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground" />
+              <input type="text" placeholder="Search restaurants, cuisines, dishes..." value={searchQuery} onChange={(e) => { const q = e.target.value; if (q) setSearchParams({ search: q }); else setSearchParams({}); }} className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground" />
               {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-4 h-4 text-muted-foreground" /></button>}
             </div>
             <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${showFilters ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted border-border hover:bg-muted/80'}`}>
