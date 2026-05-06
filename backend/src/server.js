@@ -461,7 +461,7 @@ app.post("/api/seed-restaurants", async (req, res) => {
       const existing = await pool.query("SELECT id FROM restaurants WHERE name = $1", [r.name]);
       if (existing.rows.length > 0) { results.push({ name: r.name, status: "exists", id: existing.rows[0].id }); continue; }
       const result = await pool.query(
-        "INSERT INTO restaurants (id, name, slug, cuisine_type, address, description, commission_rate, delivery_time, is_active, is_open, rating, image_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW()) RETURNING id",
+        "INSERT INTO restaurants (id, name, cuisine_type, address, description, commission_rate, delivery_time, is_active, is_open, rating, image_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW()) RETURNING id",
         [uuidv4(), r.name, r.slug, r.cuisine, r.address, r.description, r.commission_rate, r.delivery_time, r.is_active, r.is_open, r.rating, r.image_url]
       );
       results.push({ name: r.name, status: "created", id: result.rows[0].id });
