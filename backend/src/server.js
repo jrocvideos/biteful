@@ -640,3 +640,35 @@ app.get("/api/seed-cuba-menu", async (req, res) => {
   }
   res.json({ results });
 });
+
+app.get("/api/seed-cuba-now", async (req, res) => {
+  const rid = "bd67f62d-cdd9-4541-b6cd-d140be14fe1a";
+  const items = [
+    ["Cuban Sandwich", "Ham, cheese and roast pork on a pressed bun.", 15.00, "Mains", true],
+    ["Chicken Sandwich", "Juicy grilled chicken on a fresh pressed bun.", 15.00, "Mains", false],
+    ["Cuban Sandwich + Pop", "Cuban sandwich plus your choice of pop.", 18.00, "Combos", true],
+    ["Chicken Sandwich + Pop", "Chicken sandwich plus your choice of pop.", 18.00, "Combos", false],
+    ["El Clasico Plate", "Rice, black beans, roast pork and sweet plantains.", 19.00, "Mains", true],
+    ["La Habanera Plate", "Rice, black beans, grilled chicken, avocado and plantains.", 19.00, "Mains", true],
+    ["Roast Chicken Plate", "Quarter roast chicken with rice, beans and plantains.", 19.00, "Mains", false],
+    ["El Clasico + Pop", "El Clasico plate with pop. Add coffee for $3.", 22.00, "Combos", false],
+    ["La Habanera + Pop", "La Habanera plate with pop. Add coffee for $3.", 22.00, "Combos", false],
+    ["Roast Chicken + Pop", "Roast chicken plate with pop. Add coffee for $3.", 22.00, "Combos", false],
+  ];
+  // Check actual columns first
+  const cols = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='menu_items'");
+  const colNames = cols.rows.map(r => r.column_name);
+  const results = [];
+  for (const [name, desc, price, cat, popular] of items) {
+    try {
+      const ex = await pool.query("SELECT id FROM menu_items WHERE restaurant_id=$1 AND name=$2", [rid, name]);
+      if (ex.rows.length > 0) { results.push({ name, status: "exists" }); continue; }
+      await pool.query(
+        "INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_popular, is_available) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+        [uuidv4(), rid, name, desc, price, cat, popular, true]
+      );
+      results.push({ name, status: "created" });
+    } catch(e) { results.push({ name, status: "error", error: e.message }); }
+  }
+  res.json({ columns: colNames, results });
+});
