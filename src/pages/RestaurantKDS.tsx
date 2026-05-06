@@ -321,12 +321,6 @@ export const RestaurantKDS = () => {
   };
 
   // Column data
-  const todayOrders = orders.filter(o => o.status !== 'cancelled');
-  const completedOrders = orders.filter(o => o.status === 'processed');
-  const avgOrderValue = completedOrders.length > 0 ? completedOrders.reduce((a,o) => a + o.total, 0) / completedOrders.length : 0;
-  const boufetCommission = todayRevenue * 0.20;
-  const restaurantEarnings = todayRevenue * 0.80;
-
   const incoming = orders.filter(o => o.status === 'incoming');
   const preparing = orders.filter(o => o.status === 'preparing');
   const ready = orders.filter(o => o.status === 'ready');
@@ -334,6 +328,9 @@ export const RestaurantKDS = () => {
   const processed = orders.filter(o => o.status === 'processed');
 
   const todayRevenue = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0);
+  const completedOrders = orders.filter(o => o.status === 'processed');
+  const restaurantEarnings = todayRevenue * 0.80;
+  const boufetCommission = todayRevenue * 0.20;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
