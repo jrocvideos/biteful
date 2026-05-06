@@ -61,8 +61,6 @@ function AppInner() {
           <Route path="/cto" element={<CTODashboard />} />
           <Route path="/driver-download" element={<DriverDownload />} />
           <Route path="/kds-download" element={<KDSDownload />} />
-          } />
-          } />
           
               </Routes>
       {!isBiz && <Footer />}
