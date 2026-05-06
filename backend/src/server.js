@@ -589,3 +589,26 @@ app.post("/api/seed-restaurants", async (req, res) => {
   }
   res.json({ results });
 });
+
+// DIRECT INSERT - Cuba Street Food and all restaurants
+app.get("/api/add-restaurants-now", async (req, res) => {
+  const items = [
+    { name: "Cuba Street Food", cuisine: "Cuban/Latin", address: "Vancouver, BC", image_url: "https://cubastreetfood.ca/wp-content/uploads/2023/08/cropped-identidad-cuba-street-food-03_1-300x300.png" },
+    { name: "Burger Vault", cuisine: "American", address: "Yaletown, Vancouver", image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800" },
+    { name: "Papa Johns", cuisine: "Pizza", address: "Near UBC, Vancouver", image_url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" },
+    { name: "Smoke2Snack", cuisine: "Vape & Convenience", address: "Olympic Village, Vancouver", image_url: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800" },
+    { name: "Blue Water Cafe", cuisine: "Seafood", address: "1095 Hamilton St, Yaletown", image_url: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800" },
+    { name: "Sakura Sushi", cuisine: "Japanese", address: "Downtown Vancouver", image_url: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800" },
+  ];
+  const results = [];
+  for (const r of items) {
+    try {
+      const ex = await pool.query("SELECT id FROM restaurants WHERE name=$1", [r.name]);
+      if (ex.rows.length > 0) { results.push({ name: r.name, status: "exists", id: ex.rows[0].id }); continue; }
+      const ins = await pool.query("INSERT INTO restaurants (id,name,cuisine,address,commission_rate,is_active,is_open,image_url,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id",
+        [uuidv4(), r.name, r.cuisine, r.address, 20, true, true, r.image_url]);
+      results.push({ name: r.name, status: "created", id: ins.rows[0].id });
+    } catch(e) { results.push({ name: r.name, status: "error", error: e.message }); }
+  }
+  res.json({ results });
+});
