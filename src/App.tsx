@@ -12,6 +12,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './lib/auth';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
+import { RestaurantKDS } from './pages/RestaurantKDS';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
@@ -24,7 +25,7 @@ import { CTODashboard } from './pages/CTODashboard';
 function AppInner() {
   const cart = useCart();
   const location = useLocation();
-  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto';
+  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto' || location.pathname.startsWith('/r/');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -51,6 +52,7 @@ function AppInner() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
+          <Route path="/r/:slug/orders" element={<RestaurantKDS />} />
           <Route path="/biz" element={<YolandaDashboard />} />
           <Route path="/cgo" element={<PeterDashboard />} />
           <Route path="/cto" element={<CTODashboard />} />
