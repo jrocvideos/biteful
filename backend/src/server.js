@@ -543,3 +543,26 @@ httpServer.listen(PORT, () => {
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+// ==================== SEED RESTAURANTS ====================
+app.post("/api/seed-restaurants", async (req, res) => {
+  const { secret } = req.body;
+  if (secret !== "BoufetSeed2026!") return res.status(401).json({ error: "Unauthorized" });
+  const restaurants = [
+    { name: "Cuba Street Food", slug: "cuba-street-food", cuisine: "Cuban/Latin", address: "Vancouver, BC", description: "Authentic Cuban street food", commission_rate: 20, delivery_time: "25-35 min", is_active: true, is_open: true, rating: 4.8, image_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" },
+    { name: "Burger Vault", slug: "burger-vault", cuisine: "American", address: "Yaletown, Vancouver", description: "Smash burgers and craft shakes", commission_rate: 20, delivery_time: "20-30 min", is_active: true, is_open: true, rating: 4.7, image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800" },
+    { name: "Papa Johns", slug: "papa-johns", cuisine: "Pizza", address: "Near UBC, Vancouver", description: "Fresh pizza delivered hot", commission_rate: 20, delivery_time: "30-40 min", is_active: true, is_open: true, rating: 4.3, image_url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" },
+    { name: "Smoke2Snack", slug: "smoke2snack", cuisine: "Vape & Convenience", address: "Olympic Village, Vancouver", description: "Vape and snacks delivered fast", commission_rate: 20, delivery_time: "15-25 min", is_active: true, is_open: true, rating: 4.5, image_url: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800" },
+    { name: "Blue Water Cafe", slug: "blue-water-cafe", cuisine: "Seafood", address: "1095 Hamilton St, Yaletown", description: "Premium seafood in Yaletown", commission_rate: 20, delivery_time: "30-45 min", is_active: true, is_open: true, rating: 4.9, image_url: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800" },
+  ];
+  const results = [];
+  for (const r of restaurants) {
+    try {
+      const existing = await pool.query("SELECT id FROM restaurants WHERE name = $1", [r.name]);
+      if (existing.rows.length > 0) { results.push({ name: r.name, status: "exists" }); continue; }
+      await pool.query("INSERT INTO restaurants (id, name, slug, cuisine_type, address, description, commission_rate, delivery_time, is_active, is_open, rating, image_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())", [uuidv4(), r.name, r.slug, r.cuisine, r.address, r.description, r.commission_rate, r.delivery_time, r.is_active, r.is_open, r.rating, r.image_url]);
+      results.push({ name: r.name, status: "created" });
+    } catch(err) { results.push({ name: r.name, status: "error", error: err.message }); }
+  }
+  res.json({ results });
+});
