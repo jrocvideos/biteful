@@ -26,7 +26,7 @@ import { CTODashboard } from './pages/CTODashboard';
 function AppInner() {
   const cart = useCart();
   const location = useLocation();
-  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto' || location.pathname.startsWith('/r/');
+  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto' || location.pathname.startsWith('/r/') || location.pathname === '/kds';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -54,6 +54,7 @@ function AppInner() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/r/:slug/orders" element={<RestaurantKDS />} />
+          <Route path="/kds" element={<RestaurantKDS />} />
           <Route path="/biz" element={<YolandaDashboard />} />
           <Route path="/cgo" element={<PeterDashboard />} />
           <Route path="/cto" element={<CTODashboard />} />
