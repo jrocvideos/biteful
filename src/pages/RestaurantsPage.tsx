@@ -23,8 +23,8 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
     });
   }, []);
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
+  const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => { const q = searchParams.get('search'); if (q) setSearchQuery(q); }, [searchParams]);
  const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
