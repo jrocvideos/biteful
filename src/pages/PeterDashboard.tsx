@@ -1,10 +1,14 @@
+import { useLiveStats } from '../hooks/useLiveStats';
 import { useState } from 'react';
+import { useLiveStats } from '../hooks/useLiveStats';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLiveStats } from '../hooks/useLiveStats';
 import {
   TrendingUp, Globe, DollarSign, Target, ChevronRight,
   BarChart2, MapPin, Users, Zap, Award, ArrowUpRight,
   CheckCircle, Clock, AlertCircle, Building2, X, Save, Plus
 } from 'lucide-react';
+import { useLiveStats } from '../hooks/useLiveStats';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
 
 const revenueData = [
@@ -82,6 +86,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
 export const PeterDashboard = () => {
   const [authed, setAuthed] = useState(false);
+  const liveStats = useLiveStats();
   const [tab, setTab] = useState<'overview'|'markets'|'partnerships'|'investor'|'roadmap'>('overview');
   const [partners, setPartners] = useState(partnerships);
   const [showAdd, setShowAdd] = useState(false);
@@ -126,9 +131,9 @@ export const PeterDashboard = () => {
         {tab==='overview' && <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { l: 'Monthly Revenue', v: '$12,000', sub: 'May 2026 — Month 1', c: 'text-teal-400', I: DollarSign },
-              { l: 'Active Restaurants', v: '43', sub: 'Vancouver pipeline', c: 'text-blue-400', I: Building2 },
-              { l: 'Active Drivers', v: '12', sub: 'Online this week', c: 'text-yellow-400', I: Users },
+              { l: 'Today Revenue', v: `$${liveStats.todayRevenue.toLocaleString()}`, sub: liveStats.connected ? '● Live' : 'Demo mode', c: 'text-teal-400', I: DollarSign },
+              { l: 'Active Restaurants', v: `${liveStats.restaurantsSigned}`, sub: 'Signed + live', c: 'text-blue-400', I: Building2 },
+              { l: 'Active Drivers', v: `${liveStats.activeDrivers}`, sub: 'Online now', c: 'text-yellow-400', I: Users },
               { l: 'Month 12 Target', v: '$350K', sub: 'On track', c: 'text-emerald-400', I: Target },
             ].map(({l,v,sub,c,I}) => (
               <div key={l} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">

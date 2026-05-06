@@ -1,11 +1,15 @@
+import { useLiveStats } from '../hooks/useLiveStats';
 import { useState, useEffect } from 'react';
+import { useLiveStats } from '../hooks/useLiveStats';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLiveStats } from '../hooks/useLiveStats';
 import {
   Terminal, Globe, GitBranch, AlertCircle, CheckCircle, Clock,
   DollarSign, Users, TrendingUp, Bike, MapPin, Package, Zap,
   BarChart2, Settings, X, ChevronRight, RefreshCw, XCircle,
   Code, Layers, Shield, Database, Cpu, Activity
 } from 'lucide-react';
+import { useLiveStats } from '../hooks/useLiveStats';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 /* ============ MOCK LIVE DATA ============ */
@@ -139,6 +143,7 @@ const SystemHealth = () => {
 /* ============ MAIN DASHBOARD ============ */
 export const CTODashboard = () => {
   const [authed, setAuthed] = useState(false);
+  const liveStats = useLiveStats();
   const [tab, setTab] = useState<'overview'|'technical'|'backlog'|'team'|'drivers'>('overview');
   const [todos, setTodos] = useState(backlog);
   const [filter, setFilter] = useState<'all'|'critical'|'high'|'medium'|'low'>('all');
@@ -170,7 +175,7 @@ export const CTODashboard = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-lg">
               <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-              <span className="text-xs text-teal-400 font-medium">All Systems Operational</span>
+              <span className="text-xs text-teal-400 font-medium">{liveStats.connected ? '● Live Data' : '○ Demo Mode'}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold">JY</div>
           </div>
@@ -188,9 +193,9 @@ export const CTODashboard = () => {
           {/* KPI row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { l: "Today's Revenue", v: '$387', c: 'text-teal-400', I: DollarSign, sub: '↑ 12% vs yesterday' },
-              { l: 'Orders Today', v: '42', c: 'text-blue-400', I: Package, sub: '3 active right now' },
-              { l: 'Active Drivers', v: '3', c: 'text-yellow-400', I: Bike, sub: '2 on delivery' },
+              { l: "Today's Revenue", v: `$${liveStats.todayRevenue.toLocaleString()}`, c: 'text-teal-400', I: DollarSign, sub: liveStats.connected ? '● Live' : 'Demo mode' },
+              { l: 'Orders Today', v: `${liveStats.totalOrders}`, c: 'text-blue-400', I: Package, sub: `${liveStats.ordersActive} active now` },
+              { l: 'Active Drivers', v: `${liveStats.activeDrivers}`, c: 'text-yellow-400', I: Bike, sub: 'GPS tracking live' },
               { l: 'Restaurants Live', v: '3', c: 'text-emerald-400', I: Globe, sub: 'Papa Johns, Blue Water, Smoke2Snack' },
             ].map(({l,v,c,I,sub}) => (
               <div key={l} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
@@ -216,6 +221,22 @@ export const CTODashboard = () => {
                 <Area type="monotone" dataKey="revenue" stroke="#0d9488" fillOpacity={1} fill="url(#rev)"/>
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Live order feed */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <h3 className="font-bold mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-teal-400"/>Live Order Feed</h3>
+            <div className="space-y-2">
+              {liveStats.recentOrders.map(o => (
+                <div key={o.id} className="flex items-center gap-3 p-3 bg-gray-800 rounded-xl">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${o.status==='incoming'?'bg-red-400 animate-pulse':o.status==='preparing'?'bg-yellow-400':o.status==='ready'?'bg-teal-400':'bg-blue-400'}`}/>
+                  <span className="text-xs font-mono text-yellow-400">{o.orderNumber}</span>
+                  <span className="text-sm flex-1">{o.customerName} · {o.restaurantName}</span>
+                  <span className="text-xs text-gray-400">{o.status}</span>
+                  <span className="text-xs font-bold text-teal-400">${o.total.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Recent commits */}

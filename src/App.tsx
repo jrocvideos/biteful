@@ -13,6 +13,9 @@ import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './lib/auth';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantKDS } from './pages/RestaurantKDS';
+import { KDSDownload } from './pages/KDSDownload';
+import { KDSDownload } from './pages/KDSDownload';
+import { KDSDownload } from './pages/KDSDownload';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
@@ -57,6 +60,9 @@ function AppInner() {
           <Route path="/cgo" element={<PeterDashboard />} />
           <Route path="/cto" element={<CTODashboard />} />
           <Route path="/driver-download" element={<DriverDownload />} />
+          <Route path="/kds-download" element={<KDSDownload />} />
+          <Route path="/kds-download" element={<KDSDownload />} />
+          <Route path="/kds-download" element={<KDSDownload />} />
           
               </Routes>
       {!isBiz && <Footer />}
