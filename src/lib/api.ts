@@ -18,6 +18,7 @@ export async function getRestaurants() {
       featured: r.is_featured || false,
       open: r.is_open,
       menu: r.menu || [],
+      slug: r.slug || r.id,
     }));
   } catch {
     return null;
