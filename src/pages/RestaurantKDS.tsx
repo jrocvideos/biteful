@@ -228,7 +228,7 @@ export const RestaurantKDS = () => {
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [connected, setConnected] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [activeTab, setActiveTab] = useState<'kitchen'|'earnings'>('kitchen');
+  const [activeTab, setActiveTab] = useState<'kitchen'|'earnings'|'advanced'>('kitchen');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const socketRef = useRef<Socket | null>(null);
 
@@ -371,6 +371,9 @@ export const RestaurantKDS = () => {
         <button onClick={() => setActiveTab('kitchen')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='kitchen' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
           🍳 Kitchen
         </button>
+        <button onClick={() => setActiveTab('advanced')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors relative ${activeTab==='advanced' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          🎉 Advanced {advanced.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full text-xs text-white flex items-center justify-center">{advanced.length}</span>}
+        </button>
         <button onClick={() => setActiveTab('earnings')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='earnings' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
           💰 Earnings
         </button>
@@ -387,13 +390,12 @@ export const RestaurantKDS = () => {
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                 <span className="font-bold text-red-400">INCOMING</span>
               </div>
-              <span className="text-2xl font-bold text-red-400">{incoming.length + advanced.length}</span>
+              <span className="text-2xl font-bold text-red-400">{incoming.length}</span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             <AnimatePresence>
               {incoming.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-              {advanced.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
             </AnimatePresence>
             {incoming.length === 0 && advanced.length === 0 && (
               <div className="flex flex-col items-center justify-center h-40 text-gray-600">
@@ -455,6 +457,50 @@ export const RestaurantKDS = () => {
       </div>
 
       }
+
+      {/* Advanced Orders Tab */}
+      {activeTab === 'advanced' && (
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {advanced.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+              <span className="text-4xl mb-3">🎉</span>
+              <p className="text-sm">No advanced orders scheduled</p>
+            </div>
+          )}
+          {advanced.map(order => (
+            <div key={order.id} className="bg-gray-900 border-2 border-purple-500/50 rounded-2xl p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-xs font-mono text-gray-400">{order.orderNumber}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-bold capitalize">{order.eventType}</span>
+                    {order.guestCount && <span className="text-xs text-gray-400">{order.guestCount} guests</span>}
+                    {order.eventDate && <span className="text-xs text-gray-400">📅 {new Date(order.eventDate).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-purple-400">${order.total.toFixed(2)}</p>
+                  <p className="text-xs text-yellow-400">${order.tip.toFixed(2)} tip</p>
+                </div>
+              </div>
+              <p className="font-bold text-lg mb-2">{order.customerName}</p>
+              <div className="space-y-1 mb-3">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-purple-800 text-white text-xs font-bold flex items-center justify-center">{item.quantity}</span>
+                    <span className="text-sm text-gray-200">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mb-3">📍 {order.address}</p>
+              <button onClick={() => handleAction(order.id, 'preparing')}
+                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">
+                🎉 Start Preparing Event Order
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Earnings Tab */}
       {activeTab === 'earnings' && (
