@@ -672,3 +672,31 @@ app.get("/api/seed-cuba-now", async (req, res) => {
   }
   res.json({ columns: colNames, results });
 });
+
+// Add slug column and set slugs for all restaurants
+app.get("/api/add-slugs", async (req, res) => {
+  try {
+    // Add slug column if not exists
+    await pool.query("ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS slug VARCHAR(255)").catch(()=>{});
+    
+    // Update slugs for all restaurants
+    const updates = [
+      ["cuba-street-food", "Cuba Street Food"],
+      ["burger-vault", "Burger Vault"],
+      ["papa-johns", "Papa Johns"],
+      ["smoke2snack", "Smoke2Snack"],
+      ["blue-water-cafe", "Blue Water Cafe"],
+      ["sakura-sushi", "Sakura Sushi"],
+      ["the-maple-table", "The Maple Table"],
+    ];
+    
+    for (const [slug, name] of updates) {
+      await pool.query("UPDATE restaurants SET slug=$1 WHERE name=$2", [slug, name]);
+    }
+    
+    const result = await pool.query("SELECT name, slug, id FROM restaurants");
+    res.json({ restaurants: result.rows });
+  } catch(e) {
+    res.json({ error: e.message });
+  }
+});
