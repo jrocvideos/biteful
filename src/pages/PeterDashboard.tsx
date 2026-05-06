@@ -1,14 +1,11 @@
 import { useLiveStats } from '../hooks/useLiveStats';
 import { useState } from 'react';
-import { useLiveStats } from '../hooks/useLiveStats';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLiveStats } from '../hooks/useLiveStats';
 import {
   TrendingUp, Globe, DollarSign, Target, ChevronRight,
   BarChart2, MapPin, Users, Zap, Award, ArrowUpRight,
   CheckCircle, Clock, AlertCircle, Building2, X, Save, Plus
 } from 'lucide-react';
-import { useLiveStats } from '../hooks/useLiveStats';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
 
 const revenueData = [

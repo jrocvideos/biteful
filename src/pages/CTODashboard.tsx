@@ -1,15 +1,12 @@
 import { useLiveStats } from '../hooks/useLiveStats';
 import { useState, useEffect } from 'react';
-import { useLiveStats } from '../hooks/useLiveStats';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLiveStats } from '../hooks/useLiveStats';
 import {
   Terminal, Globe, GitBranch, AlertCircle, CheckCircle, Clock,
   DollarSign, Users, TrendingUp, Bike, MapPin, Package, Zap,
   BarChart2, Settings, X, ChevronRight, RefreshCw, XCircle,
   Code, Layers, Shield, Database, Cpu, Activity
 } from 'lucide-react';
-import { useLiveStats } from '../hooks/useLiveStats';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 /* ============ MOCK LIVE DATA ============ */

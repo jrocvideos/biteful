@@ -14,8 +14,6 @@ import { AuthProvider } from './lib/auth';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantKDS } from './pages/RestaurantKDS';
 import { KDSDownload } from './pages/KDSDownload';
-import { KDSDownload } from './pages/KDSDownload';
-import { KDSDownload } from './pages/KDSDownload';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderTracking } from './pages/OrderTracking';
