@@ -36,12 +36,17 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
   const filtered = useMemo(() => {
     let result = [...restaurants];
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(r => 
-        r.name?.toLowerCase().includes(q) || 
-        r.cuisine?.toLowerCase().includes(q) ||
-        r.tags?.some((t: string) => t?.toLowerCase().includes(q))
-      );
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(r => {
+        const nameMatch = r.name?.toLowerCase().includes(q);
+        const cuisineMatch = r.cuisine?.toLowerCase().includes(q);
+        const tagMatch = r.tags?.some((t: string) => t?.toLowerCase().includes(q));
+        const menuMatch = r.menu?.some((item: any) => 
+          item.name?.toLowerCase().includes(q) || 
+          item.description?.toLowerCase().includes(q)
+        );
+        return nameMatch || cuisineMatch || tagMatch || menuMatch;
+      });
     }
     if (activeCategory !== 'all') {
       result = result.filter(r => r.cuisine?.toLowerCase() === activeCategory.toLowerCase());
