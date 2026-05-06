@@ -442,6 +442,34 @@ app.get("/api/stats", async (req, res) => {
   }
 });
 
+
+// ==================== SEED RESTAURANTS ====================
+app.post("/api/seed-restaurants", async (req, res) => {
+  const { secret } = req.body;
+  if (secret !== "BoufetSeed2026!") return res.status(401).json({ error: "Unauthorized" });
+  const restaurants = [
+    { name: "Cuba Street Food", slug: "cuba-street-food", cuisine: "Cuban/Latin", address: "Vancouver, BC", description: "Authentic Cuban street food — sandwiches, rice bowls, plantains", commission_rate: 20, delivery_time: "25-35 min", is_active: true, is_open: true, rating: 4.8, image_url: "https://cubastreetfood.ca/wp-content/uploads/2023/08/cropped-identidad-cuba-street-food-03_1-300x300.png" },
+    { name: "Burger Vault", slug: "burger-vault", cuisine: "American", address: "Yaletown, Vancouver", description: "Smash burgers, truffle fries, craft shakes", commission_rate: 20, delivery_time: "20-30 min", is_active: true, is_open: true, rating: 4.7, image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800" },
+    { name: "Papa Johns", slug: "papa-johns", cuisine: "Pizza", address: "Near UBC, Vancouver", description: "Fresh pizza delivered hot", commission_rate: 20, delivery_time: "30-40 min", is_active: true, is_open: true, rating: 4.3, image_url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" },
+    { name: "Smoke2Snack", slug: "smoke2snack", cuisine: "Vape & Convenience", address: "Olympic Village, Vancouver", description: "Vape, snacks and convenience delivered fast", commission_rate: 20, delivery_time: "15-25 min", is_active: true, is_open: true, rating: 4.5, image_url: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800" },
+    { name: "Blue Water Cafe", slug: "blue-water-cafe", cuisine: "Seafood", address: "1095 Hamilton St, Yaletown", description: "Premium seafood in the heart of Yaletown", commission_rate: 20, delivery_time: "30-45 min", is_active: true, is_open: true, rating: 4.9, image_url: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800" },
+    { name: "Sakura Sushi", slug: "sakura-sushi", cuisine: "Japanese", address: "Downtown Vancouver", description: "Fresh sushi and Japanese cuisine", commission_rate: 20, delivery_time: "25-35 min", is_active: true, is_open: true, rating: 4.6, image_url: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800" },
+  ];
+  const results = [];
+  for (const r of restaurants) {
+    try {
+      const existing = await pool.query("SELECT id FROM restaurants WHERE name = $1", [r.name]);
+      if (existing.rows.length > 0) { results.push({ name: r.name, status: "exists", id: existing.rows[0].id }); continue; }
+      const result = await pool.query(
+        "INSERT INTO restaurants (id, name, slug, cuisine_type, address, description, commission_rate, delivery_time, is_active, is_open, rating, image_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW()) RETURNING id",
+        [uuidv4(), r.name, r.slug, r.cuisine, r.address, r.description, r.commission_rate, r.delivery_time, r.is_active, r.is_open, r.rating, r.image_url]
+      );
+      results.push({ name: r.name, status: "created", id: result.rows[0].id });
+    } catch(err) { results.push({ name: r.name, status: "error", error: err.message }); }
+  }
+  res.json({ results });
+});
+
 // ==================== RESTAURANT SIGNUP ====================
 app.post("/api/restaurant/apply", async (req, res) => {
   const { restaurantName, ownerName, email, phone, address, cuisine, avgMonthlyOrders, message } = req.body;
