@@ -212,23 +212,20 @@ app.post("/api/orders", auth, async (req, res) => {
 
     // Emit to KDS immediately — don't wait for payment confirmation
     // Emit globally for dashboards
-    io.emit("new_order", {
-      type: "new_order",
+    const orderPayload = {
+      id: orderId,
       order_id: orderId,
+      type: "new_order",
       restaurant_id: restaurant_id,
       customer_name: req.user?.first_name || "Customer",
       total: total,
+      tip: tip,
+      customer_address: customer_address,
       delivery_type: req.body.delivery_type || "asap",
-    });
-    // Emit to specific restaurant room
-    io.to(`restaurant:${restaurant_id}`).emit("new_order", {
-      type: "new_order",
-      order_id: orderId,
-      restaurant_id: restaurant_id,
-      customer_name: req.user?.first_name || "Customer",
-      total: total,
-      delivery_type: req.body.delivery_type || "asap",
-    });
+      is_express: (req.body.delivery_type === "asap"),
+    };
+    io.emit("new_order", orderPayload);
+    io.to(`restaurant:${restaurant_id}`).emit("new_order", orderPayload);
 
     // Also emit to admin dashboards
     io.emit("order_update", {
