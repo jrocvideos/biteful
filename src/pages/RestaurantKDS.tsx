@@ -16,6 +16,16 @@ const RESTAURANT_NAMES: Record<string, string> = {
   'smoke2snack': 'Smoke2Snack',
   'blue-water-cafe': 'Blue Water Cafe',
   'sakura-sushi': 'Sakura Sushi',
+  'cuba-street-food': 'Cuba Street Food',
+};
+
+const RESTAURANT_IDS: Record<string, string> = {
+  'burger-vault': 'cb8b55eb-118b-4895-9277-93847a329533',
+  'papa-johns': '5a3ac06e-7a5d-4e5c-ba4c-4dac89a2e79d',
+  'smoke2snack': 'a93bbf8f-4895-4908-8a71-87d390989300',
+  'blue-water-cafe': 'ec544790-3d6b-4fb8-97ab-bc4725271e75',
+  'sakura-sushi': '8eaf9ff4-2f47-4ac5-a2b2-f76860b4f6c6',
+  'cuba-street-food': 'bd67f62d-cdd9-4541-b6cd-d140be14fe1a',
 };
 
 type OrderStatus = 'incoming' | 'preparing' | 'ready' | 'processed' | 'cancelled' | 'advanced';
@@ -251,7 +261,8 @@ export const RestaurantKDS = () => {
 
     socket.on('connect', () => {
       setConnected(true);
-      socket.emit('join_restaurant', slug);
+      const restaurantId = RESTAURANT_IDS[slug || ''] || slug || 'restaurant_1';
+      socket.emit('join_restaurant', restaurantId);
     });
 
     socket.on('disconnect', () => setConnected(false));
