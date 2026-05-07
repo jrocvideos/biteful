@@ -788,3 +788,25 @@ app.get("/api/check-orders-schema", async (req, res) => {
   const cols = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='orders' ORDER BY ordinal_position");
   res.json({ columns: cols.rows.map(r => r.column_name) });
 });
+
+// Get active orders for a restaurant
+app.get("/api/restaurants/:id/active-orders", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT o.*, 
+        json_agg(json_build_object('id', oi.id, 'name', mi.name, 'quantity', oi.quantity, 'unit_price', oi.unit_price)) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON oi.order_id = o.id
+       LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+       WHERE o.restaurant_id = $1 
+       AND o.status NOT IN ('delivered', 'cancelled')
+       AND o.created_at > NOW() - INTERVAL '12 hours'
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch(e) {
+    res.json([]);
+  }
+});
