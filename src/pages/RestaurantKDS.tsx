@@ -256,7 +256,7 @@ export const RestaurantKDS = () => {
 
   // Socket.io connection
   useEffect(() => {
-    const socket = io(API_URL, { transports: ['websocket'], reconnection: true });
+    const socket = io(API_URL, { transports: ['polling', 'websocket'], reconnection: true });
     socketRef.current = socket;
 
     socket.on('connect', () => {

@@ -47,7 +47,7 @@ export const useLiveStats = () => {
       .then(data => setStats(prev => ({ ...prev, totalOrders: data.total_orders ?? prev.totalOrders, todayRevenue: data.today_revenue ?? prev.todayRevenue, activeDrivers: data.active_drivers ?? prev.activeDrivers, restaurantsSigned: data.restaurants_signed ?? prev.restaurantsSigned, ordersActive: data.orders_active ?? prev.ordersActive, ordersReady: data.orders_ready ?? prev.ordersReady, lastUpdate: new Date() })))
       .catch(() => {});
 
-    const socket = io(API_URL, { transports: ['websocket'], reconnection: true });
+    const socket = io(API_URL, { transports: ['polling', 'websocket'], reconnection: true });
     socketRef.current = socket;
 
     socket.on('connect', () => { setStats(prev => ({ ...prev, connected: true })); socket.emit('join_admin'); });
