@@ -775,3 +775,8 @@ app.get("/api/seed-papajohns-menu", async (req, res) => {
   }
   res.json({ results });
 });
+
+app.get("/api/check-orders-schema", async (req, res) => {
+  const cols = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='orders' ORDER BY ordinal_position");
+  res.json({ columns: cols.rows.map(r => r.column_name) });
+});
