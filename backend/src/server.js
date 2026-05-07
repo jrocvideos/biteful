@@ -746,3 +746,32 @@ app.get("/api/add-slugs", async (req, res) => {
     res.json({ error: e.message });
   }
 });
+
+app.get("/api/seed-papajohns-menu", async (req, res) => {
+  const rid = "5a3ac06e-7a5d-4e5c-ba4c-4dac89a2e79d";
+  const items = [
+    ["Pepperoni Pizza", "Classic pepperoni with mozzarella on our fresh dough.", 18.99, "Pizza", true],
+    ["BBQ Chicken Pizza", "Grilled chicken, BBQ sauce, red onions, mozzarella.", 20.99, "Pizza", true],
+    ["Veggie Supreme Pizza", "Bell peppers, mushrooms, onions, olives, tomatoes.", 17.99, "Pizza", false],
+    ["Cheese Pizza", "Pure mozzarella on our signature tomato sauce.", 15.99, "Pizza", false],
+    ["Meat Lovers Pizza", "Pepperoni, sausage, beef, bacon on our fresh dough.", 22.99, "Pizza", true],
+    ["Garlic Breadsticks", "Fresh baked breadsticks with garlic butter.", 7.99, "Sides", true],
+    ["Chicken Wings", "8 crispy wings with your choice of sauce.", 12.99, "Sides", true],
+    ["Caesar Salad", "Romaine, parmesan, croutons, caesar dressing.", 8.99, "Sides", false],
+    ["Cinnamon Pulls", "Sweet cinnamon pull-apart bread with icing.", 6.99, "Desserts", false],
+    ["2L Pop", "Your choice of Pepsi, Diet Pepsi, or 7UP.", 3.99, "Drinks", false],
+  ];
+  const results = [];
+  for (const [name, desc, price, cat, popular] of items) {
+    try {
+      const ex = await pool.query("SELECT id FROM menu_items WHERE restaurant_id=$1 AND name=$2", [rid, name]);
+      if (ex.rows.length > 0) { results.push({ name, status: "exists" }); continue; }
+      await pool.query(
+        "INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_popular, is_available) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+        [uuidv4(), rid, name, desc, price, cat, popular, true]
+      );
+      results.push({ name, status: "created" });
+    } catch(e) { results.push({ name, status: "error", error: e.message }); }
+  }
+  res.json({ results });
+});
