@@ -16,7 +16,13 @@ const { Pool } = pkg;
 const app = express();
 export { app, pool, io };
 const httpServer = createServer(app);
-const io = new Server(httpServer, { cors: { origin: "*" } });
+const io = new Server(httpServer, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
+  transports: ["polling", "websocket"],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
 
