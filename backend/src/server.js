@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import pkg from "pg";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -10,7 +12,6 @@ import nodemailer from "nodemailer";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-dotenv.config();
 const { Pool } = pkg;
 const app = express();
 export { app, pool, io };
@@ -202,7 +203,17 @@ app.post("/api/orders", auth, async (req, res) => {
     await client.query("COMMIT");
 
     // Emit to KDS immediately — don't wait for payment confirmation
+    // Emit globally for dashboards
     io.emit("new_order", {
+      type: "new_order",
+      order_id: orderId,
+      restaurant_id: restaurant_id,
+      customer_name: req.user?.first_name || "Customer",
+      total: total,
+      delivery_type: req.body.delivery_type || "asap",
+    });
+    // Emit to specific restaurant room
+    io.to(`restaurant:${restaurant_id}`).emit("new_order", {
       type: "new_order",
       order_id: orderId,
       restaurant_id: restaurant_id,
@@ -268,8 +279,8 @@ app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
       [req.params.id]
     );
     
-    // Emit to restaurant room only
-    io.to(`restaurant:${order.restaurant_id}`).emit("order:new", {
+    // Emit to restaurant room
+    io.to(`restaurant:${order.restaurant_id}`).emit("new_order", {
       id: order.id,
       orderNumber: order.order_number || `ORD-${order.id}`,
       customerName: order.customer_name || "Customer",
