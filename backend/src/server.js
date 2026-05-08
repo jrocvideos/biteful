@@ -790,15 +790,17 @@ app.get("/api/check-orders-schema", async (req, res) => {
 app.get("/api/restaurants/:id/active-orders", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT o.*, 
+      `SELECT o.*,
+        COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name,
         json_agg(json_build_object('id', oi.id, 'name', mi.name, 'quantity', oi.quantity, 'unit_price', oi.unit_price)) as items
        FROM orders o
+       LEFT JOIN users u ON u.id = o.customer_id
        LEFT JOIN order_items oi ON oi.order_id = o.id
        LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
-       WHERE o.restaurant_id = $1 
+       WHERE o.restaurant_id = $1
        AND o.status NOT IN ('delivered', 'cancelled')
        AND o.created_at > NOW() - INTERVAL '12 hours'
-       GROUP BY o.id
+       GROUP BY o.id, u.first_name, u.last_name
        ORDER BY o.created_at DESC`,
       [req.params.id]
     );
