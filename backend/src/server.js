@@ -20,10 +20,11 @@ const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
   transports: ["polling", "websocket"],
   allowEIO3: true,
-  pingTimeout: 30000,
-  pingInterval: 10000,
-  upgradeTimeout: 30000,
+  pingTimeout: 20000,
+  pingInterval: 5000,
+  upgradeTimeout: 10000,
   httpCompression: false,
+  maxHttpBufferSize: 1e6,
 });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
