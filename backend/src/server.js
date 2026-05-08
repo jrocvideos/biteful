@@ -392,7 +392,7 @@ app.post("/api/drivers/location", auth, async (req, res) => {
 });
 
 // Driver status updates
-app.post("/api/orders/:id/status", auth, async (req, res) => {
+app.post("/api/orders/:id/status", async (req, res) => {
   const { status } = req.body;
   const validStatuses = ['driver_at_restaurant','picked_up','en_route_to_customer','arrived','delivered'];
   
