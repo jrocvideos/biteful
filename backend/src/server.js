@@ -810,3 +810,20 @@ app.get("/api/restaurants/:id/active-orders", async (req, res) => {
     res.json([]);
   }
 });
+cd ~/Documents/biteful/backend
+cat >> src/server.js << 'EOF'
+
+app.get("/api/all-orders-debug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT o.id, o.total, o.status, o.restaurant_id, o.created_at,
+        r.name as restaurant_name,
+        COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name
+       FROM orders o
+       LEFT JOIN restaurants r ON r.id = o.restaurant_id
+       LEFT JOIN users u ON u.id = o.customer_id
+       ORDER BY o.created_at DESC LIMIT 20`
+    );
+    res.json(result.rows);
+  } catch(e) { res.json({ error: e.message }); }
+});
