@@ -800,7 +800,7 @@ app.get("/api/restaurants/:id/active-orders", async (req, res) => {
        LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
        WHERE o.restaurant_id = $1
        AND o.status NOT IN ('delivered', 'cancelled')
-       AND o.created_at > NOW() - INTERVAL '12 hours'
+       AND o.created_at > NOW() - INTERVAL '24 hours'
        GROUP BY o.id, u.first_name, u.last_name
        ORDER BY o.created_at DESC`,
       [req.params.id]
