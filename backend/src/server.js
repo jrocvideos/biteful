@@ -810,8 +810,6 @@ app.get("/api/restaurants/:id/active-orders", async (req, res) => {
     res.json([]);
   }
 });
-cd ~/Documents/biteful/backend
-cat >> src/server.js << 'EOF'
 
 app.get("/api/all-orders-debug", async (req, res) => {
   try {
