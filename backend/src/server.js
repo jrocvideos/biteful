@@ -396,7 +396,7 @@ app.post("/api/orders/:id/status", async (req, res) => {
   const kdsSecret = req.headers["x-kds-secret"];
   const hasAuth = req.headers["authorization"];
   if (!kdsSecret && !hasAuth) return res.status(401).json({ error: "Unauthorized" });
-  if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026!")) return res.status(401).json({ error: "Invalid KDS secret" });
+  if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026")) return res.status(401).json({ error: "Invalid KDS secret" });
   const { status } = req.body;
   const validStatuses = ['driver_at_restaurant','picked_up','en_route_to_customer','arrived','delivered'];
   
