@@ -393,16 +393,22 @@ app.post("/api/drivers/location", auth, async (req, res) => {
 
 // Driver status updates
 app.post("/api/orders/:id/status", async (req, res) => {
+  const kdsSecret = req.headers["x-kds-secret"];
+  const hasAuth = req.headers["authorization"];
+  if (!kdsSecret && !hasAuth) return res.status(401).json({ error: "Unauthorized" });
+  if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026!")) return res.status(401).json({ error: "Invalid KDS secret" });
   const { status } = req.body;
   const validStatuses = ['driver_at_restaurant','picked_up','en_route_to_customer','arrived','delivered'];
   
   try {
-    let query = "UPDATE orders SET status = ";
-    const params = [status];
-    if (status === 'picked_up') query += ", picked_up_at = NOW()";
-    if (status === 'delivered') query += ", delivered_at = NOW()";
-    query += " WHERE id = $" + (params.length + 1);
-    params.push(req.params.id);
+    let query = "UPDATE orders SET status = $1";
+    const params = [status, req.params.id];
+    if (status === 'picked_up') query = "UPDATE orders SET status = $1, picked_up_at = NOW() WHERE id = $2";
+    else if (status === 'delivered') query = "UPDATE orders SET status = $1, delivered_at = NOW() WHERE id = $2";
+    else if (status === 'preparing') query = "UPDATE orders SET status = $1, accepted_at = NOW() WHERE id = $2";
+    else if (status === 'ready') query = "UPDATE orders SET status = $1 WHERE id = $2";
+    else if (status === 'cancelled') query = "UPDATE orders SET status = $1, cancelled_at = NOW() WHERE id = $2";
+    else query = "UPDATE orders SET status = $1 WHERE id = $2";
     
     await pool.query(query, params);
     
@@ -800,7 +806,7 @@ app.get("/api/restaurants/:id/active-orders", async (req, res) => {
        LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
        WHERE o.restaurant_id = $1
        AND o.status NOT IN ('delivered', 'cancelled')
-       AND o.created_at > NOW() - INTERVAL '24 hours'
+       AND DATE(o.created_at) = CURRENT_DATE
        GROUP BY o.id, u.first_name, u.last_name
        ORDER BY o.created_at DESC`,
       [req.params.id]
