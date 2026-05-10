@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Star, Clock, MapPin, Bike, ChevronDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getRestaurants } from '../lib/api';
+import { categories } from '../data/restaurants';
 import { MenuItem } from '../types';
 
 interface RestaurantsPageProps {
