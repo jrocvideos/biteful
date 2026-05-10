@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Star, Clock, MapPin, Bike, ChevronDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { restaurants as mockRestaurants, categories } from '../data/restaurants';
 import { getRestaurants } from '../lib/api';
 import { MenuItem } from '../types';
 
@@ -13,12 +12,12 @@ interface RestaurantsPageProps {
 type SortOption = 'recommended' | 'rating' | 'delivery_time' | 'distance';
 
 export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
-  const [restaurants, setRestaurants] = useState<any[]>(mockRestaurants);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
 
   useEffect(() => {
     getRestaurants().then(data => {
       if (data && data.length > 0) {
-        setRestaurants([...mockRestaurants, ...data.filter((r: any) => !mockRestaurants.find(m => m.name === r.name))]);
+        setRestaurants(data);
       }
     });
   }, []);
