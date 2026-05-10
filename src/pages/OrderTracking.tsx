@@ -31,16 +31,36 @@ export const OrderTracking = () => {
   }, [id]);
 
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setStatus('preparing'), 3000),
-      setTimeout(() => setStatus('ready'), 6000),
-      setTimeout(() => setStatus('picked_up'), 9000),
-      setTimeout(() => setStatus('en_route'), 12000),
-      setTimeout(() => setStatus('arriving'), 18000),
-      setTimeout(() => { setStatus('delivered'); setShowRating(true); }, 24000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
+    if (!id) return;
+    // Poll real order status from backend every 5 seconds
+    const fetchStatus = () => {
+      fetch(`https://api.boufet.com/api/orders/${id}/track`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.status) {
+            const statusMap: Record<string, OrderStatus> = {
+              'pending_payment': 'confirmed',
+              'paid': 'confirmed',
+              'confirmed': 'confirmed',
+              'preparing': 'preparing',
+              'ready_for_pickup': 'ready',
+              'ready': 'ready',
+              'picked_up': 'picked_up',
+              'en_route_to_customer': 'en_route',
+              'arrived': 'arriving',
+              'delivered': 'delivered',
+            };
+            const mapped = statusMap[data.status] || 'confirmed';
+            setStatus(mapped);
+            if (mapped === 'delivered') setShowRating(true);
+          }
+        })
+        .catch(() => {});
+    };
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
 
   useEffect(() => {
     if (status === 'delivered' && !savedToHistory && orderData) {
