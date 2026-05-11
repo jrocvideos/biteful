@@ -95,6 +95,8 @@ export const DriverApp = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [jobs, setJobs] = useState<DeliveryJob[]>(initialJobs);
   const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
+  const [waitSeconds, setWaitSeconds] = useState(0);
+  const waitIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [earnings, setEarnings] = useState({ today: 87.50, week: 693, trips: 45, rating: 4.92 });
   const [preferences, setPreferences] = useState({ vapeDelivery: false, cashOnDelivery: false });
@@ -116,16 +118,99 @@ export const DriverApp = () => {
     return () => { navigator.geolocation.clearWatch(watchId); socket.disconnect(); };
   }, [isOnline]);
 
-  const acceptJob = (id: string) => {
+  // Listen for real job offers from backend
+  useEffect(() => {
+    if (!isOnline) return;
+    const socket = io("https://api.boufet.com", { transports: ["websocket"] });
+    socket.emit("driver_online", {
+      driver_id: localStorage.getItem("driver_id") || "drv_anon",
+      vehicle_type: "car"
+    });
+    socket.on("new_job", (job: DeliveryJob) => {
+      setJobs(prev => [...prev, { ...job, status: "available" as const }]);
+    });
+    socket.on("job_reassigned", (job: DeliveryJob) => {
+      setJobs(prev => [...prev, { ...job, status: "available" as const, reassigned: true }]);
+    });
+    socket.on("job_taken", (jobId: string) => {
+      setJobs(prev => prev.filter(j => j.id !== jobId));
+    });
+    return () => { socket.disconnect(); };
+  }, [isOnline]);
+
+  const acceptJob = async (id: string) => {
     const job = jobs.find(j => j.id === id);
-    if (job) { setActiveJob({ ...job, status: "accepted" }); setJobs(jobs.map(j => j.id === id ? { ...j, status: "accepted" as const } : j)); }
+    if (!job) return;
+    try {
+      const res = await fetch(`https://api.boufet.com/api/orders/${id}/driver-accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driver_id: localStorage.getItem("driver_id") || "drv_anon",
+          accepted_at: new Date().toISOString()
+        })
+      });
+      if (!res.ok) throw new Error("Failed to accept job");
+      setActiveJob({ ...job, status: "accepted" });
+      setJobs(jobs.map(j => j.id === id ? { ...j, status: "accepted" as const } : j));
+      // Start wait timer
+      setWaitSeconds(0);
+      if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+      waitIntervalRef.current = setInterval(() => {
+        setWaitSeconds(s => s + 1);
+      }, 1000);
+    } catch (err) {
+      alert("Could not accept job — another driver may have taken it.");
+      setJobs(prev => prev.filter(j => j.id !== id));
+    }
   };
-  const declineJob = (id: string) => setJobs(jobs.filter(j => j.id !== id));
-  const updateJobStatus = (status: DeliveryJob["status"]) => {
+  const declineJob = async (id: string) => {
+    try {
+      await fetch(`https://api.boufet.com/api/orders/${id}/driver-decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driver_id: localStorage.getItem("driver_id") || "drv_anon",
+          declined_at: new Date().toISOString()
+        })
+      });
+    } catch (e) {}
+    setJobs(jobs.filter(j => j.id !== id));
+  };
+  const updateJobStatus = async (status: DeliveryJob["status"]) => {
     if (!activeJob) return;
     const updated = { ...activeJob, status };
     setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
-    if (status === "delivered") { setEarnings(e => ({ ...e, today: e.today + activeJob.earnings + activeJob.tip, trips: e.trips + 1 })); setActiveJob(null); }
+
+    if (status === "picked-up") {
+      // Stop wait timer, calculate wait fee
+      if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+      const waitMinutes = Math.ceil(waitSeconds / 60);
+      const waitFee = waitMinutes > 5 ? (waitMinutes - 5) * 0.50 : 0;
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "out_for_delivery",
+          picked_up_at: new Date().toISOString(),
+          wait_minutes: waitMinutes,
+          wait_fee: waitFee
+        })
+      });
+    }
+
+    if (status === "delivered") {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "delivered",
+          delivered_at: new Date().toISOString()
+        })
+      });
+      setEarnings(e => ({ ...e, today: e.today + activeJob.earnings + activeJob.tip, trips: e.trips + 1 }));
+      setActiveJob(null);
+    }
   };
 
   const availableJobs = jobs.filter(j => j.status === "available");
@@ -232,6 +317,20 @@ export const DriverApp = () => {
                     <p className="font-bold text-sm">{activeJob.customer}</p><p className={`text-xs ${muted}`}>{activeJob.customerAddress}</p>
                   </div>
                   <div className="text-right"><p className="font-bold text-teal-400">${(activeJob.earnings + activeJob.tip).toFixed(2)}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
+                </div>
+                <div className="mb-3">
+                  {activeJob.status === "accepted" && (
+                    <div className="p-2 bg-yellow-900/30 border border-yellow-600 rounded-lg mb-2">
+                      <p className="text-yellow-400 text-sm font-bold">
+                        Wait time: {Math.floor(waitSeconds / 60)}m {waitSeconds % 60}s
+                      </p>
+                      {waitSeconds > 300 && (
+                        <p className="text-green-400 text-xs">
+                          +${((Math.ceil(waitSeconds / 60) - 5) * 0.50).toFixed(2)} wait fee earning
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {activeJob.status === "accepted" && <><button onClick={() => updateJobStatus("arrived-restaurant")} className="py-3 rounded-xl bg-teal-600 text-white font-bold text-sm">Arrived at Restaurant</button><a href={`tel:${activeJob.phone}`} className="py-3 rounded-xl bg-gray-700 text-white font-bold text-sm flex items-center justify-center gap-1"><Phone className="w-4 h-4" />Call</a></>}
