@@ -611,6 +611,152 @@ initIvrs(app);
 
 // ==================== START ====================
 const PORT = process.env.PORT || 3001;
+
+
+// ════════════════════════════════════════════════════════════
+// DRIVER SOCKET & REST ENDPOINTS — Added May 2026
+// ════════════════════════════════════════════════════════════
+
+const onlineDrivers = new Map();
+const activeOrders = new Map();
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('driver_online', (data) => {
+    const { driver_id, vehicle_type, lat, lng } = data || {};
+    onlineDrivers.set(socket.id, { driver_id, vehicle_type, lat, lng, socket });
+    console.log('Driver ' + driver_id + ' online. Total: ' + onlineDrivers.size);
+    socket.join('drivers_online');
+  });
+
+  socket.on('driver_location', (coords) => {
+    const driver = onlineDrivers.get(socket.id);
+    if (driver) { driver.lat = coords.lat; driver.lng = coords.lng; }
+  });
+
+  socket.on('disconnect', () => {
+    onlineDrivers.delete(socket.id);
+    console.log('Socket ' + socket.id + ' disconnected. Drivers left: ' + onlineDrivers.size);
+  });
+});
+
+app.post('/api/orders/:id/ready-for-pickup', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    const order = orderResult.rows[0];
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    await pool.query('UPDATE orders SET status = $1 WHERE id = $2', ['ready', orderId]);
+    io.emit('order_update', { order_id: orderId, status: 'ready', message: 'Ready for Pickup' });
+
+    if (order.order_type === 'delivery' || !order.order_type) {
+      const jobPayload = {
+        id: orderId,
+        restaurant: order.restaurant_name || 'Restaurant',
+        restaurantAddress: order.restaurant_address || '',
+        restaurantLat: order.restaurant_lat || 49.2827,
+        restaurantLng: order.restaurant_lng || -123.1207,
+        customer: order.customer_name || 'Customer',
+        customerAddress: order.customer_address || '',
+        customerLat: order.customer_lat || 49.2827,
+        customerLng: order.customer_lng || -123.1207,
+        distance: '2.3 km',
+        earnings: 8.50,
+        tip: order.tip || 0,
+        total: order.total || 0,
+        status: 'available'
+      };
+      activeOrders.set(orderId, jobPayload);
+      io.to('drivers_online').emit('new_job', jobPayload);
+      console.log('Emitted new_job for ' + orderId + ' to ' + onlineDrivers.size + ' drivers');
+    }
+
+    res.json({ success: true, status: 'ready', drivers_notified: onlineDrivers.size });
+  } catch (err) {
+    console.error('ready-for-pickup error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/orders/:id/driver-accept', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { driver_id, accepted_at } = req.body;
+    
+    const orderResult = await pool.query('SELECT status FROM orders WHERE id = $1', [orderId]);
+    const order = orderResult.rows[0];
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.status === 'driver_assigned') return res.status(409).json({ error: 'Already taken' });
+
+    await pool.query(
+      'UPDATE orders SET status = $1, driver_id = $2, driver_accepted_at = $3 WHERE id = $4',
+      ['driver_assigned', driver_id, accepted_at, orderId]
+    );
+
+    io.emit('job_taken', orderId);
+    io.emit('order_update', { order_id: orderId, status: 'driver_assigned', message: 'Driver is on the way', driver_id });
+    activeOrders.delete(orderId);
+
+    res.json({ success: true, status: 'driver_assigned' });
+  } catch (err) {
+    console.error('driver-accept error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/orders/:id/driver-decline', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { driver_id, declined_at } = req.body;
+    console.log('Driver ' + driver_id + ' declined ' + orderId + ' at ' + declined_at);
+    
+    const orderResult = await pool.query('SELECT status FROM orders WHERE id = $1', [orderId]);
+    const order = orderResult.rows[0];
+    if (order && order.status === 'ready' && activeOrders.has(orderId)) {
+      setTimeout(() => {
+        io.to('drivers_online').emit('job_reassigned', activeOrders.get(orderId));
+        console.log('Reassigned order ' + orderId);
+      }, 5000);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('driver-decline error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/orders/:id/status', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { status, picked_up_at, delivered_at, wait_minutes, wait_fee } = req.body;
+    
+    await pool.query('UPDATE orders SET status = $1 WHERE id = $2', [status, orderId]);
+    
+    if (picked_up_at) {
+      await pool.query('UPDATE orders SET picked_up_at = $1, wait_minutes = $2, wait_fee = $3 WHERE id = $4',
+        [picked_up_at, wait_minutes || 0, wait_fee || 0, orderId]);
+    }
+    if (delivered_at) {
+      await pool.query('UPDATE orders SET delivered_at = $1 WHERE id = $2', [delivered_at, orderId]);
+    }
+
+    const msgMap = { 'out_for_delivery': 'Out for delivery', 'delivered': 'Delivered!' };
+    io.emit('order_update', { order_id: orderId, status, message: msgMap[status] || status, wait_fee: wait_fee || 0 });
+    
+    if (status === 'delivered') {
+      const revResult = await pool.query('SELECT total FROM orders WHERE id = $1', [orderId]);
+      io.emit('dashboard_update', { type: 'order_status_change', order_id: orderId, status, revenue: revResult.rows[0]?.total || 0 });
+    }
+
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error('status update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 httpServer.listen(PORT, () => {
   console.log(`Boufet API running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);

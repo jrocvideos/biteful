@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Vonage } from '@vonage/server-sdk';
 import { createClient } from '@supabase/supabase-js';
 
