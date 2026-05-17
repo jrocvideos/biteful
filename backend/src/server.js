@@ -389,11 +389,11 @@ app.post("/api/drivers/location", async (req, res) => {
   try {
     await pool.query(
       "INSERT INTO driver_locations (driver_id, lat, lng, is_online, updated_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4, updated_at=NOW()",
-      [req.user.id, lat, lng, is_online]
+      [driver_id, lat, lng, is_online]
     );
     
     // Check if driver has active order
-    const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id =  AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [req.user.id]);
+    const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id = $1 AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [driver_id]);
     if (orderResult.rows.length > 0) {
       const orderId = orderResult.rows[0].id;
       await pool.query("UPDATE orders SET driver_lat = $1, driver_lng = $2 WHERE id = $3", [lat, lng, orderId]);
