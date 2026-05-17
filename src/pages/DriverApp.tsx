@@ -334,7 +334,7 @@ export const DriverApp = () => {
                 className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"} border rounded-2xl p-4 mb-3`}>
                 <div className="flex justify-between mb-2">
                   <div><p className="font-bold">{job.restaurant}</p><p className={`text-xs ${muted}`}>{job.distance} · {job.timeLeft} to accept</p></div>
-                  <div className="text-right"><p className="font-bold text-teal-400 text-lg">${(job.earnings + job.tip).toFixed(2)}</p><p className={`text-xs ${muted}`}>${Number(job.earnings || 0).toFixed(2)} + ${Number(job.tip || 0).toFixed(2)} tip</p></div>
+                  <div className="text-right"><p className="font-bold text-teal-400 text-lg">${(Number(job.earnings || 0) + Number(job.tip || 0)).toFixed(2)}</p><p className={`text-xs ${muted}`}>${Number(job.earnings || 0).toFixed(2)} + ${Number(job.tip || 0).toFixed(2)} tip</p></div>
                 </div>
                 <p className={`text-xs ${muted} mb-3`}>{job.customer} · {job.customerAddress}</p>
                 <div className="flex gap-2">
