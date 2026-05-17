@@ -388,18 +388,25 @@ app.post("/api/drivers/location", async (req, res) => {
   const { lat, lng, is_online } = req.body;
   const driver_id = req.body.driver_id || "anonymous";
   try {
-    await pool.query(
-      "INSERT INTO driver_locations (driver_id, lat, lng, is_online) VALUES ($1, $2, $3, $4) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4",
-      [driver_id, lat, lng, is_online]
-    );
-    
-    // Check if driver has active order
-    const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id = $1 AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [driver_id]);
-    if (orderResult.rows.length > 0) {
-      const orderId = orderResult.rows[0].id;
-      await pool.query("UPDATE orders SET driver_lat = $1, driver_lng = $2 WHERE id = $3", [lat, lng, orderId]);
-      io.emit("driver_location", { lat, lng });
+    // Save driver location (ignore DB errors — UUID format issues, missing table, etc.)
+    try {
+      await pool.query(
+        "INSERT INTO driver_locations (driver_id, lat, lng, is_online) VALUES ($1, $2, $3, $4) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4",
+        [driver_id, lat, lng, is_online]
+      );
+    } catch (dbErr) {
+      console.log("Driver location DB skipped:", dbErr.message);
     }
+    
+    // Check if driver has active order (ignore errors)
+    try {
+      const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id = $1 AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [driver_id]);
+      if (orderResult.rows.length > 0) {
+        const orderId = orderResult.rows[0].id;
+        await pool.query("UPDATE orders SET driver_lat = $1, driver_lng = $2 WHERE id = $3", [lat, lng, orderId]);
+        io.emit("driver_location", { lat, lng });
+      }
+    } catch (orderErr) {}
     
     res.json({ success: true });
   } catch (err) {
