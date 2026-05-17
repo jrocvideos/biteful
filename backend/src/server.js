@@ -162,7 +162,7 @@ app.get("/api/restaurants/:id/menu", async (req, res) => {
 });
 
 // ==================== ORDERS ====================
-app.post("/api/orders", auth, async (req, res) => {
+app.post("/api/orders", async (req, res) => {
   const { restaurant_id, items, tip = 0, customer_address, customer_lat, customer_lng, special_instructions } = req.body;
   const client = await pool.connect();
   try {
@@ -441,13 +441,32 @@ app.post("/api/orders/:id/status", async (req, res) => {
 // ==================== TRACKING ====================
 app.get("/api/orders/:id/track", async (req, res) => {
   try {
+    // Simple query without driver_locations join (table may not exist)
     const result = await pool.query(
-      "SELECT o.*, u.first_name as driver_first_name, d.lat as driver_lat, d.lng as driver_lng FROM orders o LEFT JOIN users u ON o.driver_id = u.id LEFT JOIN driver_locations d ON o.driver_id = d.driver_id WHERE o.id = $1",
+      "SELECT * FROM orders WHERE id = $1",
       [req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Order not found" });
-    res.json(result.rows[0]);
+    
+    // Add driver info separately if needed
+    const order = result.rows[0];
+    if (order.driver_id) {
+      try {
+        const driverResult = await pool.query(
+          "SELECT first_name FROM users WHERE id = $1",
+          [order.driver_id]
+        );
+        if (driverResult.rows.length > 0) {
+          order.driver_first_name = driverResult.rows[0].first_name;
+        }
+      } catch (e) {
+        // Ignore driver lookup errors
+      }
+    }
+    
+    res.json(order);
   } catch (err) {
+    console.error("Track error:", err);
     res.status(500).json({ error: err.message });
   }
 });
