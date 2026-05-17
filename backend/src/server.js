@@ -349,7 +349,22 @@ async function matchDriver(orderId) {
       const driver = driverResult.rows[0];
       await pool.query("UPDATE orders SET driver_id = $1, status = 'driver_assigned' WHERE id = $2", [driver.driver_id, orderId]);
       await pool.query("UPDATE driver_locations SET is_on_delivery = true WHERE driver_id = $1", [driver.driver_id]);
-      io.emit("driver_update", { type: "new_job", order_id: orderId });
+      // Emit new_job to all online drivers
+    const orderDetails = await pool.query(
+      `SELECT o.*, r.name as restaurant_name, r.address as restaurant_address 
+       FROM orders o JOIN restaurants r ON r.id = o.restaurant_id 
+       WHERE o.id = $1`, [orderId]
+    );
+    const order = orderDetails.rows[0];
+    io.emit("new_job", {
+      order_id: orderId,
+      restaurant_name: order?.restaurant_name || "Restaurant",
+      restaurant_address: order?.restaurant_address || "",
+      customer_address: order?.customer_address || "",
+      total: order?.total || 0,
+      driver_pay: parseFloat(order?.driver_total || 5.50),
+      distance: "2.3 km",
+    });
       io.emit("order_update", { status: "driver_assigned", driver_id: driver.driver_id });
     }
   } catch (err) {
