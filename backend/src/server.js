@@ -389,7 +389,7 @@ app.post("/api/drivers/location", async (req, res) => {
   const driver_id = req.body.driver_id || "anonymous";
   try {
     await pool.query(
-      "INSERT INTO driver_locations (driver_id, lat, lng, is_online, updated_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4, updated_at=NOW()",
+      "INSERT INTO driver_locations (driver_id, lat, lng, is_online) VALUES ($1, $2, $3, $4) ON CONFLICT (driver_id) DO UPDATE SET lat=$2, lng=$3, is_online=$4",
       [driver_id, lat, lng, is_online]
     );
     
