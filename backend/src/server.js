@@ -384,7 +384,7 @@ app.post("/api/orders/:id/driver-accept", async (req, res) => {
 });
 
 // Driver location update
-app.post("/api/drivers/location", auth, async (req, res) => {
+app.post("/api/drivers/location", async (req, res) => {
   const { lat, lng, is_online } = req.body;
   try {
     await pool.query(
