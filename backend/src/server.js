@@ -162,6 +162,38 @@ app.get("/api/restaurants/:id/menu", async (req, res) => {
 });
 
 // ==================== ORDERS ====================
+// GET orders by status (for KDS, dashboards)
+app.get("/api/orders", async (req, res) => {
+  try {
+    const { status, restaurant_id, limit = '50' } = req.query;
+    let query = "SELECT * FROM orders WHERE 1=1";
+    const params = [];
+    let paramIdx = 1;
+    
+    if (status) {
+      const statuses = status.split(',');
+      query += " AND status = ANY($" + paramIdx + ")";
+      params.push(statuses);
+      paramIdx++;
+    }
+    
+    if (restaurant_id) {
+      query += " AND restaurant_id = $" + paramIdx;
+      params.push(restaurant_id);
+      paramIdx++;
+    }
+    
+    query += " ORDER BY created_at DESC LIMIT $" + paramIdx;
+    params.push(parseInt(limit));
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET /api/orders error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/orders", async (req, res) => {
   const { restaurant_id, items, tip = 0, customer_address, customer_lat, customer_lng, special_instructions } = req.body;
   const client = await pool.connect();
