@@ -30,18 +30,7 @@ const todayBreakdown = [
   { hour: "4pm", earnings: 18 }, { hour: "6pm", earnings: 56 },
 ];
 
-const initialJobs: DeliveryJob[] = [
-  { id: "JOB-2048", restaurant: "Burger Vault", restaurantAddress: "1234 Robson St, Vancouver",
-    customer: "Alex M.", customerAddress: "888 Burrard St, Apt 12B", distance: "0.4 mi",
-    earnings: 8.50, tip: 4.00, items: ["Classic Cheeseburger", "Truffle Fries"],
-    status: "available", timeLeft: "2 min", orderTime: "12:45 PM",
-    instructions: "Leave at door. Ring bell.", phone: "(555) 123-4567" },
-  { id: "JOB-2049", restaurant: "Sakura Sushi", restaurantAddress: "456 Granville St, Vancouver",
-    customer: "Sarah K.", customerAddress: "450 Lexington Ave, Floor 8", distance: "1.2 mi",
-    earnings: 12.75, tip: 6.50, items: ["Dragon Roll", "Spicy Tuna Roll"],
-    status: "available", timeLeft: "5 min", orderTime: "12:38 PM",
-    instructions: "Hand to customer.", phone: "(555) 987-6543" },
-];
+const initialJobs: DeliveryJob[] = [];
 
 const completedJobs: DeliveryJob[] = [
   { id: "JOB-2045", restaurant: "Green Bowl", restaurantAddress: "200 Park Ave",
