@@ -118,6 +118,35 @@ export const DriverApp = () => {
       driver_id: localStorage.getItem("driver_id") || "drv_anon",
       vehicle_type: "car"
     });
+    // Fetch existing ready orders from DB
+    fetch("https://api.boufet.com/api/orders?status=ready&limit=20")
+      .then(r => r.json())
+      .then((orders: any[]) => {
+        if (!Array.isArray(orders)) return;
+        const existingJobs = orders.map((o: any) => ({
+          id: o.id,
+          restaurant: o.restaurant_name || "Restaurant",
+          restaurantAddress: o.restaurant_address || "Vancouver, BC",
+          restaurantLat: o.restaurant_lat || 49.2827,
+          restaurantLng: o.restaurant_lng || -123.1207,
+          customer: o.customer_name || "Customer",
+          customerAddress: o.customer_address || "",
+          customerLat: o.customer_lat || 49.2827,
+          customerLng: o.customer_lng || -123.1207,
+          distance: "2.3 km",
+          earnings: Number(o.driver_total) || 8.50,
+          tip: Number(o.tip) || 0,
+          total: Number(o.total) || 0,
+          status: "available" as const,
+        }));
+        console.log("Loaded", existingJobs.length, "ready orders from DB");
+        setJobs(prev => {
+          const existingIds = new Set(prev.map(j => j.id));
+          const newJobs = existingJobs.filter(j => !existingIds.has(j.id));
+          return [...prev, ...newJobs];
+        });
+      })
+      .catch(err => console.log("Fetch ready orders error:", err));
     socket.on("new_job", (job: DeliveryJob) => {
       console.log("NEW JOB RECEIVED:", job);
       setJobs(prev => [...prev, { ...job, status: "available" as const }]);
