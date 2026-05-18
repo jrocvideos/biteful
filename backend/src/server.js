@@ -194,7 +194,7 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
-app.post("/api/orders", async (req, res) => {
+app.post("/api/orders", auth, async (req, res) => {
   const { restaurant_id, items, tip = 0, customer_address, customer_lat, customer_lng, special_instructions } = req.body;
   const client = await pool.connect();
   try {
