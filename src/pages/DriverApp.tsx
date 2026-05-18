@@ -150,9 +150,24 @@ export const DriverApp = () => {
         });
       })
       .catch(err => console.log("Fetch ready orders error:", err));
-    socket.on("new_job", (job: DeliveryJob) => {
-      console.log("NEW JOB RECEIVED:", job);
-      setJobs(prev => [...prev, { ...job, id: job.id || job.order_id || String(Date.now()), status: "available" as const }]);
+    socket.on("new_job", (data: any) => {
+      console.log("NEW JOB RECEIVED:", data);
+      const job: DeliveryJob = {
+        id: data.order_id || data.id || String(Date.now()),
+        order_id: data.order_id || data.id,
+        restaurant: data.restaurant_name || "Restaurant",
+        restaurantAddress: data.restaurant_address || "Vancouver, BC",
+        customer: data.customer_name || "Customer",
+        customerAddress: data.customer_address || "",
+        distance: data.distance || "2.3 km",
+        earnings: parseFloat(data.driver_pay || data.earnings || 8.50),
+        tip: parseFloat(data.tip || 0),
+        items: data.items || ["Order ready"],
+        status: "available" as const,
+        timeLeft: "30 min",
+        orderTime: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
+      };
+      setJobs(prev => [...prev, job]);
     });
     socket.on("job_reassigned", (job: DeliveryJob) => {
       setJobs(prev => [...prev, { ...job, status: "available" as const, reassigned: true }]);
@@ -169,7 +184,7 @@ export const DriverApp = () => {
     try {
       const res = await fetch(`https://api.boufet.com/api/orders/${id}/driver-accept`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
           driver_id: localStorage.getItem("driver_id") || "drv_anon",
           accepted_at: new Date().toISOString()
@@ -193,7 +208,7 @@ export const DriverApp = () => {
     try {
       await fetch(`https://api.boufet.com/api/orders/${id}/driver-decline`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
           driver_id: localStorage.getItem("driver_id") || "drv_anon",
           declined_at: new Date().toISOString()
