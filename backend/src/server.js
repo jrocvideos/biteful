@@ -471,7 +471,32 @@ app.post("/api/orders/:id/status", async (req, res) => {
       await pool.query("UPDATE driver_locations SET is_on_delivery = false WHERE driver_id = (SELECT driver_id FROM orders WHERE id = $1)", [req.params.id]);
     }
     
-    io.emit("order_update", { status });
+    io.emit("order_update", { order_id: req.params.id, status });
+
+    // When restaurant marks ready — broadcast job to all online drivers
+    if (status === 'ready') {
+      const orderResult = await pool.query(
+        `SELECT o.*, r.name as restaurant_name, r.address as restaurant_address 
+         FROM orders o JOIN restaurants r ON r.id = o.restaurant_id 
+         WHERE o.id = $1`, [req.params.id]
+      );
+      const order = orderResult.rows[0];
+      if (order) {
+        const jobPayload = {
+          order_id: req.params.id,
+          restaurant_name: order.restaurant_name,
+          restaurant_address: order.restaurant_address || 'Vancouver, BC',
+          customer_address: order.customer_address,
+          total: parseFloat(order.total),
+          driver_pay: parseFloat(order.driver_total) || 8.50,
+          distance: '2.3 km',
+        };
+        io.to('drivers_online').emit('new_job', jobPayload);
+        io.emit('new_job', jobPayload);
+        console.log('new_job emitted for order:', req.params.id);
+      }
+    }
+
     res.json({ status });
   } catch (err) {
     res.status(500).json({ error: err.message });
