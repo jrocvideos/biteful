@@ -111,11 +111,15 @@ export const DriverApp = () => {
   useEffect(() => {
     if (!isOnline) return;
     const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
+    console.log("Driver going online, connecting socket...");
+    socket.on("connect", () => console.log("Driver socket connected:", socket.id));
+    socket.on("connect_error", (e) => console.log("Driver socket error:", e.message));
     socket.emit("driver_online", {
       driver_id: localStorage.getItem("driver_id") || "drv_anon",
       vehicle_type: "car"
     });
     socket.on("new_job", (job: DeliveryJob) => {
+      console.log("NEW JOB RECEIVED:", job);
       setJobs(prev => [...prev, { ...job, status: "available" as const }]);
     });
     socket.on("job_reassigned", (job: DeliveryJob) => {
