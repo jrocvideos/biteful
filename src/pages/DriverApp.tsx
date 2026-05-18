@@ -138,6 +138,9 @@ export const DriverApp = () => {
           tip: Number(o.tip || o.driver_tip || 0),
           total: Number(o.total) || 0,
           status: "available" as const,
+          items: ["Order ready for pickup"],
+          timeLeft: "30 min",
+          orderTime: new Date(o.created_at || Date.now()).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
         }));
         console.log("Loaded", existingJobs.length, "ready orders from DB");
         setJobs(prev => {
