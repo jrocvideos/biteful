@@ -152,7 +152,7 @@ export const DriverApp = () => {
       .catch(err => console.log("Fetch ready orders error:", err));
     socket.on("new_job", (job: DeliveryJob) => {
       console.log("NEW JOB RECEIVED:", job);
-      setJobs(prev => [...prev, { ...job, status: "available" as const }]);
+      setJobs(prev => [...prev, { ...job, id: job.id || job.order_id, status: "available" as const }]);
     });
     socket.on("job_reassigned", (job: DeliveryJob) => {
       setJobs(prev => [...prev, { ...job, status: "available" as const, reassigned: true }]);
@@ -233,7 +233,7 @@ export const DriverApp = () => {
           delivered_at: new Date().toISOString()
         })
       });
-      setEarnings(e => ({ ...e, today: e.today + activeJob.earnings + activeJob.tip, trips: e.trips + 1 }));
+      setEarnings(e => ({ ...e, today: Number(e.today || 0) + Number(activeJob.earnings || 0) + Number(activeJob.tip || 0), trips: e.trips + 1 }));
       setActiveJob(null);
     }
   };
