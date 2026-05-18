@@ -92,7 +92,7 @@ export const DriverApp = () => {
 
   useEffect(() => {
     if (!isOnline) return;
-    const socket = io("https://api.boufet.com", { transports: ["websocket"] });
+    const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         socket.emit("driver_location", { lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -110,7 +110,7 @@ export const DriverApp = () => {
   // Listen for real job offers from backend
   useEffect(() => {
     if (!isOnline) return;
-    const socket = io("https://api.boufet.com", { transports: ["websocket"] });
+    const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
     socket.emit("driver_online", {
       driver_id: localStorage.getItem("driver_id") || "drv_anon",
       vehicle_type: "car"
