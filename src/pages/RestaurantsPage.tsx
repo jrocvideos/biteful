@@ -33,11 +33,11 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
   const [ratingFilter, setRatingFilter] = useState(0);
   const [deliveryFilter, setDeliveryFilter] = useState(false);
 
-  const filtered = useMemo(() => { console.log("Restaurants count:", restaurants.length); console.log("First restaurant menu:", restaurants[0]?.menu);
+  const filtered = useMemo(() => {
     let result = [...restaurants];
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
-      result = result.filter(r => { console.log("Checking:", r.name, "menu:", r.menu);
+      result = result.filter(r => {
         const nameMatch = r.name?.toLowerCase().includes(q);
         const cuisineMatch = r.cuisine?.toLowerCase().includes(q);
         const tagMatch = r.tags?.some((t: string) => t?.toLowerCase().includes(q));
