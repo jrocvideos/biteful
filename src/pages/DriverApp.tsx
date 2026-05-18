@@ -11,7 +11,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface DeliveryJob {
-  id: string; restaurant: string; restaurantAddress: string;
+  id: string; order_id?: string; restaurant: string; restaurantAddress: string;
   customer: string; customerAddress: string; distance: string;
   earnings: number; tip: number; items: string[];
   status: "available"|"accepted"|"arrived-restaurant"|"picked-up"|"arrived-customer"|"delivered"|"cancelled";
