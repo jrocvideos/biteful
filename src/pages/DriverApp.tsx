@@ -213,9 +213,8 @@ export const DriverApp = () => {
       const waitMinutes = Math.ceil(waitSeconds / 60);
       const waitFee = waitMinutes > 5 ? (waitMinutes - 5) * 0.50 : 0;
       await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
-        headers: { 'Content-Type': 'application/json', 'x-kds-secret': 'BoufetKDS2026' },
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
           status: "out_for_delivery",
           picked_up_at: new Date().toISOString(),
@@ -227,9 +226,8 @@ export const DriverApp = () => {
 
     if (status === "delivered") {
       await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
-        headers: { 'Content-Type': 'application/json', 'x-kds-secret': 'BoufetKDS2026' },
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
           status: "delivered",
           delivered_at: new Date().toISOString()
