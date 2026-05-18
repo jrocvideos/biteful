@@ -628,6 +628,16 @@ io.on("connection", (socket) => {
     console.log("Socket joined driver room:", driverId);
   });
   
+  socket.on("driver_online", (data) => {
+    socket.join("drivers_online");
+    console.log("Driver joined drivers_online room:", data?.driver_id || socket.id);
+  });
+
+  socket.on("driver_offline", () => {
+    socket.leave("drivers_online");
+    console.log("Driver left drivers_online room");
+  });
+
   socket.on("join_restaurant", (restaurantId) => {
     socket.join("restaurant:" + restaurantId);
     console.log("Socket joined restaurant room:", restaurantId);
