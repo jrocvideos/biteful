@@ -134,8 +134,8 @@ export const DriverApp = () => {
           customerLat: o.customer_lat || 49.2827,
           customerLng: o.customer_lng || -123.1207,
           distance: "2.3 km",
-          earnings: Number(o.driver_total) || 8.50,
-          tip: Number(o.tip) || 0,
+          earnings: Number(o.driver_total || o.earnings || 8.50),
+          tip: Number(o.tip || o.driver_tip || 0),
           total: Number(o.total) || 0,
           status: "available" as const,
         }));
