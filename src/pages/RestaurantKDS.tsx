@@ -103,15 +103,15 @@ const MOCK_ORDERS: Order[] = [
   },
 ];
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string }> = {
   incoming: { label: 'Incoming', color: '#EF4444', bg: 'border-red-500 bg-red-500/5' },
   preparing: { label: 'Preparing', color: '#F59E0B', bg: 'border-yellow-500 bg-yellow-500/5' },
   ready: { label: 'Ready', color: '#10B981', bg: 'border-emerald-500 bg-emerald-500/5' },
   picked_up: { label: 'Picked Up', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  driver_assigned: { label: 'With Driver', color: '#6366F1', bg: 'border-indigo-500 bg-indigo-500/5' },
   out_for_delivery: { label: 'Out for Delivery', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   processed: { label: 'Processed', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   cancelled: { label: 'Cancelled', color: '#6B7280', bg: 'border-gray-500 bg-gray-500/5' },
-  driver_assigned: { label: 'Driver Assigned', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   advanced: { label: 'Advanced', color: '#8B5CF6', bg: 'border-purple-500 bg-purple-500/5' },
 };
 
@@ -395,8 +395,8 @@ export const RestaurantKDS = () => {
         </button>
       </div>
 
-      {/* 3-Column Staggered Grid */}
-      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-3 gap-0 overflow-hidden">
+      {/* 6-Column Staggered Grid */}
+      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-0 overflow-hidden">
 
         {/* COLUMN 1 — INCOMING */}
         <div className="border-r border-gray-800 flex flex-col overflow-hidden">
@@ -446,28 +446,8 @@ export const RestaurantKDS = () => {
           </div>
         </div>
 
-        {/* COLUMN 3 — WITH DRIVER */}
+        {/* COLUMN 3 — READY */}
         <div className="border-r border-gray-800 flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-400"/>
-              <span className="text-xs font-bold tracking-widest text-blue-400">WITH DRIVER</span>
-            </div>
-            <span className="text-2xl font-bold text-blue-400">{withDriver.length}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-            {withDriver.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-32 text-gray-700">
-                <span className="text-3xl mb-2">🚗</span>
-                <p className="text-xs">No orders with driver</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* COLUMN 4 — READY + PROCESSED */}
-        <div className="flex flex-col overflow-hidden">
           <div className="px-4 py-3 bg-emerald-500/10 border-b border-emerald-500/20 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -480,7 +460,6 @@ export const RestaurantKDS = () => {
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             <AnimatePresence>
               {ready.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-              {processed.slice(0, 3).map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
             </AnimatePresence>
             {ready.length === 0 && (
               <div className="flex flex-col items-center justify-center h-40 text-gray-600">
@@ -490,14 +469,77 @@ export const RestaurantKDS = () => {
             )}
           </div>
         </div>
-      </div>
 
-      }
+        {/* COLUMN 4 — PICKED UP */}
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                <span className="font-bold text-blue-400">PICKED UP</span>
+              </div>
+              <span className="text-2xl font-bold text-blue-400">{pickedUp.length}</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {pickedUp.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {pickedUp.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+                <span className="text-3xl mb-2">📦</span>
+                <p className="text-sm">No orders picked up</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Advanced Orders Tab */}
-      {activeTab === 'advanced' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {advanced.length === 0 && (
+        {/* COLUMN 5 — WITH DRIVER */}
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-400"/>
+              <span className="text-xs font-bold tracking-widest text-blue-400">WITH DRIVER</span>
+            </div>
+            <span className="text-2xl font-bold text-blue-400">{withDriver.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {withDriver.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-700">
+                <span className="text-3xl mb-2">🚗</span>
+                <p className="text-xs">No orders with driver</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 6 — PROCESSED */}
+        <div className="flex flex-col overflow-hidden">
+          <div className="px-4 py-3 bg-gray-500/10 border-b border-gray-500/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-500" />
+                <span className="font-bold text-gray-400">PROCESSED</span>
+              </div>
+              <span className="text-2xl font-bold text-gray-400">{processed.length}</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {processed.slice(0, 5).map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {processed.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+                <span className="text-3xl mb-2">✅</span>
+                <p className="text-sm">No processed orders</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>}
             <div className="flex flex-col items-center justify-center h-40 text-gray-600">
               <span className="text-4xl mb-3">🎉</span>
               <p className="text-sm">No advanced orders scheduled</p>
