@@ -107,6 +107,8 @@ const STATUS_CONFIG = {
   incoming: { label: 'Incoming', color: '#EF4444', bg: 'border-red-500 bg-red-500/5' },
   preparing: { label: 'Preparing', color: '#F59E0B', bg: 'border-yellow-500 bg-yellow-500/5' },
   ready: { label: 'Ready', color: '#10B981', bg: 'border-emerald-500 bg-emerald-500/5' },
+  picked_up: { label: 'Picked Up', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  out_for_delivery: { label: 'Out for Delivery', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   processed: { label: 'Processed', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   cancelled: { label: 'Cancelled', color: '#6B7280', bg: 'border-gray-500 bg-gray-500/5' },
   driver_assigned: { label: 'Driver Assigned', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
@@ -338,6 +340,7 @@ export const RestaurantKDS = () => {
   const incoming = orders.filter(o => o.status === 'incoming');
   const preparing = orders.filter(o => o.status === 'preparing');
   const ready = orders.filter(o => o.status === 'ready');
+  const pickedUp = orders.filter(o => ['picked_up', 'out_for_delivery'].includes(o.status));
   const withDriver = orders.filter(o => ['driver_assigned','picked_up','out_for_delivery'].includes(o.status));
   const advanced = orders.filter(o => o.status === 'advanced');
   const processed = orders.filter(o => o.status === 'processed');
