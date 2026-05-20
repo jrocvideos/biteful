@@ -28,7 +28,7 @@ const RESTAURANT_IDS: Record<string, string> = {
   'cuba-street-food': 'bd67f62d-cdd9-4541-b6cd-d140be14fe1a',
 };
 
-type OrderStatus = 'incoming' | 'preparing' | 'ready' | 'processed' | 'cancelled' | 'advanced';
+type OrderStatus = 'incoming' | 'preparing' | 'ready' | 'driver_assigned' | 'picked_up' | 'out_for_delivery' | 'processed' | 'cancelled' | 'advanced';
 
 interface OrderItem {
   id: string;
@@ -335,6 +335,7 @@ export const RestaurantKDS = () => {
   const incoming = orders.filter(o => o.status === 'incoming');
   const preparing = orders.filter(o => o.status === 'preparing');
   const ready = orders.filter(o => o.status === 'ready');
+  const withDriver = orders.filter(o => ['driver_assigned','picked_up','out_for_delivery'].includes(o.status));
   const advanced = orders.filter(o => o.status === 'advanced');
   const processed = orders.filter(o => o.status === 'processed');
 
@@ -441,7 +442,27 @@ export const RestaurantKDS = () => {
           </div>
         </div>
 
-        {/* COLUMN 3 — READY + PROCESSED */}
+        {/* COLUMN 3 — WITH DRIVER */}
+        <div className={`border-r border-gray-800 flex flex-col overflow-hidden ${mobileCol !== 'driver' ? 'hidden md:flex' : 'flex'}`}>
+          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-400"/>
+              <span className="text-xs font-bold tracking-widest text-blue-400">WITH DRIVER</span>
+            </div>
+            <span className="text-2xl font-bold text-blue-400">{withDriver.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            {withDriver.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-700">
+                <span className="text-3xl mb-2">🚗</span>
+                <p className="text-xs">No orders with driver</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 4 — READY + PROCESSED */}
         <div className="flex flex-col overflow-hidden">
           <div className="px-4 py-3 bg-emerald-500/10 border-b border-emerald-500/20 flex-shrink-0">
             <div className="flex items-center justify-between">
