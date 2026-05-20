@@ -335,13 +335,16 @@ export const RestaurantKDS = () => {
   };
 
   // Column data
-  const incoming = orders.filter(o => o.status === 'incoming');
-  const preparing = orders.filter(o => o.status === 'preparing');
-  const ready = orders.filter(o => o.status === 'ready');
+  const now = Date.now();
+  const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000;
+  const freshOrders = orders.filter(o => (now - o.createdAt.getTime()) < STALE_THRESHOLD_MS);
+  const incoming = freshOrders.filter(o => o.status === 'incoming');
+  const preparing = freshOrders.filter(o => o.status === 'preparing');
+  const ready = freshOrders.filter(o => o.status === 'ready');
   const pickedUp = orders.filter(o => ['picked_up', 'out_for_delivery'].includes(o.status));
   const withDriver = orders.filter(o => ['driver_assigned','picked_up','out_for_delivery'].includes(o.status));
   const advanced = orders.filter(o => o.status === 'advanced');
-  const processed = orders.filter(o => o.status === 'processed');
+  const processed = freshOrders.filter(o => o.status === 'processed');
 
   const todayRevenue = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0);
   const completedOrders = orders.filter(o => o.status === 'processed');
