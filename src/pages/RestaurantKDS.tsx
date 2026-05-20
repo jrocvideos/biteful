@@ -109,6 +109,9 @@ const STATUS_CONFIG = {
   ready: { label: 'Ready', color: '#10B981', bg: 'border-emerald-500 bg-emerald-500/5' },
   processed: { label: 'Processed', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   cancelled: { label: 'Cancelled', color: '#6B7280', bg: 'border-gray-500 bg-gray-500/5' },
+  driver_assigned: { label: 'Driver Assigned', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  picked_up: { label: 'Picked Up', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  out_for_delivery: { label: 'Out for Delivery', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
   advanced: { label: 'Advanced', color: '#8B5CF6', bg: 'border-purple-500 bg-purple-500/5' },
 };
 
@@ -443,7 +446,7 @@ export const RestaurantKDS = () => {
         </div>
 
         {/* COLUMN 3 — WITH DRIVER */}
-        <div className={`border-r border-gray-800 flex flex-col overflow-hidden ${mobileCol !== 'driver' ? 'hidden md:flex' : 'flex'}`}>
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-blue-400"/>
