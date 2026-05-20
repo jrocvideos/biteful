@@ -407,9 +407,9 @@ async function matchDriver(orderId) {
 // Driver accepts job
 app.post("/api/orders/:id/driver-accept", async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'driver_en_route' WHERE id = $1", [req.params.id]);
-    io.emit("order_update", { status: "driver_en_route" });
-    res.json({ status: "driver_en_route" });
+    await pool.query("UPDATE orders SET status = 'driver_assigned' WHERE id = $1", [req.params.id]);
+    io.emit("order_update", { order_id: req.params.id, status: "driver_assigned" });
+    res.json({ status: "driver_assigned" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
