@@ -397,7 +397,7 @@ async function matchDriver(orderId) {
       driver_pay: parseFloat(order?.driver_total || 5.50),
       distance: "2.3 km",
     });
-      io.emit("order_update", { status: "driver_assigned", driver_id: driver.driver_id });
+      io.emit("order_update", { order_id: orderId, status: "driver_assigned", driver_id: driver.driver_id });
     }
   } catch (err) {
     console.error("Match driver error:", err);
