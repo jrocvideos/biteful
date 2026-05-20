@@ -90,66 +90,59 @@ export const DriverApp = () => {
   const [earnings, setEarnings] = useState({ today: 87.50, week: 693, trips: 45, rating: 4.92 });
   const [preferences, setPreferences] = useState({ vapeDelivery: false, cashOnDelivery: false });
 
-  useEffect(() => {
-    if (!isOnline) return;
-    const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        socket.emit("driver_location", { lat: pos.coords.latitude, lng: pos.coords.longitude });
-        fetch("https://api.boufet.com/api/drivers/location", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, is_online: true }),
-        }).catch(() => {});
-      },
-      (err) => console.warn("GPS:", err),
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
-    );
-    return () => { navigator.geolocation.clearWatch(watchId); socket.disconnect(); };
-  }, [isOnline]);
-
-  // Listen for real job offers from backend
+  // SINGLE socket — GPS + job listener merged
   useEffect(() => {
     if (!isOnline) return;
     const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
     console.log("Driver going online, connecting socket...");
-    socket.on("connect", () => console.log("Driver socket connected:", socket.id));
-    socket.on("connect_error", (e) => console.log("Driver socket error:", e.message));
-    socket.emit("driver_online", {
-      driver_id: localStorage.getItem("driver_id") || "drv_anon",
-      vehicle_type: "car"
+
+    socket.on("connect", () => {
+      console.log("Driver socket connected:", socket.id);
+      socket.emit("driver_online", {
+        driver_id: localStorage.getItem("driver_id") || "drv_anon",
+        vehicle_type: "car"
+      });
+      // Fetch existing ready orders
+      fetch("https://api.boufet.com/api/orders?status=ready&limit=20")
+        .then(r => r.json())
+        .then((orders: any[]) => {
+          if (!Array.isArray(orders)) return;
+          const existingJobs: DeliveryJob[] = orders.map((o: any) => ({
+            id: o.id,
+            order_id: o.id,
+            restaurant: o.restaurant_name || "Restaurant",
+            restaurantAddress: o.restaurant_address || "Vancouver, BC",
+            customer: o.customer_name || "Customer",
+            customerAddress: o.customer_address || "",
+            distance: "2.3 km",
+            earnings: Number(o.driver_total || 8.50),
+            tip: Number(o.tip || 0),
+            items: ["Order ready for pickup"],
+            status: "available" as const,
+            timeLeft: "30 min",
+            orderTime: new Date(o.created_at || Date.now()).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
+          }));
+          console.log("Loaded", existingJobs.length, "ready orders from DB");
+          setJobs(prev => {
+            const ids = new Set(prev.map(j => j.id));
+            return [...prev, ...existingJobs.filter(j => !ids.has(j.id))];
+          });
+        })
+        .catch(err => console.log("Fetch error:", err));
     });
-    // Fetch existing ready orders from DB
-    fetch("https://api.boufet.com/api/orders?status=ready&limit=20")
-      .then(r => r.json())
-      .then((orders: any[]) => {
-        if (!Array.isArray(orders)) return;
-        const existingJobs = orders.map((o: any) => ({
-          id: o.id,
-          restaurant: o.restaurant_name || "Restaurant",
-          restaurantAddress: o.restaurant_address || "Vancouver, BC",
-          restaurantLat: o.restaurant_lat || 49.2827,
-          restaurantLng: o.restaurant_lng || -123.1207,
-          customer: o.customer_name || "Customer",
-          customerAddress: o.customer_address || "",
-          customerLat: o.customer_lat || 49.2827,
-          customerLng: o.customer_lng || -123.1207,
-          distance: "2.3 km",
-          earnings: Number(o.driver_total || o.earnings || 8.50),
-          tip: Number(o.tip || o.driver_tip || 0),
-          total: Number(o.total) || 0,
-          status: "available" as const,
-          items: ["Order ready for pickup"],
-          timeLeft: "30 min",
-          orderTime: new Date(o.created_at || Date.now()).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
-        }));
-        console.log("Loaded", existingJobs.length, "ready orders from DB");
-        setJobs(prev => {
-          const existingIds = new Set(prev.map(j => j.id));
-          const newJobs = existingJobs.filter(j => !existingIds.has(j.id));
-          return [...prev, ...newJobs];
-        });
-      })
-      .catch(err => console.log("Fetch ready orders error:", err));
+
+    socket.on("connect_error", (e) => console.log("Driver socket error:", e.message));
+
+    // GPS
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        socket.emit("driver_location", { lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => console.warn("GPS:", err),
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    );
+
+    // Job listeners
     socket.on("new_job", (data: any) => {
       console.log("NEW JOB RECEIVED:", data);
       const job: DeliveryJob = {
@@ -169,13 +162,32 @@ export const DriverApp = () => {
       };
       setJobs(prev => [...prev, job]);
     });
-    socket.on("job_reassigned", (job: DeliveryJob) => {
-      setJobs(prev => [...prev, { ...job, status: "available" as const, reassigned: true }]);
+    socket.on("job_reassigned", (data: any) => {
+      const job: DeliveryJob = {
+        id: data.order_id || data.id || String(Date.now()),
+        order_id: data.order_id || data.id,
+        restaurant: data.restaurant_name || "Restaurant",
+        restaurantAddress: data.restaurant_address || "Vancouver, BC",
+        customer: data.customer_name || "Customer",
+        customerAddress: data.customer_address || "",
+        distance: "2.3 km",
+        earnings: parseFloat(data.driver_pay || 8.50),
+        tip: parseFloat(data.tip || 0),
+        items: ["Order ready"],
+        status: "available" as const,
+        timeLeft: "30 min",
+        orderTime: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
+      };
+      setJobs(prev => [...prev, job]);
     });
     socket.on("job_taken", (jobId: string) => {
       setJobs(prev => prev.filter(j => j.id !== jobId));
     });
-    return () => { socket.disconnect(); };
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      socket.disconnect();
+    };
   }, [isOnline]);
 
   const acceptJob = async (id: string) => {
