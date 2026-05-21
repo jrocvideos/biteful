@@ -432,7 +432,7 @@ app.post("/api/drivers/location", async (req, res) => {
     
     // Check if driver has active order (ignore errors)
     try {
-      const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id = $1 AND status IN ('driver_en_route','picked_up','en_route_to_customer')", [driver_id]);
+      const orderResult = await pool.query("SELECT id FROM orders WHERE driver_id = $1 AND status IN ('driver_assigned','picked_up','out_for_delivery')", [driver_id]);
       if (orderResult.rows.length > 0) {
         const orderId = orderResult.rows[0].id;
         await pool.query("UPDATE orders SET driver_lat = $1, driver_lng = $2 WHERE id = $3", [lat, lng, orderId]);
@@ -453,7 +453,7 @@ app.post("/api/orders/:id/status", async (req, res) => {
   if (!kdsSecret && !hasAuth) return res.status(401).json({ error: "Unauthorized" });
   if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026")) return res.status(401).json({ error: "Invalid KDS secret" });
   const { status } = req.body;
-  const validStatuses = ['driver_at_restaurant','picked_up','en_route_to_customer','arrived','delivered'];
+  const validStatuses = ['driver_assigned','picked_up','out_for_delivery','arrived','delivered'];
   
   try {
     let query = "UPDATE orders SET status = $1";
