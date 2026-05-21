@@ -160,7 +160,7 @@ export const DriverApp = () => {
         timeLeft: "30 min",
         orderTime: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
       };
-      setJobs(prev => [...prev, job]);
+      setJobs(prev => [...prev.filter(j => j.id !== job.id), job]);
     });
     socket.on("job_reassigned", (data: any) => {
       const job: DeliveryJob = {
@@ -178,7 +178,7 @@ export const DriverApp = () => {
         timeLeft: "30 min",
         orderTime: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
       };
-      setJobs(prev => [...prev, job]);
+      setJobs(prev => [...prev.filter(j => j.id !== job.id), job]);
     });
     socket.on("job_taken", (jobId: string) => {
       setJobs(prev => prev.filter(j => j.id !== jobId));
