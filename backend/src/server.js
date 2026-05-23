@@ -1086,3 +1086,20 @@ app.get("/api/all-orders-debug", async (req, res) => {
     res.json(result.rows);
   } catch(e) { res.json({ error: e.message }); }
 });
+
+// ONE-OFF: Cleanup old driver_en_route statuses
+app.post('/api/admin/cleanup-driver-status', async (req, res) => {
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET status = 'driver_assigned' WHERE status = 'driver_en_route' RETURNING id"
+    );
+    res.json({ 
+      message: 'Cleanup complete', 
+      updated: result.rowCount,
+      order_ids: result.rows.map(r => r.id)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
