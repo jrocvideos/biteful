@@ -1119,3 +1119,52 @@ app.get("/api/all-orders-debug", async (req, res) => {
   } catch(e) { res.json({ error: e.message }); }
 });
 
+// REJECT ORDER (restaurant declines incoming order)
+app.post("/api/orders/:id/reject", auth, async (req, res) => {
+  const { reason } = req.body;
+  const orderId = req.params.id;
+  const validReasons = [
+    'Restaurant is closed',
+    'No time to prepare',
+    'Out of ingredients',
+    'Kitchen at capacity',
+    'Other'
+  ];
+  
+  if (!validReasons.includes(reason)) {
+    return res.status(400).json({ error: "Invalid rejection reason" });
+  }
+  
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET status = 'cancelled', cancelled_at = NOW(), cancellation_reason = $1 WHERE id = $2 AND status = 'pending_payment' RETURNING *",
+      [reason, orderId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Order not found or already processed" });
+    }
+    
+    const order = result.rows[0];
+    
+    // Notify customer via socket
+    io.to(`customer:${order.customer_id}`).emit("order_rejected", {
+      order_id: orderId,
+      reason: reason,
+      message: `Your order was rejected: ${reason}`
+    });
+    
+    // Broadcast to KDS to remove the order
+    io.emit("order_update", {
+      order_id: orderId,
+      status: "cancelled",
+      cancellation_reason: reason
+    });
+    
+    res.json({ success: true, order_id: orderId, status: "cancelled", reason });
+  } catch (err) {
+    console.error("POST /api/orders/:id/reject error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
