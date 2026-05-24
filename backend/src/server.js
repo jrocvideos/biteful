@@ -217,21 +217,29 @@ app.post("/api/orders", auth, async (req, res) => {
   try {
     await client.query("BEGIN");
     
-    // Get menu prices
-    let subtotal = 0;
+    // Accept fee breakdown from frontend (validated)
+    let subtotal = parseFloat(req.body.subtotal) || 0;
+    const tax = parseFloat(req.body.tax) || 0;
+    const delivery_fee = parseFloat(req.body.delivery_fee) || 0;
+    const service_fee = parseFloat(req.body.service_fee) || 0;
+    const tip = parseFloat(req.body.tip) || 0;
+    const total = parseFloat(req.body.total) || (subtotal + tax + delivery_fee + service_fee + tip);
+    
+    // Validate subtotal against menu prices
+    let calcSubtotal = 0;
     const orderItems = [];
     for (const item of items) {
       const menuResult = await client.query("SELECT price FROM menu_items WHERE id = $1", [item.menu_item_id]);
       if (menuResult.rows.length === 0) throw new Error("Menu item not found");
       const price = menuResult.rows[0].price;
-      subtotal += price * item.quantity;
+      calcSubtotal += price * item.quantity;
       orderItems.push({ ...item, unit_price: price });
     }
     
-    const tax = subtotal * 0.08;
-    const delivery_fee = 2.99;
-    const service_fee = 3.50;
-    const total = subtotal + tax + delivery_fee + service_fee + tip;
+    // Use frontend subtotal if within $1 of calculated (allows for rounding/promos)
+    if (Math.abs(subtotal - calcSubtotal) > 1.00) {
+      subtotal = calcSubtotal;
+    }
     
     // Get restaurant commission rate
     const restResult = await client.query("SELECT commission_rate FROM restaurants WHERE id = $1", [restaurant_id]);
