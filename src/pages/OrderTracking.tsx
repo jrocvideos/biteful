@@ -186,14 +186,29 @@ export const OrderTracking = () => {
 
         <div className="bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center gap-2 mb-4"><Receipt className="w-5 h-5 text-primary" /><h3 className="font-bold">Receipt</h3></div>
+          
+          {orderData?.items && orderData.items.length > 0 && (
+            <div className="mb-4 pb-4 border-b border-border">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Items</h4>
+              <div className="space-y-2">
+                {orderData.items.map((item: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span><span className="font-semibold">{item.quantity}x</span> {item.name}</span>
+                    <span className="font-medium">${((item.price || item.unit_price || 0) * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>$24.97</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : '$2.99'}</span></div>
-            {orderData?.express && <div className="flex justify-between text-yellow-600"><span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Priority Fee</span><span>${orderData.expressFee?.toFixed(2) || '3.00'}</span></div>}
-            <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>$2.50</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>$3.00</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>$3.75</span></div>
-            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(37.21 + (orderData?.expressFee || 0)).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 2.99).toFixed(2)}`}</span></div>
+            {orderData?.express && <div className="flex justify-between text-yellow-600"><span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Priority Fee</span><span>${(orderData?.expressFee || 0).toFixed(2)}</span></div>}
+            <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${(orderData?.serviceFee || 2.50).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(orderData?.tax || 0).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${(orderData?.tip || 0).toFixed(2)}</span></div>
+            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(orderData?.total || 0).toFixed(2)}</span></div>
           </div>
         </div>
 
