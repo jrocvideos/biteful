@@ -166,24 +166,41 @@ app.get("/api/restaurants/:id/menu", async (req, res) => {
 app.get("/api/orders", async (req, res) => {
   try {
     const { status, restaurant_id, limit = '50' } = req.query;
-    let query = "SELECT * FROM orders WHERE 1=1";
+    let where = "WHERE 1=1";
     const params = [];
     let paramIdx = 1;
     
     if (status) {
       const statuses = status.split(',');
-      query += " AND status = ANY($" + paramIdx + ")";
+      where += " AND o.status = ANY($" + paramIdx + ")";
       params.push(statuses);
       paramIdx++;
     }
     
     if (restaurant_id) {
-      query += " AND restaurant_id = $" + paramIdx;
+      where += " AND o.restaurant_id = $" + paramIdx;
       params.push(restaurant_id);
       paramIdx++;
     }
     
-    query += " ORDER BY created_at DESC LIMIT $" + paramIdx;
+    const query = `
+      SELECT o.*,
+        COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name,
+        COALESCE(json_agg(json_build_object(
+          'id', oi.id,
+          'name', mi.name,
+          'quantity', oi.quantity,
+          'unit_price', oi.unit_price,
+          'special_instructions', oi.special_instructions
+        )) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.customer_id
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+      ${where}
+      GROUP BY o.id, u.first_name, u.last_name
+      ORDER BY o.created_at DESC LIMIT $` + paramIdx + `
+    `;
     params.push(parseInt(limit));
     
     const result = await pool.query(query, params);
@@ -200,21 +217,29 @@ app.post("/api/orders", auth, async (req, res) => {
   try {
     await client.query("BEGIN");
     
-    // Get menu prices
-    let subtotal = 0;
+    // Accept fee breakdown from frontend (validated)
+    let subtotal = parseFloat(req.body.subtotal) || 0;
+    const tax = parseFloat(req.body.tax) || 0;
+    const delivery_fee = parseFloat(req.body.delivery_fee) || 0;
+    const service_fee = parseFloat(req.body.service_fee) || 0;
+    const tip = parseFloat(req.body.tip) || 0;
+    const total = parseFloat(req.body.total) || (subtotal + tax + delivery_fee + service_fee + tip);
+    
+    // Validate subtotal against menu prices
+    let calcSubtotal = 0;
     const orderItems = [];
     for (const item of items) {
       const menuResult = await client.query("SELECT price FROM menu_items WHERE id = $1", [item.menu_item_id]);
       if (menuResult.rows.length === 0) throw new Error("Menu item not found");
       const price = menuResult.rows[0].price;
-      subtotal += price * item.quantity;
+      calcSubtotal += price * item.quantity;
       orderItems.push({ ...item, unit_price: price });
     }
     
-    const tax = subtotal * 0.08;
-    const delivery_fee = 2.99;
-    const service_fee = 3.50;
-    const total = subtotal + tax + delivery_fee + service_fee + tip;
+    // Use frontend subtotal if within $1 of calculated (allows for rounding/promos)
+    if (Math.abs(subtotal - calcSubtotal) > 1.00) {
+      subtotal = calcSubtotal;
+    }
     
     // Get restaurant commission rate
     const restResult = await client.query("SELECT commission_rate FROM restaurants WHERE id = $1", [restaurant_id]);
@@ -245,6 +270,12 @@ app.post("/api/orders", auth, async (req, res) => {
 
     // Emit to KDS immediately — don't wait for payment confirmation
     // Emit globally for dashboards
+    // Fetch items for socket emit
+    const itemsResult = await client.query(
+      "SELECT mi.name, oi.quantity, oi.special_instructions FROM order_items oi JOIN menu_items mi ON mi.id = oi.menu_item_id WHERE oi.order_id = $1",
+      [orderId]
+    );
+    
     const orderPayload = {
       id: orderId,
       order_id: orderId,
@@ -256,6 +287,7 @@ app.post("/api/orders", auth, async (req, res) => {
       customer_address: customer_address,
       delivery_type: req.body.delivery_type || "asap",
       is_express: (req.body.delivery_type === "asap"),
+      items: itemsResult.rows,
     };
     io.emit("new_order", orderPayload);
     io.to(`restaurant:${restaurant_id}`).emit("new_order", orderPayload);
@@ -1085,5 +1117,54 @@ app.get("/api/all-orders-debug", async (req, res) => {
     );
     res.json(result.rows);
   } catch(e) { res.json({ error: e.message }); }
+});
+
+// REJECT ORDER (restaurant declines incoming order)
+app.post("/api/orders/:id/reject", auth, async (req, res) => {
+  const { reason } = req.body;
+  const orderId = req.params.id;
+  const validReasons = [
+    'Restaurant is closed',
+    'No time to prepare',
+    'Out of ingredients',
+    'Kitchen at capacity',
+    'Other'
+  ];
+  
+  if (!validReasons.includes(reason)) {
+    return res.status(400).json({ error: "Invalid rejection reason" });
+  }
+  
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET status = 'cancelled', cancelled_at = NOW(), cancellation_reason = $1 WHERE id = $2 AND status = 'pending_payment' RETURNING *",
+      [reason, orderId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Order not found or already processed" });
+    }
+    
+    const order = result.rows[0];
+    
+    // Notify customer via socket
+    io.to(`customer:${order.customer_id}`).emit("order_rejected", {
+      order_id: orderId,
+      reason: reason,
+      message: `Your order was rejected: ${reason}`
+    });
+    
+    // Broadcast to KDS to remove the order
+    io.emit("order_update", {
+      order_id: orderId,
+      status: "cancelled",
+      cancellation_reason: reason
+    });
+    
+    res.json({ success: true, order_id: orderId, status: "cancelled", reason });
+  } catch (err) {
+    console.error("POST /api/orders/:id/reject error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
