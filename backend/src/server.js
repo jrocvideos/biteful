@@ -166,24 +166,41 @@ app.get("/api/restaurants/:id/menu", async (req, res) => {
 app.get("/api/orders", async (req, res) => {
   try {
     const { status, restaurant_id, limit = '50' } = req.query;
-    let query = "SELECT * FROM orders WHERE 1=1";
+    let where = "WHERE 1=1";
     const params = [];
     let paramIdx = 1;
     
     if (status) {
       const statuses = status.split(',');
-      query += " AND status = ANY($" + paramIdx + ")";
+      where += " AND o.status = ANY($" + paramIdx + ")";
       params.push(statuses);
       paramIdx++;
     }
     
     if (restaurant_id) {
-      query += " AND restaurant_id = $" + paramIdx;
+      where += " AND o.restaurant_id = $" + paramIdx;
       params.push(restaurant_id);
       paramIdx++;
     }
     
-    query += " ORDER BY created_at DESC LIMIT $" + paramIdx;
+    const query = `
+      SELECT o.*,
+        COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name,
+        COALESCE(json_agg(json_build_object(
+          'id', oi.id,
+          'name', mi.name,
+          'quantity', oi.quantity,
+          'unit_price', oi.unit_price,
+          'special_instructions', oi.special_instructions
+        )) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.customer_id
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+      ${where}
+      GROUP BY o.id, u.first_name, u.last_name
+      ORDER BY o.created_at DESC LIMIT $` + paramIdx + `
+    `;
     params.push(parseInt(limit));
     
     const result = await pool.query(query, params);
@@ -245,6 +262,12 @@ app.post("/api/orders", auth, async (req, res) => {
 
     // Emit to KDS immediately — don't wait for payment confirmation
     // Emit globally for dashboards
+    // Fetch items for socket emit
+    const itemsResult = await client.query(
+      "SELECT mi.name, oi.quantity, oi.special_instructions FROM order_items oi JOIN menu_items mi ON mi.id = oi.menu_item_id WHERE oi.order_id = $1",
+      [orderId]
+    );
+    
     const orderPayload = {
       id: orderId,
       order_id: orderId,
@@ -256,6 +279,7 @@ app.post("/api/orders", auth, async (req, res) => {
       customer_address: customer_address,
       delivery_type: req.body.delivery_type || "asap",
       is_express: (req.body.delivery_type === "asap"),
+      items: itemsResult.rows,
     };
     io.emit("new_order", orderPayload);
     io.to(`restaurant:${restaurant_id}`).emit("new_order", orderPayload);
