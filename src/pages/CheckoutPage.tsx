@@ -114,8 +114,12 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       if (res.ok) {
         const data = await res.json();
         const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
-<<<<<<< HEAD
-        
+        // Save actual checkout values for receipt (API returns recalculated values)
+        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
+          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+        }));
+        // Trigger KDS notification via backend Socket.io
         // Trigger KDS notification via backend Socket.io
         if (data.id || data.order_id) {
           await fetch(`https://api.boufet.com/api/orders/${orderId}/confirm-payment`, {
@@ -126,13 +130,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
             },
           });
         }
-        
-=======
-        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
-          tax, tip: tipAmount, total: totalAmount, items: orderItems,
-        }));
->>>>>>> 5c010cdba6dd4539e6700bb649b8789f0de242b5
         onClearCart();
         navigate(`/order/${orderId}`);
       } else {
