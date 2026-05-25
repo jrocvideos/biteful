@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, MessageCircle, Bike, CheckCircle, ChefHat, Package, Home, Star, Receipt, Copy, Check, Zap, Clock, Navigation, RotateCcw } from 'lucide-react';
 import { LiveMap } from '../components/LiveMap';
 
-type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
+type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'driving_to_restaurant' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
 
 const statusSteps = [
   { id: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, description: 'Restaurant received your order' },
   { id: 'preparing', label: 'Preparing', icon: ChefHat, description: 'Kitchen is cooking your food' },
   { id: 'ready', label: 'Ready for Pickup', icon: Package, description: 'Food is packed and waiting' },
-  { id: 'picked_up', label: 'Driver Picked Up', icon: Bike, description: 'Driver has your order' },
+{ id: 'driving_to_restaurant', label: 'Driving to Restaurant', icon: Bike, description: 'Driver is heading to the restaurant' },  { id: 'picked_up', label: 'Driver Picked Up', icon: Bike, description: 'Driver has your order' },
   { id: 'en_route', label: 'On the Way', icon: Navigation, description: 'Heading to your address' },
   { id: 'arriving', label: 'Arriving Soon', icon: MapPin, description: 'Driver is near your location' },
   { id: 'delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },
@@ -28,6 +28,18 @@ export const OrderTracking = () => {
   useEffect(() => {
     const saved = localStorage.getItem(`biteful-order-${id}`);
     if (saved) setOrderData(JSON.parse(saved));
+
+    // Also get cart items (checkout does not save order to localStorage)
+    const cartItems = localStorage.getItem("biteful-cart");
+    if (cartItems) {
+      try {
+        const parsed = JSON.parse(cartItems);
+        setOrderData((prev: any) => ({
+          ...(prev || {}),
+          items: parsed,
+        }));
+      } catch {}
+    }
   }, [id]);
 
   useEffect(() => {
@@ -38,6 +50,14 @@ export const OrderTracking = () => {
         .then(r => r.json())
         .then(data => {
           if (data.status) {
+            // Parse string values from API to numbers
+            // Only update status/driver info from API, NOT financial data
+            setOrderData((prev: any) => ({
+              ...(prev || {}),
+              status: data.status,
+              driverName: data.driver_name || prev?.driverName,
+              driverLocation: data.driver_location || prev?.driverLocation,
+            }));
             const statusMap: Record<string, OrderStatus> = {
               'pending_payment': 'confirmed',
               'paid': 'confirmed',
@@ -45,9 +65,12 @@ export const OrderTracking = () => {
               'preparing': 'preparing',
               'ready_for_pickup': 'ready',
               'ready': 'ready',
+              'driver_assigned': 'driving_to_restaurant',
               'picked_up': 'picked_up',
+              'out_for_delivery': 'en_route',
               'en_route_to_customer': 'en_route',
               'arrived': 'arriving',
+              'arrived-customer': 'arriving',
               'delivered': 'delivered',
             };
             const mapped = statusMap[data.status] || 'confirmed';
@@ -186,14 +209,29 @@ export const OrderTracking = () => {
 
         <div className="bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center gap-2 mb-4"><Receipt className="w-5 h-5 text-primary" /><h3 className="font-bold">Receipt</h3></div>
+          
+          {orderData?.items && orderData.items.length > 0 && (
+            <div className="mb-4 pb-4 border-b border-border">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Items</h4>
+              <div className="space-y-2">
+                {orderData.items.map((item: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span><span className="font-semibold">{item.quantity}x</span> {item.name}</span>
+                    <span className="font-medium">${((item.price || item.unit_price || 0) * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>$24.97</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : '$2.99'}</span></div>
-            {orderData?.express && <div className="flex justify-between text-yellow-600"><span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Priority Fee</span><span>${orderData.expressFee?.toFixed(2) || '3.00'}</span></div>}
-            <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>$2.50</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>$3.00</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>$3.75</span></div>
-            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(37.21 + (orderData?.expressFee || 0)).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 2.99).toFixed(2)}`}</span></div>
+            {orderData?.express && <div className="flex justify-between text-yellow-600"><span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Priority Fee</span><span>${(orderData?.expressFee || 0).toFixed(2)}</span></div>}
+            <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${(orderData?.serviceFee || 2.50).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(orderData?.tax || 0).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${(orderData?.tip || 0).toFixed(2)}</span></div>
+            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(orderData?.total || 0).toFixed(2)}</span></div>
           </div>
         </div>
 

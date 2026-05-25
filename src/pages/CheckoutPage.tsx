@@ -31,7 +31,7 @@ const getStandardFee = (subtotal: number): number => subtotal * 0.02;
 
 export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClearCart }: CheckoutPageProps) => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
   const [address, setAddress] = useState('');
   const [apt, setApt] = useState('');
@@ -100,7 +100,8 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           items: orderItems,
           subtotal,
           tax,
-          delivery_fee: deliveryFee,
+          delivery_fee: 8.29,
+          asap_fee: deliveryFee,
           service_fee: adminFee,
           tip: tipAmount,
           total: totalAmount,
@@ -113,6 +114,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       if (res.ok) {
         const data = await res.json();
         const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+<<<<<<< HEAD
         
         // Trigger KDS notification via backend Socket.io
         if (data.id || data.order_id) {
@@ -125,11 +127,21 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           });
         }
         
+=======
+        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
+          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+        }));
+>>>>>>> 5c010cdba6dd4539e6700bb649b8789f0de242b5
         onClearCart();
         navigate(`/order/${orderId}`);
       } else {
         // Fallback — still navigate so demo works
         const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
+          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+        }));
         onClearCart();
         navigate(`/order/${orderId}`);
       }
