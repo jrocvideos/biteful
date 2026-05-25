@@ -70,6 +70,7 @@ export const OrderTracking = () => {
               'out_for_delivery': 'en_route',
               'en_route_to_customer': 'en_route',
               'arrived': 'arriving',
+              'arrived-customer': 'arriving',
               'delivered': 'delivered',
             };
             const mapped = statusMap[data.status] || 'confirmed';
