@@ -51,15 +51,12 @@ export const OrderTracking = () => {
         .then(data => {
           if (data.status) {
             // Parse string values from API to numbers
+            // Only update status/driver info from API, NOT financial data
             setOrderData((prev: any) => ({
               ...(prev || {}),
-              ...data,
-              total: parseFloat(data.total) || 0,
-              subtotal: parseFloat(data.subtotal) || 0,
-              tax: parseFloat(data.tax) || 0,
-              deliveryFee: parseFloat(data.delivery_fee) || 0,
-              serviceFee: parseFloat(data.service_fee) || 0,
-              tip: parseFloat(data.tip) || 0,
+              status: data.status,
+              driverName: data.driver_name || prev?.driverName,
+              driverLocation: data.driver_location || prev?.driverLocation,
             }));
             const statusMap: Record<string, OrderStatus> = {
               'pending_payment': 'confirmed',
