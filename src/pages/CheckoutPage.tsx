@@ -113,11 +113,19 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       if (res.ok) {
         const data = await res.json();
         const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+          subtotal, deliveryFee, serviceFee: adminFee,
+          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+        }));
         onClearCart();
         navigate(`/order/${orderId}`);
       } else {
         // Fallback — still navigate so demo works
         const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+          subtotal, deliveryFee, serviceFee: adminFee,
+          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+        }));
         onClearCart();
         navigate(`/order/${orderId}`);
       }
