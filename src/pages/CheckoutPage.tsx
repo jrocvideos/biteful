@@ -148,6 +148,10 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
     } catch {
       // Offline fallback
       const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
+        subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0,
+        serviceFee: adminFee, tax, tip: tipAmount, total: totalAmount, items: orderItems,
+      }));
       onClearCart();
       navigate(`/order/${orderId}`);
     } finally {
