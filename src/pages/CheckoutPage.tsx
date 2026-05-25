@@ -100,7 +100,8 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           items: orderItems,
           subtotal,
           tax,
-          delivery_fee: deliveryFee,
+          delivery_fee: 8.29,
+          asap_fee: deliveryFee,
           service_fee: adminFee,
           tip: tipAmount,
           total: totalAmount,
@@ -114,7 +115,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         const data = await res.json();
         const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
         localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-          subtotal, deliveryFee, serviceFee: adminFee,
+          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
           tax, tip: tipAmount, total: totalAmount, items: orderItems,
         }));
         onClearCart();
@@ -123,7 +124,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         // Fallback — still navigate so demo works
         const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-          subtotal, deliveryFee, serviceFee: adminFee,
+          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
           tax, tip: tipAmount, total: totalAmount, items: orderItems,
         }));
         onClearCart();
