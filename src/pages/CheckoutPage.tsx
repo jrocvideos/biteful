@@ -113,6 +113,18 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       if (res.ok) {
         const data = await res.json();
         const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        
+        // Trigger KDS notification via backend Socket.io
+        if (data.id || data.order_id) {
+          await fetch(`https://api.boufet.com/api/orders/${orderId}/confirm-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
+        }
+        
         onClearCart();
         navigate(`/order/${orderId}`);
       } else {

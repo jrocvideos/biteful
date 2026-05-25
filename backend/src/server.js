@@ -281,7 +281,7 @@ app.post("/api/orders", auth, async (req, res) => {
       order_id: orderId,
       type: "new_order",
       restaurant_id: restaurant_id,
-      customer_name: req.user?.first_name || "Customer",
+      customer_name: req.body.customer_name || req.user?.first_name || "Customer",
       total: total,
       tip: tip,
       customer_address: customer_address,
@@ -439,8 +439,8 @@ async function matchDriver(orderId) {
 // Driver accepts job
 app.post("/api/orders/:id/driver-accept", async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'driver_assigned' WHERE id = $1", [req.params.id]);
-    io.emit("order_update", { order_id: req.params.id, status: "driver_assigned" });
+    const driverName = req.body.driver_name || req.body.driver_id || 'Boufet Driver'; await pool.query("UPDATE orders SET status = 'driver_assigned', driver_id = $2, driver_name = $3 WHERE id = $1", [req.params.id, req.body.driver_id || 'anonymous', driverName]);
+    io.emit("order_update", { order_id: req.params.id, status: "driver_assigned", driver_name: driverName });
     res.json({ status: "driver_assigned" });
   } catch (err) {
     res.status(500).json({ error: err.message });
