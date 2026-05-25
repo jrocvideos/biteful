@@ -31,7 +31,7 @@ const getStandardFee = (subtotal: number): number => subtotal * 0.02;
 
 export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClearCart }: CheckoutPageProps) => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
   const [address, setAddress] = useState('');
   const [apt, setApt] = useState('');
