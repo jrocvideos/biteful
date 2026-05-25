@@ -68,6 +68,7 @@ export const OrderTracking = () => {
               'preparing': 'preparing',
               'ready_for_pickup': 'ready',
               'ready': 'ready',
+              'driver_assigned': 'ready',
               'picked_up': 'picked_up',
               'en_route_to_customer': 'en_route',
               'arrived': 'arriving',
