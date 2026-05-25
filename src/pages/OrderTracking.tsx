@@ -28,6 +28,18 @@ export const OrderTracking = () => {
   useEffect(() => {
     const saved = localStorage.getItem(`biteful-order-${id}`);
     if (saved) setOrderData(JSON.parse(saved));
+
+    // Also get cart items (checkout does not save order to localStorage)
+    const cartItems = localStorage.getItem("biteful-cart");
+    if (cartItems) {
+      try {
+        const parsed = JSON.parse(cartItems);
+        setOrderData((prev: any) => ({
+          ...(prev || {}),
+          items: parsed,
+        }));
+      } catch {}
+    }
   }, [id]);
 
   useEffect(() => {
@@ -38,6 +50,17 @@ export const OrderTracking = () => {
         .then(r => r.json())
         .then(data => {
           if (data.status) {
+            // Parse string values from API to numbers
+            setOrderData((prev: any) => ({
+              ...(prev || {}),
+              ...data,
+              total: parseFloat(data.total) || 0,
+              subtotal: parseFloat(data.subtotal) || 0,
+              tax: parseFloat(data.tax) || 0,
+              deliveryFee: parseFloat(data.delivery_fee) || 0,
+              serviceFee: parseFloat(data.service_fee) || 0,
+              tip: parseFloat(data.tip) || 0,
+            }));
             const statusMap: Record<string, OrderStatus> = {
               'pending_payment': 'confirmed',
               'paid': 'confirmed',
