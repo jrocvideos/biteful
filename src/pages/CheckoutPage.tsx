@@ -86,7 +86,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       const tax = subtotal * 0.12;
       const deliveryFee = deliveryTime === 'asap' ? getAsapFee() : subtotal * 0.02;
       const adminFee = 2.09 + subtotal * 0.08;
-      const tipAmount = subtotal * (tip / 100);
+      const tipAmount = subtotal * tip;
       const totalAmount = subtotal + tax + deliveryFee + adminFee + tipAmount;
 
       const res = await fetch('https://api.boufet.com/api/orders', {
@@ -119,7 +119,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
           tax, tip: tipAmount, total: totalAmount, items: orderItems,
         }));
-        // Trigger KDS notification via backend Socket.io
         // Trigger KDS notification via backend Socket.io
         if (data.id || data.order_id) {
           await fetch(`https://api.boufet.com/api/orders/${orderId}/confirm-payment`, {
