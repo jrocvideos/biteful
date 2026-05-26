@@ -69,7 +69,7 @@ export const OrderTracking = () => {
     const cartItems = localStorage.getItem("biteful-cart");
     if (cartItems) {
       try {
-        const parsed = JSON.parse(cartItems);
+        const parsed = JSON.parse(cartItems || '[]');
         setOrderData((prev: any) => ({
           ...(prev || {}),
           items: parsed,
