@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, MessageCircle, Bike, CheckCircle, ChefHat, Package, Home, Star, Receipt, Copy, Check, Zap, Clock, Navigation, RotateCcw } from 'lucide-react';
 import { LiveMap } from '../components/LiveMap';
 
-type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'driving_to_restaurant' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
+type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'driving_to_restaurant' | 'driver_at_restaurant' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
 
 const statusSteps = [
   { id: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, description: 'Restaurant received your order' },
   { id: 'preparing', label: 'Preparing', icon: ChefHat, description: 'Kitchen is cooking your food' },
   { id: 'ready', label: 'Ready for Pickup', icon: Package, description: 'Food is packed and waiting' },
-{ id: 'driving_to_restaurant', label: 'Driving to Restaurant', icon: Bike, description: 'Driver is heading to the restaurant' },  { id: 'picked_up', label: 'Driver Picked Up', icon: Bike, description: 'Driver has your order' },
+{ id: 'driving_to_restaurant', label: 'Driving to Restaurant', icon: Bike, description: 'Driver is heading to the restaurant' },
+  { id: 'driver_at_restaurant', label: 'At Restaurant', icon: Bike, description: 'Driver is waiting for your order' },  { id: 'picked_up', label: 'Driver Picked Up', icon: Bike, description: 'Driver has your order' },
   { id: 'en_route', label: 'On the Way', icon: Navigation, description: 'Heading to your address' },
   { id: 'arriving', label: 'Arriving Soon', icon: MapPin, description: 'Driver is near your location' },
   { id: 'delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },

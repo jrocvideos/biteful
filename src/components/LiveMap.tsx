@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { io } from 'socket.io-client';
 
-type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'driving_to_restaurant' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
+type OrderStatus = 'confirmed' | 'preparing' | 'ready' | 'driving_to_restaurant' | 'driver_at_restaurant' | 'picked_up' | 'en_route' | 'arriving' | 'delivered';
 
 interface LiveMapProps {
   status: OrderStatus;
