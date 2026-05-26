@@ -103,7 +103,7 @@ export const DriverApp = () => {
         vehicle_type: "car"
       });
       // Fetch existing ready orders
-      fetch("https://api.boufet.com/api/orders?status=ready,driver_assignedfetch("https://api.boufet.com/api/orders?status=ready&limit=20")limit=20")
+      fetch("https://api.boufet.com/api/orders?status=ready,driver_assigned&limit=20")
         .then(r => r.json())
         .then((orders: any[]) => {
           if (!Array.isArray(orders)) return;
@@ -199,6 +199,7 @@ export const DriverApp = () => {
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
           driver_id: localStorage.getItem("driver_id") || "drv_anon",
+          driver_name: localStorage.getItem("driver_name") || "Boufet Driver",
           accepted_at: new Date().toISOString()
         })
       });
