@@ -402,7 +402,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Service Fee</span>
-                  <span className="font-medium">${adminFee.toFixed(2)}</span>
+                  <span className="font-medium">${serviceFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (12% GST/PST)</span>
