@@ -439,7 +439,7 @@ async function matchDriver(orderId) {
 // Driver accepts job
 app.post("/api/orders/:id/driver-accept", async (req, res) => {
   try {
-    const driverName = req.body.driver_name || req.body.driver_id || 'Boufet Driver'; await pool.query("UPDATE orders SET status = 'driver_assigned', driver_id = $2, driver_name = $3 WHERE id = $1", [req.params.id, req.body.driver_id || 'anonymous', driverName]);
+    const driverName = req.body.driver_name || req.body.driver_id || 'Boufet Driver'; await pool.query("UPDATE orders SET status = 'driver_assigned', driver_id = $2, driver_name = $3 WHERE id = $1", [req.params.id, req.body.driver_id || '00000000-0000-0000-0000-000000000001', driverName]);
     io.emit("order_update", { order_id: req.params.id, status: "driver_assigned", driver_name: driverName });
     res.json({ status: "driver_assigned" });
   } catch (err) {
