@@ -443,7 +443,13 @@ const driverName = req.body.driver_name || req.body.driver_id || 'Boufet Driver'
     // Only update driver_id if it's a valid UUID (FK constraint to users table)
     const isValidUUID = (str) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
     if (isValidUUID(req.body.driver_id)) {
-      await pool.query("UPDATE orders SET status = 'driver_assigned', driver_id = $2, driver_name = $3 WHERE id = $1", [req.params.id, req.body.driver_id, driverName]);
+      // Validate driver_id is a proper UUID to avoid FK constraint errors
+      const isValidUUID = (str) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
+      if (isValidUUID(req.body.driver_id)) {
+        await pool.query("UPDATE orders SET status = 'driver_assigned', driver_id = $2, driver_name = $3 WHERE id = $1", [req.params.id, req.body.driver_id, driverName]);
+      } else {
+        await pool.query("UPDATE orders SET status = 'driver_assigned', driver_name = $2 WHERE id = $1", [req.params.id, driverName]);
+      }
     } else {
       await pool.query("UPDATE orders SET status = 'driver_assigned', driver_name = $2 WHERE id = $1", [req.params.id, driverName]);
     }
@@ -546,6 +552,11 @@ app.post("/api/orders/:id/status", async (req, res) => {
 app.get("/api/orders/:id/track", async (req, res) => {
   try {
     // Simple query without driver_locations join (table may not exist)
+    // Validate order ID is a valid UUID
+    const isValidUUID = (str) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid order ID', id: req.params.id });
+    }
     const result = await pool.query(
       "SELECT * FROM orders WHERE id = $1",
       [req.params.id]
@@ -839,6 +850,28 @@ app.post('/api/orders/:id/driver-accept', async (req, res) => {
   }
 });
 
+// Driver arrived at restaurant
+app.post('/api/orders/:id/driver-arrived-restaurant', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const driverName = req.body.driver_name || 'Boufet Driver';
+    await pool.query(
+      "UPDATE orders SET status = 'driver_at_restaurant' WHERE id = $1",
+      [orderId]
+    );
+    io.emit('order_update', {
+      order_id: orderId,
+      status: 'driver_at_restaurant',
+      driver_name: driverName,
+      message: 'Driver is at the restaurant waiting for order'
+    });
+    res.json({ success: true, status: 'driver_at_restaurant' });
+  } catch (err) {
+    console.error('driver-arrived-restaurant error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/orders/:id/driver-decline', async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -886,6 +919,42 @@ app.post('/api/orders/:id/status', async (req, res) => {
     res.json({ success: true, status });
   } catch (err) {
     console.error('status update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Forgot password
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (!userResult.rows[0]) return res.status(404).json({ error: 'No account found' });
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 3600000);
+    await pool.query(
+      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = $3',
+      [userResult.rows[0].id, resetToken, expiresAt]
+    );
+    res.json({ success: true, message: 'Reset email sent' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Invalid input' });
+    const tokenResult = await pool.query('SELECT user_id FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW()', [token]);
+    if (!tokenResult.rows[0]) return res.status(400).json({ error: 'Invalid or expired token' });
+    const bcrypt = await import('bcrypt');
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashed, tokenResult.rows[0].user_id]);
+    await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [tokenResult.rows[0].user_id]);
+    res.json({ success: true, message: 'Password reset' });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
