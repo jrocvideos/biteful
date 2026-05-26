@@ -279,7 +279,7 @@ export const OrderTracking = () => {
                 <span>${(orderData?.asapFee || orderData?.expressFee || 0).toFixed(2)}</span>
               </div>
             )}
-            {(orderData?.serviceFee > 0) && (<div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${orderData.serviceFee.toFixed(2)}</span></div>)}
+            {(orderData?.serviceFee > 0) && (<div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${(orderData?.serviceFee || 0).toFixed(2)}</span></div>)}
             <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(orderData?.tax || 0).toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${(orderData?.tip || 0).toFixed(2)}</span></div>
             <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(orderData?.total || 0).toFixed(2)}</span></div>
