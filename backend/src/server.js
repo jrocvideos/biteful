@@ -817,8 +817,8 @@ app.post('/api/orders/:id/driver-accept', async (req, res) => {
     if (order.status === 'driver_assigned') return res.status(409).json({ error: 'Already taken' });
 
     await pool.query(
-      'UPDATE orders SET status = $1, driver_id = $2, driver_accepted_at = $3 WHERE id = $4',
-      ['driver_assigned', driver_id, accepted_at, orderId]
+      'UPDATE orders SET status = $1, driver_id = $2 WHERE id = $3',
+      ['driver_assigned', driver_id, orderId]
     );
 
     io.emit('job_taken', orderId);
