@@ -228,8 +228,14 @@ export const OrderTracking = () => {
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0).toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 2.99).toFixed(2)}`}</span></div>
-            {orderData?.express && <div className="flex justify-between text-yellow-600"><span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Priority Fee</span><span>${(orderData?.expressFee || 0).toFixed(2)}</span></div>}
+            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 8.29).toFixed(2)}`}</span></div>
+            {/* ASAP Fee */}
+            {(orderData?.asapFee > 0 || orderData?.expressFee > 0) && (
+              <div className="flex justify-between text-yellow-600">
+                <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> ASAP Fee</span>
+                <span>${(orderData?.asapFee || orderData?.expressFee || 0).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${(orderData?.serviceFee || 2.50).toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(orderData?.tax || 0).toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${(orderData?.tip || 0).toFixed(2)}</span></div>
