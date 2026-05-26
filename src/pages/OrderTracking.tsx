@@ -270,7 +270,7 @@ export const OrderTracking = () => {
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0).toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Admin Fee</span><span>${(orderData?.serviceFee || 0).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Admin Fee</span><span>${(orderData?.adminFee || orderData?.serviceFee || 0).toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 8.29).toFixed(2)}`}</span></div>
             {/* ASAP Fee */}
             {(orderData?.asapFee > 0 || orderData?.expressFee > 0) && (
