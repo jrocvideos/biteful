@@ -29,6 +29,40 @@ export const OrderTracking = () => {
   useEffect(() => {
     const saved = localStorage.getItem(`biteful-order-${id}`);
     if (saved) setOrderData(JSON.parse(saved));
+    
+    // Socket.io for real-time status updates
+    const socket = io('https://api.boufet.com', { transports: ['polling', 'websocket'] });
+    socket.on('connect', () => {
+      console.log('Socket connected for order tracking');
+    });
+    socket.on('order_update', (data: any) => {
+      if (data.order_id === id || data.order_id === orderData?.id) {
+        const statusMap: Record<string, OrderStatus> = {
+          'pending_payment': 'confirmed',
+          'paid': 'confirmed',
+          'confirmed': 'confirmed',
+          'preparing': 'preparing',
+          'ready_for_pickup': 'ready',
+          'ready': 'ready',
+          'driver_assigned': 'driving_to_restaurant',
+          'driver_at_restaurant': 'driver_at_restaurant',
+          'picked_up': 'picked_up',
+          'out_for_delivery': 'en_route',
+          'en_route_to_customer': 'en_route',
+          'arrived': 'arriving',
+          'arrived-customer': 'arriving',
+          'delivered': 'delivered',
+        };
+        const mapped = statusMap[data.status] || 'confirmed';
+        setStatus(mapped);
+        setOrderData((prev: any) => ({
+          ...(prev || {}),
+          driverName: data.driver_name || prev?.driverName,
+        }));
+        if (mapped === 'delivered') setShowRating(true);
+      }
+    });
+    return () => { socket.disconnect(); };
 
     // Also get cart items (checkout does not save order to localStorage)
     const cartItems = localStorage.getItem("biteful-cart");
