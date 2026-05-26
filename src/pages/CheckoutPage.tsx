@@ -104,7 +104,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           asap_fee: deliveryFee,
           service_fee: adminFee,
           tip: tipAmount,
-          total: totalAmount,
+          total: finalTotal,
           customer_address: address + (apt ? `, ${apt}` : ''),
           delivery_type: deliveryTime,
           special_instructions: '',
@@ -117,7 +117,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         // Save actual checkout values for receipt (API returns recalculated values)
         localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
           subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
-          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+          tax, tip: tipAmount, total: finalTotal, items: orderItems,
         }));
         // Trigger KDS notification via backend Socket.io
         if (data.id || data.order_id) {
@@ -136,7 +136,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
           subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, serviceFee: adminFee,
-          tax, tip: tipAmount, total: totalAmount, items: orderItems,
+          tax, tip: tipAmount, total: finalTotal, items: orderItems,
         }));
         onClearCart();
         navigate(`/order/${orderId}`);
