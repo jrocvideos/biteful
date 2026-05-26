@@ -103,7 +103,7 @@ export const DriverApp = () => {
         vehicle_type: "car"
       });
       // Fetch existing ready orders
-      fetch("https://api.boufet.com/api/orders?status=ready&limit=20")
+      fetch("https://api.boufet.com/api/orders?status=ready,driver_assignedfetch("https://api.boufet.com/api/orders?status=ready&limit=20")limit=20")
         .then(r => r.json())
         .then((orders: any[]) => {
           if (!Array.isArray(orders)) return;
