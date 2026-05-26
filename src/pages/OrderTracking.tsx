@@ -32,7 +32,7 @@ export const OrderTracking = () => {
     if (saved) setOrderData(JSON.parse(saved));
     
     // Socket.io for real-time status updates
-    const socket = io('https://api.boufet.com', { transports: ['polling', 'websocket'] });
+    const socket = io('https://api.boufet.com', { withCredentials: true, transports: ['polling', 'websocket'] });
     socket.on('connect', () => {
       console.log('Socket connected for order tracking');
     });
