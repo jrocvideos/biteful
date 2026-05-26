@@ -93,6 +93,13 @@ export const OrderTracking = () => {
               status: data.status,
               driverName: data.driver_name || prev?.driverName,
               driverLocation: data.driver_location || prev?.driverLocation,
+              subtotal: prev?.subtotal,
+              deliveryFee: prev?.deliveryFee,
+              asapFee: prev?.asapFee,
+              serviceFee: prev?.serviceFee,
+              tax: prev?.tax,
+              tip: prev?.tip,
+              total: prev?.total,
             }));
             const statusMap: Record<string, OrderStatus> = {
               'pending_payment': 'confirmed',
