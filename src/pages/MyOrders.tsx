@@ -1,4 +1,5 @@
 import { useState } from 'react';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 import { motion } from 'framer-motion';
 import { Clock, CheckCircle, MapPin, Bike, ChevronRight, Star } from 'lucide-react';
 
@@ -114,7 +115,7 @@ const OrderCard = ({ order }: { order: Order }) => {
           <p className="text-sm text-muted-foreground">{order.date}</p>
         </div>
         <div className="text-right">
-          <p className="font-bold text-lg text-foreground">${order.total.toFixed(2)}</p>
+          <p className="font-bold text-lg text-foreground">${sf(order.total)}</p>
         </div>
       </div>
 

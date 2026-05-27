@@ -1,4 +1,5 @@
 import { useState } from 'react';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -84,7 +85,7 @@ export const CartDrawer = ({ isOpen, onClose, items, onUpdateQuantity, onRemove,
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-sm truncate">{item.name}</h4>
-                              <p className="text-xs text-muted-foreground">${item.price.toFixed(2)}</p>
+                              <p className="text-xs text-muted-foreground">${sf(item.price)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <button
@@ -102,7 +103,7 @@ export const CartDrawer = ({ isOpen, onClose, items, onUpdateQuantity, onRemove,
                               </button>
                             </div>
                             <div className="text-right min-w-[60px]">
-                              <p className="font-semibold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                              <p className="font-semibold text-sm">${sf(item.price * item.quantity)}</p>
                               <button onClick={() => onRemove(item.id, item.restaurantId)} className="text-red-500 hover:text-red-600 mt-1">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -120,7 +121,7 @@ export const CartDrawer = ({ isOpen, onClose, items, onUpdateQuantity, onRemove,
               <div className="border-t border-border p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-semibold">${total.toFixed(2)}</span>
+                  <span className="font-semibold">${sf(total)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Delivery & Fees</span>
