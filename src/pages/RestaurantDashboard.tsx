@@ -1,89 +1,24 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Bell, CheckCircle, Clock, ChefHat, Package, 
-  Phone, MapPin, DollarSign, UtensilsCrossed, 
-  AlertCircle, Volume2, VolumeX, X, Printer, Timer,
-  TrendingUp, BarChart3, Receipt,
-  Star, Calendar, ArrowUpRight,
-  Ban, RotateCcw, ClipboardCheck, Sparkles, PartyPopper,
-  Users, Cake, Church
+Bell, CheckCircle, Clock, ChefHat, Package, 
+Phone, MapPin, DollarSign, UtensilsCrossed, 
+AlertCircle, Volume2, VolumeX, X, Printer, Timer,
+TrendingUp, BarChart3, Receipt,
+Star, Calendar, ArrowUpRight,
+Ban, RotateCcw, ClipboardCheck, Sparkles, PartyPopper,
+Users, Cake, Church
 } from "lucide-react";
 import { 
-  Tooltip, ResponsiveContainer, BarChart, Bar,
-  PieChart, Pie, Cell
+AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+Tooltip, ResponsiveContainer, BarChart, Bar,
+PieChart, Pie, Cell
 } from "recharts";
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  unit_price: number;
-  special_instructions?: string;
-}
-
-interface Order {
-  id: string;
-  customer_name: string;
-  customer_phone?: string;
-  customer_address: string;
-  items: OrderItem[];
-  subtotal: number;
-  tax: number;
-  delivery_fee: number;
-  tip: number;
-  total: number;
-  status: string;
-  special_instructions?: string;
-  time_elapsed: string;
-  event_type?: string;
-  event_date?: string;
-  guest_count?: number;
-  deposit_paid?: number;
-  deposit_total?: number;
-  cancellation_reason?: string;
-  cancelled_at?: string;
-}
-
-const MOCK_ORDERS: Order[] = [
-  {
-    id: "ORD-2048",
-    customer_name: "Alex M.",
-    customer_phone: "(555) 123-4567",
-    customer_address: "888 Burrard St, Apt 12B",
-    items: [
-      { name: "Classic Cheeseburger", quantity: 1, unit_price: 12.99 },
-      { name: "Truffle Fries", quantity: 1, unit_price: 6.99 },
-      { name: "Vanilla Shake", quantity: 1, unit_price: 5.99 },
-    ],
-    subtotal: 25.97,
-    tax: 2.08,
-    delivery_fee: 2.99,
-    tip: 4.00,
-    total: 35.04,
-    status: "pending",
-    special_instructions: "No pickles on burger. Extra sauce on side.",
-    time_elapsed: "2 min ago",
-  },
-  {
-    id: "ORD-2049",
-    customer_name: "Sarah K.",
-    customer_phone: "(555) 987-6543",
-    customer_address: "555 W Hastings St, Floor 8",
-    items: [
-      { name: "Dragon Roll", quantity: 1, unit_price: 16.99 },
-      { name: "Spicy Tuna Roll", quantity: 2, unit_price: 8.99 },
-    ],
-    subtotal: 34.97,
-    tax: 2.80,
-    delivery_fee: 2.99,
-    tip: 6.50,
-    total: 47.26,
-    status: "preparing",
-    time_elapsed: "9 min ago",
-  },
-  {
-    id: "ORD-2051",
-    customer_name: "James L.",
+const sf = (n: any) => {
+const v = Number(n);
+return isNaN(v) ? "0.00" : v.toFixed(2);
+};
     customer_phone: "(555) 111-2222",
     customer_address: "1234 Robson St, Apt 501",
     items: [
@@ -588,7 +523,7 @@ export const RestaurantDashboard = () => {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Deposit Paid</span>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid)} / ${sf(selectedOrder.deposit_total)}</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid?)} / ${sf(selectedOrder.deposit_total?)}</span>
                     </div>
                     <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
                       <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((selectedOrder.deposit_paid || 0) / (selectedOrder.deposit_total || 1)) * 100}%` }} />
