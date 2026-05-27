@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { MapPin, CreditCard, Clock, ChevronRight, Minus, Plus, Trash2, Tag, Bike, Shield, Star, TrendingDown, Info } from 'lucide-react';
 import { CartItem } from '../types';
 import { useAuth } from '../lib/auth';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 interface CheckoutPageProps {
   items: CartItem[];
@@ -202,7 +203,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold truncate">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</p>
+                            <p className="text-sm text-muted-foreground">${sf(item.price)} each</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <button onClick={() => onUpdateQuantity(item.id, item.restaurantId, item.quantity - 1)} className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted"><Minus className="w-4 h-4" /></button>
@@ -210,7 +211,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                             <button onClick={() => onUpdateQuantity(item.id, item.restaurantId, item.quantity + 1)} className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted"><Plus className="w-4 h-4" /></button>
                           </div>
                           <div className="text-right min-w-[80px]">
-                            <p className="font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                            <p className="font-bold">${sf((item.price * item.quantity))}</p>
                             <button onClick={() => onRemove(item.id, item.restaurantId)} className="text-red-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </div>
@@ -226,7 +227,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                           <TrendingDown className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="font-bold text-green-800">You're saving ${totalSavings.toFixed(2)} vs UberEats</p>
+                          <p className="font-bold text-green-800">You're saving ${sf(totalSavings)} vs UberEats</p>
                           <p className="text-xs text-green-600">Lower fees, same great delivery</p>
                         </div>
                       </div>
@@ -239,16 +240,16 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
                           <span className="text-green-800">Delivery</span>
-                          <span className="text-center text-red-500 line-through">${uberDeliveryFee.toFixed(2)}</span>
-                          <span className="text-right font-bold text-green-600">${totalDelivery.toFixed(2)}</span>
+                          <span className="text-center text-red-500 line-through">${sf(uberDeliveryFee)}</span>
+                          <span className="text-right font-bold text-green-600">${sf(totalDelivery)}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
                           <span className="text-green-800">Service Fee</span>
-                          <span className="text-right font-bold text-green-600">${serviceFee.toFixed(2)}</span>
+                          <span className="text-right font-bold text-green-600">${sf(serviceFee)}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm pt-2 font-bold">
                           <span className="text-green-800">Total Saved</span><span></span>
-                          <span className="text-right text-green-600">${totalSavings.toFixed(2)}</span>
+                          <span className="text-right text-green-600">${sf(totalSavings)}</span>
                         </div>
                       </motion.div>
                     )}
@@ -280,14 +281,14 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">ASAP</p>
                         <p className="text-xs text-muted-foreground">~25–35 min</p>
-                        <p className="text-xs font-semibold text-primary mt-1">+${asapFee.toFixed(2)}</p>
+                        <p className="text-xs font-semibold text-primary mt-1">+${sf(asapFee)}</p>
                         {getAsapLabel(asapFee) && <p className="text-[10px] text-orange-500 mt-0.5">{getAsapLabel(asapFee)}</p>}
                       </button>
                       <button onClick={() => setDeliveryTime('standard')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'standard' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
                         <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
                         <p className="font-semibold">Standard</p>
                         <p className="text-xs text-muted-foreground">~45–60 min</p>
-                        <p className="text-xs font-semibold text-primary mt-1">+${standardFee.toFixed(2)}</p>
+                        <p className="text-xs font-semibold text-primary mt-1">+${sf(standardFee)}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Shared delivery</p>
                       </button>
                       <button onClick={() => setDeliveryTime('schedule')} className={`p-4 rounded-xl border-2 text-center transition-colors ${deliveryTime === 'schedule' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
@@ -308,7 +309,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Tip: ${tipAmount.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Tip: ${sf(tipAmount)}</p>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
@@ -356,7 +357,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('delivery')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
                   <button onClick={handlePlaceOrder} disabled={loading} className="flex-1 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-70">
-                    {loading ? 'Placing Order...' : `Place Order • $${finalTotal.toFixed(2)}`}
+                    {loading ? 'Placing Order...' : `Place Order • $${sf(finalTotal)}`}
                   </button>
                 </div>
               </motion.div>
@@ -379,17 +380,17 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Item Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>${sf(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Admin Fee</span>
-                  <span className="font-medium">${adminFee.toFixed(2)}</span>
+                  <span className="font-medium">${sf(adminFee)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Delivery Fee</span>
                   <div className="text-right">
-                    <span className="text-xs text-red-400 line-through mr-1">${uberDeliveryFee.toFixed(2)}</span>
-                    <span className="font-medium">${deliveryFee.toFixed(2)}</span>
+                    <span className="text-xs text-red-400 line-through mr-1">${sf(uberDeliveryFee)}</span>
+                    <span className="font-medium">${sf(deliveryFee)}</span>
                   </div>
                 </div>
                 {deliveryTime === 'asap' && (
@@ -397,36 +398,36 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     <span className="text-muted-foreground">
                       ASAP Fee{getAsapLabel(asapFee) && <span className="ml-1 text-[10px] text-orange-500">({getAsapLabel(asapFee)})</span>}
                     </span>
-                    <span className="font-medium">${asapFee.toFixed(2)}</span>
+                    <span className="font-medium">${sf(asapFee)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Service Fee</span>
-                  <span className="font-medium">${serviceFee.toFixed(2)}</span>
+                  <span className="font-medium">${sf(serviceFee)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (12% GST/PST)</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>${sf(tax)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Driver Tip</span>
-                  <span>${tipAmount.toFixed(2)}</span>
+                  <span>${sf(tipAmount)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Promo Discount</span>
-                    <span>-${discount.toFixed(2)}</span>
+                    <span>-${sf(discount)}</span>
                   </div>
                 )}
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-green-600 font-medium bg-green-50 rounded-lg px-2 py-1">
                     <span className="flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Saved vs UberEats</span>
-                    <span>-${totalSavings.toFixed(2)}</span>
+                    <span>-${sf(totalSavings)}</span>
                   </div>
                 )}
                 <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${finalTotal.toFixed(2)}</span>
+                  <span>${sf(finalTotal)}</span>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground">

@@ -10,6 +10,7 @@ import {
   Users, Cake, Church
 } from "lucide-react";
 import { 
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, BarChart, Bar,
   PieChart, Pie, Cell
@@ -423,7 +424,7 @@ export const RestaurantDashboard = () => {
                 <div className="bg-card rounded-2xl p-5 border border-border shadow-soft">
                   <p className="text-sm text-muted-foreground mb-1">Total Orders</p>
                   <p className="text-2xl font-bold text-foreground">{totalOrders}</p>
-                  <p className="text-xs text-muted-foreground mt-1">${avgOrderValue.toFixed(2)} avg order</p>
+                  <p className="text-xs text-muted-foreground mt-1">${sf(avgOrderValue)} avg order</p>
                 </div>
                 <div className="bg-card rounded-2xl p-5 border border-border shadow-soft">
                   <p className="text-sm text-muted-foreground mb-1">You Keep</p>
@@ -502,7 +503,7 @@ export const RestaurantDashboard = () => {
                             <p className="text-xs text-muted-foreground">{item.sales} sold</p>
                           </div>
                         </div>
-                        <p className="font-bold text-primary">${item.revenue.toFixed(2)}</p>
+                        <p className="font-bold text-primary">${sf(item.revenue)}</p>
                       </div>
                     ))}
                   </div>
@@ -517,11 +518,11 @@ export const RestaurantDashboard = () => {
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-green-800 dark:text-green-200 mb-1">You are saving with Boufet</h3>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-3">
-                      With DoorDash (30% commission), you would have paid <span className="font-bold">${(totalRevenue * 0.30).toFixed(0)}</span> in fees this week.
+                      With DoorDash (30% commission), you would have paid <span className="font-bold">${sf((totalRevenue * 0.30))}</span> in fees this week.
                     </p>
                     <p className="text-sm text-green-700 dark:text-green-300">
-                      With Boufet (20% commission), you paid only <span className="font-bold">${totalCommission.toFixed(0)}</span>. 
-                      <span className="font-bold text-green-800 dark:text-green-200"> You saved ${((totalRevenue * 0.30) - totalCommission).toFixed(0)} this week!</span>
+                      With Boufet (20% commission), you paid only <span className="font-bold">${sf(totalCommission)}</span>. 
+                      <span className="font-bold text-green-800 dark:text-green-200"> You saved ${sf(((totalRevenue * 0.30) - totalCommission))} this week!</span>
                     </p>
                   </div>
                 </div>
@@ -589,7 +590,7 @@ export const RestaurantDashboard = () => {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Deposit Paid</span>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">${selectedOrder.deposit_paid?.toFixed(2)} / ${selectedOrder.deposit_total?.toFixed(2)}</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid?)} / ${sf(selectedOrder.deposit_total?)}</span>
                     </div>
                     <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
                       <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((selectedOrder.deposit_paid || 0) / (selectedOrder.deposit_total || 1)) * 100}%` }} />
@@ -624,7 +625,7 @@ export const RestaurantDashboard = () => {
                           <p className="font-medium text-foreground">{item.quantity}x {item.name}</p>
                           {item.special_instructions && <p className="text-xs text-amber-600 mt-1">Note: {item.special_instructions}</p>}
                         </div>
-                        <p className="font-semibold">${(item.unit_price * item.quantity).toFixed(2)}</p>
+                        <p className="font-semibold">${sf((item.unit_price * item.quantity))}</p>
                       </div>
                     ))}
                   </div>
@@ -643,11 +644,11 @@ export const RestaurantDashboard = () => {
                 )}
 
                 <div className="space-y-2 text-sm border-t pt-4">
-                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>${selectedOrder.subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span>${selectedOrder.tax.toFixed(2)}</span></div>
-                  {selectedOrder.delivery_fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Delivery Fee</span><span>${selectedOrder.delivery_fee.toFixed(2)}</span></div>}
-                  <div className="flex justify-between text-muted-foreground"><span>Tip</span><span className="text-green-600">${selectedOrder.tip.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t"><span>Total</span><span>${selectedOrder.total.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>${sf(selectedOrder.subtotal)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span>${sf(selectedOrder.tax)}</span></div>
+                  {selectedOrder.delivery_fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Delivery Fee</span><span>${sf(selectedOrder.delivery_fee)}</span></div>}
+                  <div className="flex justify-between text-muted-foreground"><span>Tip</span><span className="text-green-600">${sf(selectedOrder.tip)}</span></div>
+                  <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t"><span>Total</span><span>${sf(selectedOrder.total)}</span></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
@@ -734,7 +735,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Clock className="w-3 h-3" /> {order.time_elapsed}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold text-foreground">${order.total.toFixed(2)}</p>
+          <p className="text-xl font-bold text-foreground">${sf(order.total)}</p>
           <p className="text-xs text-muted-foreground">{order.items.length} items</p>
         </div>
       </div>
@@ -798,7 +799,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {order.customer_address.slice(0, 20)}...</span>
-        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Tip: ${order.tip.toFixed(2)}</span>
+        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Tip: ${sf(order.tip)}</span>
       </div>
     </motion.div>
   );

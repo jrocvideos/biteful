@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import {
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
   CheckCircle, Clock, ChefHat, Phone, MapPin,
   DollarSign, Bell, BellOff, Wifi, WifiOff,
   Zap, Calendar, Users, RefreshCw, Package
@@ -152,7 +153,7 @@ const KDSCard = ({ order, onAction }: { order: Order; onAction: (id: string, sta
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold text-white">${order.total.toFixed(2)}</p>
+          <p className="text-xl font-bold text-white">${sf(order.total)}</p>
 
         </div>
       </div>
@@ -365,7 +366,7 @@ export const RestaurantKDS = () => {
 
         {/* Stats */}
         <div className="hidden md:flex items-center gap-6">
-          <div className="text-center"><p className="text-xs text-gray-400">Revenue</p><p className="font-bold text-teal-400">${todayRevenue.toFixed(0)}</p></div>
+          <div className="text-center"><p className="text-xs text-gray-400">Revenue</p><p className="font-bold text-teal-400">${sf(todayRevenue)}</p></div>
           <div className="text-center"><p className="text-xs text-gray-400">Orders</p><p className="font-bold">{orders.filter(o => o.status !== 'cancelled').length}</p></div>
           <div className="text-center"><p className="text-xs text-gray-400">Active</p><p className="font-bold text-yellow-400">{preparing.length}</p></div>
         </div>
@@ -568,8 +569,8 @@ export const RestaurantKDS = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-purple-400">${order.total.toFixed(2)}</p>
-                  <p className="text-xs text-yellow-400">${order.tip.toFixed(2)} tip</p>
+                  <p className="text-2xl font-bold text-purple-400">${sf(order.total)}</p>
+                  <p className="text-xs text-yellow-400">${sf(order.tip)} tip</p>
                 </div>
               </div>
               <p className="font-bold text-lg mb-2">{order.customerName}</p>
@@ -596,9 +597,9 @@ export const RestaurantKDS = () => {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Today Revenue', value: `$${todayRevenue.toFixed(2)}`, color: 'text-teal-400' },
-              { label: 'Your Earnings (80%)', value: `$${restaurantEarnings.toFixed(2)}`, color: 'text-emerald-400' },
-              { label: 'Boufet Fee (20%)', value: `$${boufetCommission.toFixed(2)}`, color: 'text-gray-400' },
+              { label: 'Today Revenue', value: `$${sf(todayRevenue)}`, color: 'text-teal-400' },
+              { label: 'Your Earnings (80%)', value: `$${sf(restaurantEarnings)}`, color: 'text-emerald-400' },
+              { label: 'Boufet Fee (20%)', value: `$${sf(boufetCommission)}`, color: 'text-gray-400' },
               { label: 'Orders Completed', value: `${completedOrders.length}`, color: 'text-blue-400' },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
@@ -619,8 +620,8 @@ export const RestaurantKDS = () => {
                     <p className="text-xs text-gray-400">{o.customerName} · {o.items.length} items</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-teal-400">${o.total.toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">${(o.total * 0.80).toFixed(2)} yours</p>
+                    <p className="font-bold text-teal-400">${sf(o.total)}</p>
+                    <p className="text-xs text-gray-500">${sf((o.total * 0.80))} yours</p>
                   </div>
                 </div>
               ))}
@@ -628,16 +629,16 @@ export const RestaurantKDS = () => {
             {completedOrders.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between font-bold">
                 <span>Total Your Earnings</span>
-                <span className="text-emerald-400">${restaurantEarnings.toFixed(2)}</span>
+                <span className="text-emerald-400">${sf(restaurantEarnings)}</span>
               </div>
             )}
           </div>
 
           <div className="bg-gradient-to-r from-teal-900/40 to-gray-900 border border-teal-800/40 rounded-2xl p-5">
             <p className="text-xs text-gray-400 mb-1">vs DoorDash (30% fee)</p>
-            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${(todayRevenue * 0.70).toFixed(2)}</span></p>
-            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${restaurantEarnings.toFixed(2)}</span></p>
-            <p className="text-teal-400 font-bold mt-2">You saved ${(todayRevenue * 0.10).toFixed(2)} today by using Boufet 🎉</p>
+            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${sf((todayRevenue * 0.70))}</span></p>
+            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${sf(restaurantEarnings)}</span></p>
+            <p className="text-teal-400 font-bold mt-2">You saved ${sf((todayRevenue * 0.10))} today by using Boufet 🎉</p>
           </div>
         </div>
       )}
