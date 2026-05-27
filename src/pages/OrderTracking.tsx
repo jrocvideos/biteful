@@ -18,6 +18,8 @@ const statusSteps = [
   { id: 'delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },
 ] as const;
 
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?'0.00':v.toFixed(2); };
+
 export const OrderTracking = () => {
   const { id } = useParams();
   const [status, setStatus] = useState<OrderStatus>('confirmed');
@@ -261,7 +263,7 @@ export const OrderTracking = () => {
                 {orderData.items.map((item: any, idx: number) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span><span className="font-semibold">{item.quantity}x</span> {item.name}</span>
-                    <span className="font-medium">${((item.price || item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                    <span className="font-medium">${sf(((item.price || item.unit_price || 0) * (item.quantity || 1)))}</span>
                   </div>
                 ))}
               </div>
@@ -269,20 +271,20 @@ export const OrderTracking = () => {
           )}
           
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0).toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Admin Fee</span><span>${(orderData?.adminFee || orderData?.serviceFee || 0).toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${(orderData?.deliveryFee || 8.29).toFixed(2)}`}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${sf((orderData?.subtotal || orderData?.items?.reduce((s: number, i: any) => s + (i.price || i.unit_price || 0) * i.quantity, 0) || 0))}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Admin Fee</span><span>${sf((orderData?.adminFee || orderData?.serviceFee || 0))}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{orderData?.express ? 'FREE' : `$${sf((orderData?.deliveryFee || 8.29))}`}</span></div>
             {/* ASAP Fee */}
             {(orderData?.asapFee > 0 || orderData?.expressFee > 0) && (
               <div className="flex justify-between text-yellow-600">
                 <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> ASAP Fee</span>
-                <span>${(orderData?.asapFee || orderData?.expressFee || 0).toFixed(2)}</span>
+                <span>${sf((orderData?.asapFee || orderData?.expressFee || 0))}</span>
               </div>
             )}
-            {(orderData?.serviceFee > 0) && (<div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${(orderData?.serviceFee || 0).toFixed(2)}</span></div>)}
-            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(orderData?.tax || 0).toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${(orderData?.tip || 0).toFixed(2)}</span></div>
-            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${(orderData?.total || 0).toFixed(2)}</span></div>
+            {(orderData?.serviceFee > 0) && (<div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>${sf((orderData?.serviceFee || 0))}</span></div>)}
+            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${sf((orderData?.tax || 0))}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>${sf((orderData?.tip || 0))}</span></div>
+            <div className="border-t border-border pt-2 flex justify-between font-bold text-lg"><span>Total</span><span>${sf((orderData?.total || 0))}</span></div>
           </div>
         </div>
 
