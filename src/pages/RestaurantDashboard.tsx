@@ -588,7 +588,7 @@ export const RestaurantDashboard = () => {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Deposit Paid</span>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid?)} / ${sf(selectedOrder.deposit_total?)}</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid)} / ${sf(selectedOrder.deposit_total)}</span>
                     </div>
                     <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
                       <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((selectedOrder.deposit_paid || 0) / (selectedOrder.deposit_total || 1)) * 100}%` }} />
