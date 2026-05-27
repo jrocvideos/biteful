@@ -261,7 +261,7 @@ export const OrderTracking = () => {
                 {orderData.items.map((item: any, idx: number) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span><span className="font-semibold">{item.quantity}x</span> {item.name}</span>
-                    <span className="font-medium">${((item.price || item.unit_price || 0) * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">${((item.price || item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
