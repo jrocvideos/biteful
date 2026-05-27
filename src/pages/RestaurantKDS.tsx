@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import {
-const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
   CheckCircle, Clock, ChefHat, Phone, MapPin,
   DollarSign, Bell, BellOff, Wifi, WifiOff,
   Zap, Calendar, Users, RefreshCw, Package

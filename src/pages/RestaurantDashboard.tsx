@@ -10,8 +10,6 @@ import {
   Users, Cake, Church
 } from "lucide-react";
 import { 
-const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, BarChart, Bar,
   PieChart, Pie, Cell
 } from "recharts";
