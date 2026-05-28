@@ -263,7 +263,7 @@ export const RecommendationsSection = ({ onAddToCart }: Props) => {
             {profile.dietarySignals.map((signal, i) => (
               <span key={i} className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">{signal}</span>
             ))}
-            <span className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full">Avg ${profile.priceComfortZone.mid.toFixed(0)}/order</span>
+            <span className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full">Avg ${Math.round(profile.priceComfortZone?.mid || 0)}/order</span>
             <span className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full">{profile.explorationScore > 0.5 ? 'Adventurous Eater' : 'Creature of Habit'}</span>
           </div>
         )}
@@ -287,7 +287,7 @@ export const RecommendationsSection = ({ onAddToCart }: Props) => {
                   {getIcon(rec.type)}
                   {rec.badge}
                 </div>
-                <span className="text-lg font-bold">${rec.price.toFixed(2)}</span>
+                <span className="text-lg font-bold">${(rec.price || 0).toFixed(2)}</span>
               </div>
               <h3 className="font-bold text-lg mb-1">{rec.itemName}</h3>
               <p className="text-sm text-muted-foreground mb-3">{rec.restaurant}</p>
