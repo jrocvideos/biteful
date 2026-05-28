@@ -15,7 +15,7 @@ Tooltip, ResponsiveContainer, BarChart, Bar,
 PieChart, Pie, Cell
 } from "recharts";
 
-
+const sf = (n: any) => {
 const v = Number(n);
 return isNaN(v) ? "0.00" : v.toFixed(2);
 };
