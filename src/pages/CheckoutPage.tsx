@@ -432,7 +432,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
               </div>
               <div className="mt-4 p-3 bg-muted rounded-xl flex items-center gap-2 text-xs text-muted-foreground">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span>Earn {(finalTotal * 0.05).toFixed(0)} Boufet points with this order</span>
+                <span>Earn {Math.round((finalTotal || 0) * 0.05)} Boufet points with this order</span>
               </div>
             </div>
           </div>

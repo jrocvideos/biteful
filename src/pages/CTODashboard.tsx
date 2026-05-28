@@ -422,7 +422,7 @@ export const CTODashboard = () => {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">GPS</p><p className="text-xs font-mono text-teal-300">{d.lat.toFixed(4)}, {d.lng.toFixed(4)}</p></div>
+                <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">GPS</p><p className="text-xs font-mono text-teal-300">{Number(d.lat || 0).toFixed(4)}, {Number(d.lng || 0).toFixed(4)}</p></div>
                 <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">Active Order</p><p className="text-xs font-mono text-yellow-300">{d.order || '— None'}</p></div>
               </div>
             </div>
