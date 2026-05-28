@@ -7,7 +7,7 @@ import {
   DollarSign, Bell, BellOff, Wifi, WifiOff,
   Zap, Calendar, Users, RefreshCw, Package
 } from 'lucide-react';
-
+import { sf } from './RestaurantDashboard';
 const API_URL = 'https://api.boufet.com';
 
 const RESTAURANT_NAMES: Record<string, string> = {

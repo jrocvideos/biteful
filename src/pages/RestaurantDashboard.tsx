@@ -15,10 +15,40 @@ Tooltip, ResponsiveContainer, BarChart, Bar,
 PieChart, Pie, Cell
 } from "recharts";
 
-const sf = (n: any) => {
+export const sf = (n: any) => {
 const v = Number(n);
 return isNaN(v) ? "0.00" : v.toFixed(2);
 };
+export interface Order {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  items: { name: string; quantity: number; unit_price: number }[];
+  subtotal: number;
+  tax: number;
+  delivery_fee: number;
+  tip: number;
+  total: number;
+  status: string;
+  special_instructions?: string;
+  time_elapsed: string;
+  event_type?: string;
+  event_date?: string;
+  guest_count?: number;
+  deposit_paid?: number;
+  deposit_total?: number;
+  cancellation_reason?: string;
+  cancelled_at?: string;
+}
+
+const MOCK_ORDERS = [
+  {
+    id: "1",
+    customer_name: "Sarah Johnson",
+    customer_phone: "(555) 111-2222",
+    customer_address: "Downtown Vancouver, 400 Burrard St",
+    items: [
       { name: "Chips & Guac", quantity: 2, unit_price: 5.99 },
     ],
     subtotal: 65.93,
@@ -464,7 +494,7 @@ export const RestaurantDashboard = () => {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Deposit Paid</span>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid?)} / ${sf(selectedOrder.deposit_total?)}</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid ?? 0)} / ${sf(selectedOrder.deposit_total ?? 0)}</span>
                     </div>
                     <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
                       <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((selectedOrder.deposit_paid || 0) / (selectedOrder.deposit_total || 1)) * 100}%` }} />
@@ -493,7 +523,7 @@ export const RestaurantDashboard = () => {
                 <div>
                   <h3 className="font-bold mb-3 flex items-center gap-2"><UtensilsCrossed className="w-4 h-4" /> Order Items</h3>
                   <div className="space-y-3">
-                    {selectedOrder.items.map((item, i) => (
+                    {selectedOrder.items.map((item: any, i: number) => (
                       <div key={i} className="flex items-start justify-between p-3 rounded-xl bg-muted">
                         <div>
                           <p className="font-medium text-foreground">{item.quantity}x {item.name}</p>
@@ -630,7 +660,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
       )}
 
       <div className="space-y-1 mb-4">
-        {order.items.slice(0, 3).map((item, i) => (<p key={i} className="text-sm text-muted-foreground">{item.quantity}x {item.name}</p>))}
+        {order.items.slice(0, 3).map((item: any, i: number) => (<p key={i} className="text-sm text-muted-foreground">{item.quantity}x {item.name}</p>))}
         {order.items.length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} more items</p>}
       </div>
 
