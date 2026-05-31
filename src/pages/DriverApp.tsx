@@ -236,6 +236,14 @@ export const DriverApp = () => {
     const updated = { ...activeJob, status };
     setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
 
+    if (status === "arrived-restaurant") {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
+        body: JSON.stringify({ status: "driver_at_restaurant", arrived_at: new Date().toISOString() })
+      });
+    }
+
     if (status === "picked-up") {
       // Stop wait timer, calculate wait fee
       if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
