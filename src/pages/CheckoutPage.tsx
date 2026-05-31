@@ -49,7 +49,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
 
   const subtotal = total;
   const hasSmoke2Snack = items.some(item => item.restaurantName === 'Smoke2Snack');
-  const adminFee = 2.09 + (subtotal * 0.08);
+  const adminFee = subtotal * 0.12;
   const asapFee = getAsapFee();
   const deliveryFee = 8.29;
   const standardFee = getStandardFee(subtotal);
@@ -86,7 +86,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const tax = subtotal * 0.12;
       const deliveryFee = deliveryTime === 'asap' ? getAsapFee() : subtotal * 0.02;
-      const adminFee = 2.09 + subtotal * 0.08;
+      const adminFee = subtotal * 0.12;
       const tipAmount = subtotal * tip;
       const totalAmount = subtotal + tax + deliveryFee + adminFee + tipAmount;
 
@@ -383,7 +383,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   <span>${sf(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Admin Fee</span>
+                  <span className="text-muted-foreground">Service Fee</span>
                   <span className="font-medium">${sf(adminFee)}</span>
                 </div>
                 <div className="flex justify-between">
