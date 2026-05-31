@@ -244,8 +244,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                           <span className="text-right font-bold text-green-600">${sf(totalDelivery)}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm py-2 border-b border-green-100">
-                          <span className="text-green-800">Service Fee</span>
-                          <span className="text-right font-bold text-green-600">${sf(serviceFee)}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm pt-2 font-bold">
                           <span className="text-green-800">Total Saved</span><span></span>
@@ -402,8 +400,6 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service Fee</span>
-                  <span className="font-medium">${sf(serviceFee)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (12% GST/PST)</span>
