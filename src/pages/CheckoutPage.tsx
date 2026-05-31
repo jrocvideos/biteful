@@ -108,6 +108,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           total: finalTotal,
           customer_address: address + (apt ? `, ${apt}` : ''),
           delivery_type: deliveryTime,
+          customer_name: user?.first_name || "Jose Y.",
           special_instructions: '',
         }),
       });
