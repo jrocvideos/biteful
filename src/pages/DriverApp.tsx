@@ -237,9 +237,8 @@ export const DriverApp = () => {
     setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
 
     if (status === "arrived-restaurant") {
-      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/driver-arrived-restaurant`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({ status: "driver_at_restaurant", arrived_at: new Date().toISOString() })
       });
     }
