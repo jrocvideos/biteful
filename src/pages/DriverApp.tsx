@@ -266,7 +266,7 @@ export const DriverApp = () => {
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({ status: "arrived-customer" })
       });
-n    }
+    }
 
     if (status === "delivered") {
       await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
