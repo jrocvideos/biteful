@@ -14,8 +14,8 @@ const statusSteps = [
 { id: 'driving_to_restaurant', label: 'Driving to Restaurant', icon: Bike, description: 'Driver is heading to the restaurant' },
   { id: 'driver_at_restaurant', label: 'At Restaurant', icon: Bike, description: 'Driver is waiting for your order' },  { id: 'picked_up', label: 'Driver Picked Up', icon: Bike, description: 'Driver has your order' },
   { id: 'en_route', label: 'On the Way', icon: Navigation, description: 'Heading to your address' },
-  { id: 'arriving', label: 'Arriving Soon', icon: MapPin, description: 'Driver is near your location' },
-  { id: 'delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },
+  { id: 'arriving', label: 'Driver Arrived', icon: MapPin, description: 'Driver is at your location' },
+  { id: 'delivered', label: 'Order Complete', icon: Home, description: 'Your order has been delivered!' },
 ] as const;
 
 const sf = (n:any) => { const v=Number(n); return isNaN(v)?'0.00':v.toFixed(2); };
