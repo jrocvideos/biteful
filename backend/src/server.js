@@ -1249,9 +1249,9 @@ app.post("/api/orders/:id/reject", auth, async (req, res) => {
 
 // KDS PIN verification
 const KDS_PINS = {
-  "4821": { id: "REPLACE_WITH_CUBA_ID", name: "Cuba Street Food" },
-  "7392": { id: "REPLACE_WITH_PAPA_ID", name: "Papa Johns" },
-  "1056": { id: "REPLACE_WITH_BURGER_ID", name: "Burger Vault" },
+  "4821": { id: "bd67f62d-cdd9-4541-b6cd-d140be14fe1a", name: "Cuba Street Food" },
+  "7392": { id: "5a3ac06e-7a5d-4e5c-ba4c-4dac89a2e79d", name: "Papa Johns" },
+  "1056": { id: "cb8b55eb-118b-4895-9277-93847a329533", name: "Burger Vault" },
 };
 
 app.post("/api/kds/verify-pin", async (req, res) => {
