@@ -272,7 +272,7 @@ app.post("/api/orders", auth, async (req, res) => {
     // Emit globally for dashboards
     // Fetch items for socket emit
     const itemsResult = await client.query(
-      "SELECT mi.name, oi.quantity, oi.special_instructions FROM order_items oi JOIN menu_items mi ON mi.id = oi.menu_item_id WHERE oi.order_id = $1",
+      "SELECT mi.name, oi.quantity, oi.unit_price, oi.special_instructions FROM order_items oi JOIN menu_items mi ON mi.id = oi.menu_item_id WHERE oi.order_id = $1",
       [orderId]
     );
     
@@ -282,6 +282,7 @@ app.post("/api/orders", auth, async (req, res) => {
       type: "new_order",
       restaurant_id: restaurant_id,
       customer_name: req.body.customer_name || req.user?.first_name || "Customer",
+      subtotal: subtotal,
       total: total,
       tip: tip,
       customer_address: customer_address,
