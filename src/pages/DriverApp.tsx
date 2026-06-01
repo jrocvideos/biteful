@@ -260,6 +260,14 @@ export const DriverApp = () => {
       });
     }
 
+    if (status === "arrived-customer") {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
+        body: JSON.stringify({ status: "arrived-customer" })
+      });
+    }
+
     if (status === "delivered") {
       await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
         method: "POST",
