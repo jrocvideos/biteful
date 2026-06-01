@@ -17,7 +17,7 @@ const app = express();
 export { app, pool, io };
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
+  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
   transports: ["polling", "websocket"],
   allowEIO3: true,
   pingTimeout: 20000,

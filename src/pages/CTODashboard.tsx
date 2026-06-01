@@ -8,6 +8,7 @@ import {
   Code, Layers, Shield, Database, Cpu, Activity
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 /* ============ MOCK LIVE DATA ============ */
 const revenueData = [
@@ -230,7 +231,7 @@ export const CTODashboard = () => {
                   <span className="text-xs font-mono text-yellow-400">{o.orderNumber}</span>
                   <span className="text-sm flex-1">{o.customerName} · {o.restaurantName}</span>
                   <span className="text-xs text-gray-400">{o.status}</span>
-                  <span className="text-xs font-bold text-teal-400">${o.total.toFixed(2)}</span>
+                  <span className="text-xs font-bold text-teal-400">${sf(o.total)}</span>
                 </div>
               ))}
             </div>
@@ -416,12 +417,12 @@ export const CTODashboard = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-teal-400">${d.earnings.toFixed(2)}</p>
+                  <p className="font-bold text-teal-400">${sf(d.earnings)}</p>
                   <p className="text-xs text-gray-500">Today</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">GPS</p><p className="text-xs font-mono text-teal-300">{d.lat.toFixed(4)}, {d.lng.toFixed(4)}</p></div>
+                <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">GPS</p><p className="text-xs font-mono text-teal-300">{Number(d.lat || 0).toFixed(4)}, {Number(d.lng || 0).toFixed(4)}</p></div>
                 <div className="bg-gray-800 rounded-xl p-3"><p className="text-xs text-gray-400 mb-1">Active Order</p><p className="text-xs font-mono text-yellow-300">{d.order || '— None'}</p></div>
               </div>
             </div>

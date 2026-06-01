@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart2, Users, FileText, Calculator, Phone, Mail, MapPin, Plus, Search, CheckCircle, Clock, XCircle, Calendar, TrendingUp, DollarSign, Trash2, X, Save, AlertCircle, Award, Zap, MessageSquare } from 'lucide-react';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 type PipelineStatus = 'contacted' | 'meeting_booked' | 'signed' | 'declined';
 interface Restaurant { id: string; name: string; ownerName: string; phone: string; email: string; address: string; cuisine: string; status: PipelineStatus; followUpDate: string; notes: string; avgMonthlyOrders: number; dateAdded: string; }
@@ -215,7 +216,7 @@ export const YolandaDashboard = () => {
 
         {tab==='kpi' && <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[{l:'Signed',v:signed.length,c:'text-teal-400',I:CheckCircle},{l:'Meetings',v:meetings.length,c:'text-yellow-400',I:Calendar},{l:'Total Pipeline',v:rests.length,c:'text-blue-400',I:Phone},{l:'Commission',v:`$${commission.toFixed(0)}`,c:'text-emerald-400',I:DollarSign}].map(({l,v,c,I})=>(
+            {[{l:'Signed',v:signed.length,c:'text-teal-400',I:CheckCircle},{l:'Meetings',v:meetings.length,c:'text-yellow-400',I:Calendar},{l:'Total Pipeline',v:rests.length,c:'text-blue-400',I:Phone},{l:'Commission',v:`$${sf(commission)}`,c:'text-emerald-400',I:DollarSign}].map(({l,v,c,I})=>(
               <div key={l} className="bg-gray-900 border border-gray-800 rounded-2xl p-5"><div className="flex justify-between mb-3"><p className="text-xs text-gray-400">{l}</p><I className={`w-4 h-4 ${c}`}/></div><p className={`text-3xl font-bold ${c}`}>{v}</p></div>
             ))}
           </div>

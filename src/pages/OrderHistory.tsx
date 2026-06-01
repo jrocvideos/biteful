@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, MapPin, Star, RotateCcw, ChevronRight, Package, Zap, Bike, Receipt, Calendar, Search, LayoutDashboard } from 'lucide-react';
@@ -163,7 +164,7 @@ export const OrderHistory = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="font-bold text-lg">${order.total.toFixed(2)}</span>
+                      <span className="font-bold text-lg">${sf(order.total)}</span>
                       {order.rating && <div className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /><span className="text-sm font-medium">{order.rating}</span></div>}
                     </div>
                     <div className="flex gap-2">

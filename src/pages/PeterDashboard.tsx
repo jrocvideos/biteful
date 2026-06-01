@@ -7,6 +7,7 @@ import {
   CheckCircle, Clock, AlertCircle, Building2, X, Save, Plus
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 const revenueData = [
   { month: 'May', revenue: 12000, orders: 320, target: 15000 },
@@ -112,7 +113,7 @@ export const PeterDashboard = () => {
             <div><h1 className="font-bold text-lg">Boufet Growth Command</h1><p className="text-xs text-gray-400">Peter — Chief Growth Officer</p></div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block"><p className="text-xs text-gray-400">Partnership Pipeline</p><p className="font-bold text-teal-400">${(totalPipelineValue/1000).toFixed(0)}K</p></div>
+            <div className="text-right hidden sm:block"><p className="text-xs text-gray-400">Partnership Pipeline</p><p className="font-bold text-teal-400">${sf((totalPipelineValue/1000))}K</p></div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold">P</div>
           </div>
         </div>
@@ -155,7 +156,7 @@ export const PeterDashboard = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={11}/>
-                <YAxis stroke="#6b7280" fontSize={11} tickFormatter={v => `$${(v/1000).toFixed(0)}K`}/>
+                <YAxis stroke="#6b7280" fontSize={11} tickFormatter={v => `$${sf((v/1000))}K`}/>
                 <Tooltip contentStyle={{background:'#111827',border:'1px solid #374151',borderRadius:12}} formatter={(v: any) => [`$${v.toLocaleString()}`, '']}/>
                 <Area type="monotone" dataKey="revenue" name="Actual" stroke="#0d9488" fillOpacity={1} fill="url(#rev)"/>
                 <Area type="monotone" dataKey="target" name="Target" stroke="#f97316" fillOpacity={1} fill="url(#tar)" strokeDasharray="4 4"/>

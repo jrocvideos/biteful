@@ -9,6 +9,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 interface DeliveryJob {
   id: string; order_id?: string; restaurant: string; restaurantAddress: string;
@@ -235,6 +236,13 @@ export const DriverApp = () => {
     const updated = { ...activeJob, status };
     setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
 
+    if (status === "arrived-restaurant") {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/driver-arrived-restaurant`, {
+        method: "POST",
+        body: JSON.stringify({ status: "driver_at_restaurant", arrived_at: new Date().toISOString() })
+      });
+    }
+
     if (status === "picked-up") {
       // Stop wait timer, calculate wait fee
       if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
@@ -323,7 +331,7 @@ export const DriverApp = () => {
       {/* Top bar */}
       <div className={`flex items-center justify-between px-4 py-3 ${cardBg} border-b z-30`}>
         <button onClick={() => setMenuOpen(true)} className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}><Menu className="w-5 h-5" /></button>
-        <div className="text-center"><p className={`text-xs ${muted}`}>This week</p><p className="font-bold text-lg text-teal-400">${earnings.week.toFixed(2)}</p></div>
+        <div className="text-center"><p className={`text-xs ${muted}`}>This week</p><p className="font-bold text-lg text-teal-400">${sf(earnings.week)}</p></div>
         <div className="flex gap-2">
           <button className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"} relative`}><Bell className="w-5 h-5" /><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" /></button>
           <button className={`p-2 rounded-full ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}><HelpCircle className="w-5 h-5" /></button>
@@ -353,7 +361,7 @@ export const DriverApp = () => {
               {isOnline ? "Go Offline" : "Go Online"}
             </button>
             <div className="grid grid-cols-3 gap-3 mb-4">
-              {[["Today", `$${earnings.today.toFixed(2)}`, "text-teal-400"], ["Trips", `${earnings.trips}`, ""], ["Rating", `${earnings.rating}★`, "text-yellow-400"]].map(([label, val, color]) => (
+              {[["Today", `$${sf(earnings.today)}`, "text-teal-400"], ["Trips", `${earnings.trips}`, ""], ["Rating", `${earnings.rating}★`, "text-yellow-400"]].map(([label, val, color]) => (
                 <div key={label} className={`${darkMode ? "bg-gray-800" : "bg-gray-50"} rounded-2xl p-3 text-center`}>
                   <p className={`text-xs ${muted} mb-1`}>{label}</p><p className={`font-bold ${color}`}>{val}</p>
                 </div>
@@ -369,7 +377,7 @@ export const DriverApp = () => {
                     <p className="font-bold text-sm">{activeJob.restaurant}</p><p className={`text-xs ${muted} mb-2`}>{activeJob.restaurantAddress}</p>
                     <p className="font-bold text-sm">{activeJob.customer}</p><p className={`text-xs ${muted}`}>{activeJob.customerAddress}</p>
                   </div>
-                  <div className="text-right"><p className="font-bold text-teal-400">${(Number(activeJob.earnings || 0) + Number(activeJob.tip || 0)).toFixed(2)}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
+                  <div className="text-right"><p className="font-bold text-teal-400">${sf((Number(activeJob.earnings || 0) + Number(activeJob.tip || 0)))}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
                 </div>
                 <div className="mb-3">
                   {activeJob.status === "accepted" && (
@@ -379,7 +387,7 @@ export const DriverApp = () => {
                       </p>
                       {waitSeconds > 300 && (
                         <p className="text-green-400 text-xs">
-                          +${((Math.ceil(waitSeconds / 60) - 5) * 0.50).toFixed(2)} wait fee earning
+                          +${sf(((Math.ceil(waitSeconds / 60) - 5) * 0.50))} wait fee earning
                         </p>
                       )}
                     </div>
@@ -398,7 +406,7 @@ export const DriverApp = () => {
                 className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"} border rounded-2xl p-4 mb-3`}>
                 <div className="flex justify-between mb-2">
                   <div><p className="font-bold">{job.restaurant}</p><p className={`text-xs ${muted}`}>{job.distance} · {job.timeLeft} to accept</p></div>
-                  <div className="text-right"><p className="font-bold text-teal-400 text-lg">${(Number(job.earnings || 0) + Number(job.tip || 0)).toFixed(2)}</p><p className={`text-xs ${muted}`}>${Number(job.earnings || 0).toFixed(2)} + ${Number(job.tip || 0).toFixed(2)} tip</p></div>
+                  <div className="text-right"><p className="font-bold text-teal-400 text-lg">${sf((Number(job.earnings || 0) + Number(job.tip || 0)))}</p><p className={`text-xs ${muted}`}>${sf(Number(job.earnings || 0))} + ${sf(Number(job.tip || 0))} tip</p></div>
                 </div>
                 <p className={`text-xs ${muted} mb-3`}>{job.customer} · {job.customerAddress}</p>
                 <div className="flex gap-2">
@@ -439,7 +447,7 @@ export const DriverApp = () => {
         <div className="flex-1 overflow-y-auto px-4 py-6">
           <h1 className="text-2xl font-bold mb-4">Earnings</h1>
           <div className={`${cardBg} border rounded-2xl p-5 mb-4`}>
-            <p className={`text-xs ${muted}`}>Today</p><p className="text-3xl font-bold text-teal-400 mb-3">${earnings.today.toFixed(2)}</p>
+            <p className={`text-xs ${muted}`}>Today</p><p className="text-3xl font-bold text-teal-400 mb-3">${sf(earnings.today)}</p>
             <ResponsiveContainer width="100%" height={150}>
               <AreaChart data={todayBreakdown}>
                 <defs><linearGradient id="teal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/><stop offset="95%" stopColor="#0d9488" stopOpacity={0}/></linearGradient></defs>
@@ -462,7 +470,7 @@ export const DriverApp = () => {
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[["Base Pay","$62.50",""],["Tips","$25.00","text-teal-400"],["Peak Pay","$12.00","text-orange-400"],["Total",`$${earnings.today.toFixed(2)}`,"text-teal-400"]].map(([l,v,c])=>(
+            {[["Base Pay","$62.50",""],["Tips","$25.00","text-teal-400"],["Peak Pay","$12.00","text-orange-400"],["Total",`$${sf(earnings.today)}`,"text-teal-400"]].map(([l,v,c])=>(
               <div key={l} className={`${cardBg} border rounded-2xl p-4`}><p className={`text-xs ${muted} mb-1`}>{l}</p><p className={`text-xl font-bold ${c}`}>{v}</p></div>
             ))}
           </div>

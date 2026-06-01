@@ -5,6 +5,7 @@ import { Star, Clock, Bike, ArrowLeft, Plus, Heart, Share2, MapPin } from 'lucid
 import { restaurants } from '../data/restaurants';
 import { getRestaurants, getMenu } from '../lib/api';
 import { MenuItem } from '../types';
+const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 interface RestaurantDetailProps {
   onAddToCart: (item: MenuItem, restaurantId: string, restaurantName: string) => void;
@@ -136,7 +137,7 @@ const MenuItemCard = ({ item, restaurant, onAddToCart }: { item: MenuItem; resta
         {item.popular && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">Popular</span>}
       </div>
       <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-      <p className="font-bold text-primary">${item.price.toFixed(2)}</p>
+      <p className="font-bold text-primary">${sf(item.price)}</p>
     </div>
     <button onClick={() => onAddToCart(item, restaurant.id, restaurant.name)}
       className="ml-4 p-3 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform shadow-glow">

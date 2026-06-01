@@ -1,33 +1,30 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Bell, CheckCircle, Clock, ChefHat, Package, 
-  Phone, MapPin, DollarSign, UtensilsCrossed, 
-  AlertCircle, Volume2, VolumeX, X, Printer, Timer,
-  TrendingUp, BarChart3, Receipt,
-  Star, Calendar, ArrowUpRight,
-  Ban, RotateCcw, ClipboardCheck, Sparkles, PartyPopper,
-  Users, Cake, Church
+Bell, CheckCircle, Clock, ChefHat, Package, 
+Phone, MapPin, DollarSign, UtensilsCrossed, 
+AlertCircle, Volume2, VolumeX, X, Printer, Timer,
+TrendingUp, BarChart3, Receipt,
+Star, Calendar, ArrowUpRight,
+Ban, RotateCcw, ClipboardCheck, Sparkles, PartyPopper,
+Users, Cake, Church
 } from "lucide-react";
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, BarChart, Bar,
-  PieChart, Pie, Cell
+AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+Tooltip, ResponsiveContainer, BarChart, Bar,
+PieChart, Pie, Cell
 } from "recharts";
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  unit_price: number;
-  special_instructions?: string;
-}
-
-interface Order {
+export const sf = (n: any) => {
+const v = Number(n);
+return isNaN(v) ? "0.00" : v.toFixed(2);
+};
+export interface Order {
   id: string;
   customer_name: string;
-  customer_phone?: string;
+  customer_phone: string;
   customer_address: string;
-  items: OrderItem[];
+  items: { name: string; quantity: number; unit_price: number }[];
   subtotal: number;
   tax: number;
   delivery_fee: number;
@@ -45,105 +42,13 @@ interface Order {
   cancelled_at?: string;
 }
 
-const MOCK_ORDERS: Order[] = [
+const MOCK_ORDERS = [
   {
-    id: "ORD-2048",
-    customer_name: "Alex M.",
-    customer_phone: "(555) 123-4567",
-    customer_address: "888 Burrard St, Apt 12B",
-    items: [
-      { name: "Classic Cheeseburger", quantity: 1, unit_price: 12.99 },
-      { name: "Truffle Fries", quantity: 1, unit_price: 6.99 },
-      { name: "Vanilla Shake", quantity: 1, unit_price: 5.99 },
-    ],
-    subtotal: 25.97,
-    tax: 2.08,
-    delivery_fee: 2.99,
-    tip: 4.00,
-    total: 35.04,
-    status: "pending",
-    special_instructions: "No pickles on burger. Extra sauce on side.",
-    time_elapsed: "2 min ago",
-  },
-  {
-    id: "ORD-2049",
-    customer_name: "Sarah K.",
-    customer_phone: "(555) 987-6543",
-    customer_address: "555 W Hastings St, Floor 8",
-    items: [
-      { name: "Dragon Roll", quantity: 1, unit_price: 16.99 },
-      { name: "Spicy Tuna Roll", quantity: 2, unit_price: 8.99 },
-    ],
-    subtotal: 34.97,
-    tax: 2.80,
-    delivery_fee: 2.99,
-    tip: 6.50,
-    total: 47.26,
-    status: "preparing",
-    time_elapsed: "9 min ago",
-  },
-  {
-    id: "ORD-2051",
-    customer_name: "James L.",
+    id: "1",
+    customer_name: "Sarah Johnson",
     customer_phone: "(555) 111-2222",
-    customer_address: "1234 Robson St, Apt 501",
+    customer_address: "Downtown Vancouver, 400 Burrard St",
     items: [
-      { name: "Margherita Pizza", quantity: 1, unit_price: 14.99 },
-      { name: "Garlic Knots", quantity: 1, unit_price: 5.99 },
-    ],
-    subtotal: 20.98,
-    tax: 1.68,
-    delivery_fee: 2.99,
-    tip: 3.00,
-    total: 28.65,
-    status: "ready_for_pickup",
-    time_elapsed: "15 min ago",
-  },
-  {
-    id: "ORD-2052",
-    customer_name: "Maria G.",
-    customer_phone: "(555) 333-4444",
-    customer_address: "999 W Pender St, Apt 302",
-    items: [
-      { name: "Butter Chicken", quantity: 1, unit_price: 16.99 },
-      { name: "Naan Bread", quantity: 2, unit_price: 3.99 },
-      { name: "Vegetable Biryani", quantity: 1, unit_price: 14.99 },
-    ],
-    subtotal: 39.96,
-    tax: 3.20,
-    delivery_fee: 2.99,
-    tip: 5.00,
-    total: 51.15,
-    status: "processed",
-    time_elapsed: "Delivered 30 min ago",
-  },
-  {
-    id: "ORD-2053",
-    customer_name: "David W.",
-    customer_phone: "(555) 555-6666",
-    customer_address: "777 Seymour St, Apt 1201",
-    items: [
-      { name: "Buddha Bowl", quantity: 1, unit_price: 13.99 },
-      { name: "Green Juice", quantity: 1, unit_price: 6.99 },
-    ],
-    subtotal: 20.98,
-    tax: 1.68,
-    delivery_fee: 2.99,
-    tip: 2.50,
-    total: 28.15,
-    status: "cancelled",
-    cancellation_reason: "Customer changed mind",
-    cancelled_at: "5 min ago",
-    time_elapsed: "Cancelled 5 min ago",
-  },
-  {
-    id: "ORD-2054",
-    customer_name: "Jennifer P.",
-    customer_phone: "(555) 777-8888",
-    customer_address: "650 W Georgia St, Penthouse",
-    items: [
-      { name: "Carne Asada Tacos", quantity: 3, unit_price: 10.99 },
-      { name: "Fish Tacos", quantity: 2, unit_price: 11.99 },
       { name: "Chips & Guac", quantity: 2, unit_price: 5.99 },
     ],
     subtotal: 65.93,
@@ -423,7 +328,7 @@ export const RestaurantDashboard = () => {
                 <div className="bg-card rounded-2xl p-5 border border-border shadow-soft">
                   <p className="text-sm text-muted-foreground mb-1">Total Orders</p>
                   <p className="text-2xl font-bold text-foreground">{totalOrders}</p>
-                  <p className="text-xs text-muted-foreground mt-1">${avgOrderValue.toFixed(2)} avg order</p>
+                  <p className="text-xs text-muted-foreground mt-1">${sf(avgOrderValue)} avg order</p>
                 </div>
                 <div className="bg-card rounded-2xl p-5 border border-border shadow-soft">
                   <p className="text-sm text-muted-foreground mb-1">You Keep</p>
@@ -502,7 +407,7 @@ export const RestaurantDashboard = () => {
                             <p className="text-xs text-muted-foreground">{item.sales} sold</p>
                           </div>
                         </div>
-                        <p className="font-bold text-primary">${item.revenue.toFixed(2)}</p>
+                        <p className="font-bold text-primary">${sf(item.revenue)}</p>
                       </div>
                     ))}
                   </div>
@@ -517,11 +422,11 @@ export const RestaurantDashboard = () => {
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-green-800 dark:text-green-200 mb-1">You are saving with Boufet</h3>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-3">
-                      With DoorDash (30% commission), you would have paid <span className="font-bold">${(totalRevenue * 0.30).toFixed(0)}</span> in fees this week.
+                      With DoorDash (30% commission), you would have paid <span className="font-bold">${sf((totalRevenue * 0.30))}</span> in fees this week.
                     </p>
                     <p className="text-sm text-green-700 dark:text-green-300">
-                      With Boufet (20% commission), you paid only <span className="font-bold">${totalCommission.toFixed(0)}</span>. 
-                      <span className="font-bold text-green-800 dark:text-green-200"> You saved ${((totalRevenue * 0.30) - totalCommission).toFixed(0)} this week!</span>
+                      With Boufet (20% commission), you paid only <span className="font-bold">${sf(totalCommission)}</span>. 
+                      <span className="font-bold text-green-800 dark:text-green-200"> You saved ${sf(((totalRevenue * 0.30) - totalCommission))} this week!</span>
                     </p>
                   </div>
                 </div>
@@ -589,7 +494,7 @@ export const RestaurantDashboard = () => {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Deposit Paid</span>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">${selectedOrder.deposit_paid?.toFixed(2)} / ${selectedOrder.deposit_total?.toFixed(2)}</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">${sf(selectedOrder.deposit_paid ?? 0)} / ${sf(selectedOrder.deposit_total ?? 0)}</span>
                     </div>
                     <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
                       <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((selectedOrder.deposit_paid || 0) / (selectedOrder.deposit_total || 1)) * 100}%` }} />
@@ -618,13 +523,13 @@ export const RestaurantDashboard = () => {
                 <div>
                   <h3 className="font-bold mb-3 flex items-center gap-2"><UtensilsCrossed className="w-4 h-4" /> Order Items</h3>
                   <div className="space-y-3">
-                    {selectedOrder.items.map((item, i) => (
+                    {selectedOrder.items.map((item: any, i: number) => (
                       <div key={i} className="flex items-start justify-between p-3 rounded-xl bg-muted">
                         <div>
                           <p className="font-medium text-foreground">{item.quantity}x {item.name}</p>
                           {item.special_instructions && <p className="text-xs text-amber-600 mt-1">Note: {item.special_instructions}</p>}
                         </div>
-                        <p className="font-semibold">${(item.unit_price * item.quantity).toFixed(2)}</p>
+                        <p className="font-semibold">${sf((item.unit_price * item.quantity))}</p>
                       </div>
                     ))}
                   </div>
@@ -643,11 +548,11 @@ export const RestaurantDashboard = () => {
                 )}
 
                 <div className="space-y-2 text-sm border-t pt-4">
-                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>${selectedOrder.subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span>${selectedOrder.tax.toFixed(2)}</span></div>
-                  {selectedOrder.delivery_fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Delivery Fee</span><span>${selectedOrder.delivery_fee.toFixed(2)}</span></div>}
-                  <div className="flex justify-between text-muted-foreground"><span>Tip</span><span className="text-green-600">${selectedOrder.tip.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t"><span>Total</span><span>${selectedOrder.total.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>${sf(selectedOrder.subtotal)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span>${sf(selectedOrder.tax)}</span></div>
+                  {selectedOrder.delivery_fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Delivery Fee</span><span>${sf(selectedOrder.delivery_fee)}</span></div>}
+                  <div className="flex justify-between text-muted-foreground"><span>Tip</span><span className="text-green-600">${sf(selectedOrder.tip)}</span></div>
+                  <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t"><span>Total</span><span>${sf(selectedOrder.total)}</span></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
@@ -734,7 +639,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Clock className="w-3 h-3" /> {order.time_elapsed}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold text-foreground">${order.total.toFixed(2)}</p>
+          <p className="text-xl font-bold text-foreground">${sf(order.total)}</p>
           <p className="text-xs text-muted-foreground">{order.items.length} items</p>
         </div>
       </div>
@@ -755,7 +660,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
       )}
 
       <div className="space-y-1 mb-4">
-        {order.items.slice(0, 3).map((item, i) => (<p key={i} className="text-sm text-muted-foreground">{item.quantity}x {item.name}</p>))}
+        {order.items.slice(0, 3).map((item: any, i: number) => (<p key={i} className="text-sm text-muted-foreground">{item.quantity}x {item.name}</p>))}
         {order.items.length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} more items</p>}
       </div>
 
@@ -798,7 +703,7 @@ const OrderCard = ({ order, onSelect, onUpdateStatus }: { order: Order; onSelect
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {order.customer_address.slice(0, 20)}...</span>
-        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Tip: ${order.tip.toFixed(2)}</span>
+        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Tip: ${sf(order.tip)}</span>
       </div>
     </motion.div>
   );
