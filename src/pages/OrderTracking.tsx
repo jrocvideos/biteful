@@ -204,7 +204,7 @@ export const OrderTracking = () => {
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-2">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-full font-medium">
                           <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                          {orderData?.express && status === 'en_route' ? 'Express: Direct route, no stops' : status === 'en_route' ? 'Turning onto W Georgia St → Homer St' : status === 'arriving' ? 'Reached your address' : 'In Progress'}
+                          {orderData?.express && status === 'en_route' ? 'Express: Direct route, no stops' : status === 'en_route' ? 'Turning onto W Georgia St → Homer St' : status === 'arriving' ? 'Reached your address' : status === 'delivered' ? 'Your order has been delivered!' : 'In Progress'}
                         </span>
                       </motion.div>
                     )}
