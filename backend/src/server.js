@@ -1245,3 +1245,23 @@ app.post("/api/orders/:id/reject", auth, async (req, res) => {
   }
 });
 
+
+
+// KDS PIN verification
+const KDS_PINS = {
+  "4821": { id: "bd67f62d-cdd9-4541-b6cd-d140be14fe1a", name: "Cuba Street Food" },
+  "7392": { id: "5a3ac06e-7a5d-4e5c-ba4c-4dac89a2e79d", name: "Papa Johns" },
+  "1056": { id: "cb8b55eb-118b-4895-9277-93847a329533", name: "Burger Vault" },
+};
+
+app.post("/api/kds/verify-pin", async (req, res) => {
+  const { pin } = req.body;
+  const restaurant = KDS_PINS[pin];
+  if (!restaurant) return res.status(401).json({ error: "Invalid PIN" });
+  const token = jwt.sign(
+    { restaurant_id: restaurant.id, type: "kds" },
+    process.env.JWT_SECRET || "biteful-secret",
+    { expiresIn: "7d" }
+  );
+  res.json({ restaurant_id: restaurant.id, name: restaurant.name, token });
+});
