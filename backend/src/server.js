@@ -543,6 +543,7 @@ app.post("/api/orders/:id/status", async (req, res) => {
       }
     }
 
+    io.emit("order_update", { order_id: req.params.id, status: req.body.status });
     res.json({ status });
   } catch (err) {
     res.status(500).json({ error: err.message });
