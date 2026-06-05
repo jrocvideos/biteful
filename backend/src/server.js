@@ -427,7 +427,7 @@ async function matchDriver(orderId) {
       restaurant_address: order?.restaurant_address || "",
       customer_address: order?.customer_address || "",
       total: order?.total || 0,
-      driver_pay: parseFloat(order?.driver_total || 5.50),
+      driver_pay: parseFloat(order?.driver_total || 8.50),
       distance: "2.3 km",
     });
       io.emit("order_update", { order_id: orderId, status: "driver_assigned", driver_id: driver.driver_id });
@@ -592,11 +592,11 @@ app.get("/api/orders/:id/track", async (req, res) => {
 app.get("/api/drivers/earnings", auth, async (req, res) => {
   try {
     const todayResult = await pool.query(
-      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id =  AND delivered_at >= CURRENT_DATE",
+      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id = $1 AND delivered_at >= CURRENT_DATE",
       [req.user.id]
     );
     const weekResult = await pool.query(
-      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id =  AND delivered_at >= CURRENT_DATE - INTERVAL '7 days'",
+      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id = $1 AND delivered_at >= CURRENT_DATE - INTERVAL '7 days'",
       [req.user.id]
     );
     res.json({
