@@ -277,7 +277,7 @@ export const DriverApp = () => {
           delivered_at: new Date().toISOString()
         })
       });
-      setEarnings(e => ({ ...e, today: Number(e.today || 0) + Number(activeJob.earnings || 0) + Number(activeJob.tip || 0), trips: e.trips + 1 }));
+      setEarnings(e => ({ ...e, today: Number(e.today || 0) + Number(activeJob.earnings || 0), trips: e.trips + 1 }));
       setActiveJob(null);
     }
   };
@@ -385,7 +385,7 @@ export const DriverApp = () => {
                     <p className="font-bold text-sm">{activeJob.restaurant}</p><p className={`text-xs ${muted} mb-2`}>{activeJob.restaurantAddress}</p>
                     <p className="font-bold text-sm">{activeJob.customer}</p><p className={`text-xs ${muted}`}>{activeJob.customerAddress}</p>
                   </div>
-                  <div className="text-right"><p className="font-bold text-teal-400">${sf((Number(activeJob.earnings || 0) + Number(activeJob.tip || 0)))}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
+                  <div className="text-right"><p className="font-bold text-teal-400">${sf((Number(activeJob.earnings || 0)))}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
                 </div>
                 <div className="mb-3">
                   {activeJob.status === "accepted" && (
