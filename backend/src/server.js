@@ -88,7 +88,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors());
+app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
 app.use(express.json());
 
 // Auth middleware
@@ -1265,4 +1265,74 @@ app.post("/api/kds/verify-pin", async (req, res) => {
     { expiresIn: "7d" }
   );
   res.json({ restaurant_id: restaurant.id, name: restaurant.name, token });
+});
+
+// ==================== ORDER HISTORY ====================
+app.get("/api/orders/history", async (req, res) => {
+  try {
+    const { restaurant_id, start_date, end_date, status, limit = '50', offset = '0' } = req.query;
+    
+    if (!restaurant_id) {
+      return res.status(400).json({ error: "restaurant_id is required" });
+    }
+
+    let query = `
+      SELECT o.id, o.order_id, o.customer_name, o.status, o.subtotal, o.total, 
+             o.delivery_fee, o.service_fee, o.tip, o.tax, o.created_at,
+             o.customer_address, o.restaurant_id
+      FROM orders o
+      WHERE o.restaurant_id = $1
+    `;
+    const params = [restaurant_id];
+    let paramIdx = 2;
+
+    // Default to completed orders if no status specified
+    if (status) {
+      query += ` AND o.status = $${paramIdx}`;
+      params.push(status);
+      paramIdx++;
+    } else {
+      query += ` AND o.status IN ('delivered', 'processed', 'cancelled')`;
+    }
+
+    // Date range filter
+    if (start_date) {
+      query += ` AND o.created_at >= $${paramIdx}`;
+      params.push(start_date);
+      paramIdx++;
+    }
+    if (end_date) {
+      query += ` AND o.created_at <= $${paramIdx}`;
+      params.push(end_date);
+      paramIdx++;
+    }
+
+    query += ` ORDER BY o.created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+    params.push(parseInt(limit), parseInt(offset));
+
+    const result = await pool.query(query, params);
+    
+    // Fetch items for each order
+    const ordersWithItems = await Promise.all(
+      result.rows.map(async (order) => {
+        const itemsResult = await pool.query(
+          `SELECT mi.name, oi.quantity, oi.unit_price, oi.special_instructions
+           FROM order_items oi
+           JOIN menu_items mi ON mi.id = oi.menu_item_id
+           WHERE oi.order_id = $1`,
+          [order.id]
+        );
+        return {
+          ...order,
+          items: itemsResult.rows,
+          created_at: order.created_at,
+        };
+      })
+    );
+
+    res.json(ordersWithItems);
+  } catch (err) {
+    console.error("History error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
