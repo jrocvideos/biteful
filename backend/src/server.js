@@ -421,6 +421,7 @@ async function matchDriver(orderId) {
        WHERE o.id = $1`, [orderId]
     );
     const order = orderDetails.rows[0];
+    io.emit("new_job", {
       order_id: orderId,
       restaurant_name: order?.restaurant_name || "Restaurant",
       restaurant_address: order?.restaurant_address || "",
@@ -537,6 +538,7 @@ app.post("/api/orders/:id/status", async (req, res) => {
           distance: '2.3 km',
         };
         io.to('drivers_online').emit('new_job', jobPayload);
+        io.emit('new_job', jobPayload);
         console.log('new_job emitted for order:', req.params.id);
       }
     }
