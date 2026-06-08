@@ -373,7 +373,7 @@ export const DriverApp = () => {
               className={`w-full py-4 rounded-2xl font-bold text-lg mb-4 ${isOnline ? "bg-gray-700 text-white" : "bg-teal-600 text-white shadow-lg shadow-teal-500/30"}`}>
               {isOnline ? "Go Offline" : "Go Online"}
             </button>
-              <ShiftTimer token={localStorage.getItem("token") || ""} province="BC" />           
+              <ShiftTimer token={localStorage.getItem("authToken") || ""} province="BC" />           
  <div className="grid grid-cols-3 gap-3 mb-4">
               {[["Today", `$${sf(earnings.today)}`, "text-teal-400"], ["Trips", `${earnings.trips}`, ""], ["Rating", `${earnings.rating}★`, "text-yellow-400"]].map(([label, val, color]) => (
                 <div key={label} className={`${darkMode ? "bg-gray-800" : "bg-gray-50"} rounded-2xl p-3 text-center`}>
@@ -497,7 +497,7 @@ export const DriverApp = () => {
           </div>
           {showEarningsDetail && (
             <EarningsDetail
-              token={localStorage.getItem("token") || ""}
+              token={localStorage.getItem("authToken") || ""}
               period={showEarningsDetail as "today" | "week" | "month"}
               onClose={() => setShowEarningsDetail(null)}
             />
