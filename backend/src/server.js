@@ -608,6 +608,49 @@ app.get("/api/drivers/earnings", auth, async (req, res) => {
   }
 });
 
+// GET /api/drivers/earnings/detail — per-order breakdown
+app.get("/api/drivers/earnings/detail", auth, async (req, res) => {
+  try {
+    const period = req.query.period || 'today'; // today, week, month
+    let dateFilter;
+    switch (period) {
+      case 'today': dateFilter = "delivered_at >= CURRENT_DATE"; break;
+      case 'week': dateFilter = "delivered_at >= CURRENT_DATE - INTERVAL '7 days'"; break;
+      case 'month': dateFilter = "delivered_at >= CURRENT_DATE - INTERVAL '30 days'"; break;
+      default: dateFilter = "delivered_at >= CURRENT_DATE";
+    }
+    
+    const result = await pool.query(
+      `SELECT id, restaurant_id, delivery_fee, tip, driver_total, driver_base_pay, delivered_at, commission_amount
+       FROM orders 
+       WHERE driver_id = $1 AND ${dateFilter} AND status = 'delivered'
+       ORDER BY delivered_at DESC`,
+      [req.user.id]
+    );
+    
+    // Get restaurant names
+    const enriched = await Promise.all(result.rows.map(async (order) => {
+      const restResult = await pool.query("SELECT name FROM restaurants WHERE id = $1", [order.restaurant_id]);
+      return {
+        orderId: order.id,
+        restaurant: restResult.rows[0]?.name || 'Unknown',
+        deliveryFee: order.delivery_fee,
+        deliveryEarned: order.delivery_fee * 0.565,
+        tip: order.tip,
+        tipEarned: order.tip * 0.40,
+        totalEarned: order.driver_total,
+        commissionTaken: order.commission_amount,
+        deliveredAt: order.delivered_at
+      };
+    }));
+    
+    res.json({ orders: enriched, period });
+  } catch (err) {
+    console.error('[EARNINGS DETAIL]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ==================== LIVE STATS ====================
 app.get("/api/stats", async (req, res) => {
