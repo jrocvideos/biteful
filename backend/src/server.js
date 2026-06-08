@@ -88,7 +88,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors());
+app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
 app.use(express.json());
 
 // Auth middleware
@@ -246,10 +246,10 @@ app.post("/api/orders", auth, async (req, res) => {
     const commission = restResult.rows[0]?.commission_rate || 20.00;
     const commission_amount = subtotal * (commission / 100);
     
-    // Driver pay calculation
-    const driver_base = 2.50;
-    const tip_skim = tip > 0 ? 2.50 : 0; // Operating fund: ads, infrastructure, growth
-    const driver_total = driver_base + (tip - tip_skim);
+    // Driver pay: 56.5% of delivery fee + 40% of tip (ASAP fee → Boufet keeps)
+    const driver_delivery = delivery_fee * 0.565;
+    const driver_tip = tip * 0.40;
+    const driver_total = driver_delivery + driver_tip;
     const boufet_net = total - driver_total - commission_amount;
     
     const orderId = uuidv4();
@@ -427,7 +427,7 @@ async function matchDriver(orderId) {
       restaurant_address: order?.restaurant_address || "",
       customer_address: order?.customer_address || "",
       total: order?.total || 0,
-      driver_pay: parseFloat(order?.driver_total || 5.50),
+      driver_pay: parseFloat(order?.driver_total || 8.50),
       distance: "2.3 km",
     });
       io.emit("order_update", { order_id: orderId, status: "driver_assigned", driver_id: driver.driver_id });
@@ -592,11 +592,11 @@ app.get("/api/orders/:id/track", async (req, res) => {
 app.get("/api/drivers/earnings", auth, async (req, res) => {
   try {
     const todayResult = await pool.query(
-      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id =  AND delivered_at >= CURRENT_DATE",
+      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id = $1 AND delivered_at >= CURRENT_DATE",
       [req.user.id]
     );
     const weekResult = await pool.query(
-      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id =  AND delivered_at >= CURRENT_DATE - INTERVAL '7 days'",
+      "SELECT COALESCE(SUM(driver_total),0) as earnings, COUNT(*) as trips FROM orders WHERE driver_id = $1 AND delivered_at >= CURRENT_DATE - INTERVAL '7 days'",
       [req.user.id]
     );
     res.json({
@@ -604,6 +604,49 @@ app.get("/api/drivers/earnings", auth, async (req, res) => {
       week: weekResult.rows[0],
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/drivers/earnings/detail — per-order breakdown
+app.get("/api/drivers/earnings/detail", auth, async (req, res) => {
+  try {
+    const period = req.query.period || 'today'; // today, week, month
+    let dateFilter;
+    switch (period) {
+      case 'today': dateFilter = "delivered_at >= CURRENT_DATE"; break;
+      case 'week': dateFilter = "delivered_at >= CURRENT_DATE - INTERVAL '7 days'"; break;
+      case 'month': dateFilter = "delivered_at >= CURRENT_DATE - INTERVAL '30 days'"; break;
+      default: dateFilter = "delivered_at >= CURRENT_DATE";
+    }
+    
+    const result = await pool.query(
+      `SELECT id, restaurant_id, delivery_fee, tip, driver_total, driver_base_pay, delivered_at, commission_amount
+       FROM orders 
+       WHERE driver_id = $1 AND ${dateFilter} AND status = 'delivered'
+       ORDER BY delivered_at DESC`,
+      [req.user.id]
+    );
+    
+    // Get restaurant names
+    const enriched = await Promise.all(result.rows.map(async (order) => {
+      const restResult = await pool.query("SELECT name FROM restaurants WHERE id = $1", [order.restaurant_id]);
+      return {
+        orderId: order.id,
+        restaurant: restResult.rows[0]?.name || 'Unknown',
+        deliveryFee: order.delivery_fee,
+        deliveryEarned: order.delivery_fee * 0.565,
+        tip: order.tip,
+        tipEarned: order.tip * 0.40,
+        totalEarned: order.driver_total,
+        commissionTaken: order.commission_amount,
+        deliveredAt: order.delivered_at
+      };
+    }));
+    
+    res.json({ orders: enriched, period });
+  } catch (err) {
+    console.error('[EARNINGS DETAIL]', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -757,6 +800,162 @@ initIvrs(app);
 
 // ==================== START ====================
 const PORT = process.env.PORT || 3001;
+
+// ============================================
+// DRIVER SHIFT TIMER - BC Regulations
+// ============================================
+
+const PROVINCE_LIMITS = {
+  'BC': { maxHours: 12, breakAfterHours: 8, resetHours: 6, minWage: 21.42, kmRate: 0.35 },
+  'ON': { maxHours: 12, breakAfterHours: 8, resetHours: 6, minWage: 16.55, kmRate: 0.35 },
+  'AB': { maxHours: 12, breakAfterHours: 8, resetHours: 6, minWage: 15.00, kmRate: 0.35 },
+  'QC': { maxHours: 12, breakAfterHours: 8, resetHours: 6, minWage: 15.75, kmRate: 0.35 },
+  'default': { maxHours: 12, breakAfterHours: 8, resetHours: 6, minWage: 15.00, kmRate: 0.35 }
+};
+
+function getShiftLimits(province) {
+  return PROVINCE_LIMITS[province?.toUpperCase()] || PROVINCE_LIMITS['default'];
+}
+
+// Auto-create driver_shifts table on startup
+const createDriverShiftsTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS driver_shifts (
+        id SERIAL PRIMARY KEY,
+        driver_id INTEGER NOT NULL,
+        province VARCHAR(10) NOT NULL DEFAULT 'BC',
+        started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        ended_at TIMESTAMP WITH TIME ZONE,
+        last_heartbeat TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        active_minutes INTEGER NOT NULL DEFAULT 0,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    console.log('[DB] driver_shifts table ready');
+  } catch (err) {
+    console.error('[DB] Failed to create driver_shifts table:', err.message);
+  }
+};
+createDriverShiftsTable();
+
+// GET /api/driver/shift-status
+app.get('/api/driver/shift-status', auth, async (req, res) => {
+  try {
+    const driverId = req.user.id;
+    const province = (req.query.province || 'BC').toUpperCase();
+    const limits = getShiftLimits(province);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const result = await pool.query(
+      `SELECT * FROM driver_shifts WHERE driver_id = $1 AND started_at >= $2 ORDER BY started_at DESC LIMIT 1`,
+      [driverId, todayStart]
+    );
+    const shift = result.rows[0];
+
+    if (!shift) {
+      return res.json({ status: 'ready', canStart: true, canContinue: true, message: 'Ready to start your shift', timeRemaining: limits.maxHours * 60, activeMinutes: 0, breakNeeded: false, province, limits });
+    }
+
+    if (shift.status === 'forced_break' || shift.status === 'max_reached') {
+      const endedAt = new Date(shift.ended_at || shift.started_at);
+      const resetTime = new Date(endedAt.getTime() + limits.resetHours * 3600000);
+      const minsUntilReset = Math.max(0, Math.floor((resetTime - Date.now()) / 60000));
+      return res.json({ status: minsUntilReset > 0 ? 'forced_break' : 'ready', canStart: minsUntilReset <= 0, canContinue: minsUntilReset <= 0, message: minsUntilReset > 0 ? `Daily limit reached. Wait ${Math.floor(minsUntilReset/60)}h ${minsUntilReset%60}m` : 'Ready to start a new shift', timeRemaining: 0, activeMinutes: shift.active_minutes || 0, breakNeeded: false, minutesUntilReset: minsUntilReset, province, limits });
+    }
+
+    const activeMinutes = shift.active_minutes || 0;
+    const remainingMinutes = Math.max(0, (limits.maxHours * 60) - activeMinutes);
+    const breakNeeded = activeMinutes >= (limits.breakAfterHours * 60);
+
+    if (remainingMinutes <= 0 && shift.status === 'active') {
+      await pool.query(`UPDATE driver_shifts SET status = 'max_reached', ended_at = NOW() WHERE id = $1`, [shift.id]);
+      return res.json({ status: 'max_reached', canStart: false, canContinue: false, message: '12-hour daily limit reached', timeRemaining: 0, activeMinutes, breakNeeded: true, minutesUntilReset: limits.resetHours * 60, province, limits });
+    }
+
+    res.json({ status: shift.status, canStart: true, canContinue: !breakNeeded, message: breakNeeded ? 'You have been active for 8+ hours. Consider taking a break.' : shift.status === 'active' ? 'Shift active' : 'Shift paused', timeRemaining: remainingMinutes, activeMinutes, breakNeeded, province, limits });
+  } catch (err) {
+    console.error('[SHIFT STATUS]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/driver/shift-start
+app.post('/api/driver/shift-start', auth, async (req, res) => {
+  try {
+    const driverId = req.user.id;
+    const province = (req.body.province || 'BC').toUpperCase();
+    const limits = getShiftLimits(province);
+
+    const existing = await pool.query(`SELECT * FROM driver_shifts WHERE driver_id = $1 AND status = 'active'`, [driverId]);
+    if (existing.rows.length > 0) return res.status(400).json({ error: 'Shift already active' });
+
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayShifts = await pool.query(`SELECT COALESCE(SUM(active_minutes), 0) as total FROM driver_shifts WHERE driver_id = $1 AND started_at >= $2`, [driverId, todayStart]);
+    const totalMinutes = parseInt(todayShifts.rows[0].total) || 0;
+    if (totalMinutes >= limits.maxHours * 60) return res.status(400).json({ error: 'Daily shift limit reached' });
+
+    const result = await pool.query(`INSERT INTO driver_shifts (driver_id, province, status, started_at, last_heartbeat) VALUES ($1, $2, 'active', NOW(), NOW()) RETURNING *`, [driverId, province]);
+    res.json({ success: true, shift: result.rows[0], message: 'Shift started. Drive safe!', timeRemaining: (limits.maxHours * 60) - totalMinutes });
+  } catch (err) {
+    console.error('[SHIFT START]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/driver/shift-end
+app.post('/api/driver/shift-end', auth, async (req, res) => {
+  try {
+    const driverId = req.user.id;
+    const result = await pool.query(`UPDATE driver_shifts SET status = 'ended', ended_at = NOW(), active_minutes = COALESCE(active_minutes, 0) + EXTRACT(EPOCH FROM (NOW() - last_heartbeat)) / 60 WHERE driver_id = $1 AND status = 'active' RETURNING *`, [driverId]);
+    if (result.rows.length === 0) return res.status(400).json({ error: 'No active shift found' });
+    res.json({ success: true, shift: result.rows[0], message: 'Shift ended. Great work!' });
+  } catch (err) {
+    console.error('[SHIFT END]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/driver/shift-heartbeat
+app.post('/api/driver/shift-heartbeat', auth, async (req, res) => {
+  try {
+    const driverId = req.user.id;
+    const province = (req.body.province || 'BC').toUpperCase();
+    const limits = getShiftLimits(province);
+
+    const result = await pool.query(`SELECT * FROM driver_shifts WHERE driver_id = $1 AND status = 'active'`, [driverId]);
+    const shift = result.rows[0];
+    if (!shift) return res.status(404).json({ error: 'No active shift' });
+
+    const now = new Date();
+    const lastBeat = new Date(shift.last_heartbeat);
+    const minutesSinceHeartbeat = Math.floor((now - lastBeat) / 60000);
+    const cappedMinutes = Math.min(minutesSinceHeartbeat, 2);
+    const newActiveMinutes = (shift.active_minutes || 0) + cappedMinutes;
+
+    if (newActiveMinutes >= limits.maxHours * 60) {
+      await pool.query(`UPDATE driver_shifts SET status = 'max_reached', ended_at = NOW(), active_minutes = $2, last_heartbeat = NOW() WHERE id = $1`, [shift.id, limits.maxHours * 60]);
+      return res.json({ canContinue: false, status: 'max_reached', activeMinutes: limits.maxHours * 60, message: '12-hour limit reached. Shift auto-ended.' });
+    }
+
+    const breakNeeded = newActiveMinutes >= limits.breakAfterHours * 60;
+    if (breakNeeded && shift.status !== 'break_required') {
+      await pool.query(`UPDATE driver_shifts SET status = 'break_required' WHERE id = $1`, [shift.id]);
+    }
+
+    await pool.query(`UPDATE driver_shifts SET last_heartbeat = NOW(), active_minutes = $2 WHERE id = $1`, [shift.id, newActiveMinutes]);
+    const remainingMinutes = (limits.maxHours * 60) - newActiveMinutes;
+
+    res.json({ canContinue: !breakNeeded, status: breakNeeded ? 'break_required' : 'active', activeMinutes: newActiveMinutes, timeRemaining: remainingMinutes, breakNeeded, message: breakNeeded ? '8+ hours active. Take a break!' : 'Heartbeat OK' });
+  } catch (err) {
+    console.error('[SHIFT HEARTBEAT]', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 // ════════════════════════════════════════════════════════════
@@ -1265,4 +1464,74 @@ app.post("/api/kds/verify-pin", async (req, res) => {
     { expiresIn: "7d" }
   );
   res.json({ restaurant_id: restaurant.id, name: restaurant.name, token });
+});
+
+// ==================== ORDER HISTORY ====================
+app.get("/api/orders/history", async (req, res) => {
+  try {
+    const { restaurant_id, start_date, end_date, status, limit = '50', offset = '0' } = req.query;
+    
+    if (!restaurant_id) {
+      return res.status(400).json({ error: "restaurant_id is required" });
+    }
+
+    let query = `
+      SELECT o.id, o.order_id, o.customer_name, o.status, o.subtotal, o.total, 
+             o.delivery_fee, o.service_fee, o.tip, o.tax, o.created_at,
+             o.customer_address, o.restaurant_id
+      FROM orders o
+      WHERE o.restaurant_id = $1
+    `;
+    const params = [restaurant_id];
+    let paramIdx = 2;
+
+    // Default to completed orders if no status specified
+    if (status) {
+      query += ` AND o.status = $${paramIdx}`;
+      params.push(status);
+      paramIdx++;
+    } else {
+      query += ` AND o.status IN ('delivered', 'processed', 'cancelled')`;
+    }
+
+    // Date range filter
+    if (start_date) {
+      query += ` AND o.created_at >= $${paramIdx}`;
+      params.push(start_date);
+      paramIdx++;
+    }
+    if (end_date) {
+      query += ` AND o.created_at <= $${paramIdx}`;
+      params.push(end_date);
+      paramIdx++;
+    }
+
+    query += ` ORDER BY o.created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+    params.push(parseInt(limit), parseInt(offset));
+
+    const result = await pool.query(query, params);
+    
+    // Fetch items for each order
+    const ordersWithItems = await Promise.all(
+      result.rows.map(async (order) => {
+        const itemsResult = await pool.query(
+          `SELECT mi.name, oi.quantity, oi.unit_price, oi.special_instructions
+           FROM order_items oi
+           JOIN menu_items mi ON mi.id = oi.menu_item_id
+           WHERE oi.order_id = $1`,
+          [order.id]
+        );
+        return {
+          ...order,
+          items: itemsResult.rows,
+          created_at: order.created_at,
+        };
+      })
+    );
+
+    res.json(ordersWithItems);
+  } catch (err) {
+    console.error("History error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
