@@ -246,10 +246,10 @@ app.post("/api/orders", auth, async (req, res) => {
     const commission = restResult.rows[0]?.commission_rate || 20.00;
     const commission_amount = subtotal * (commission / 100);
     
-    // Driver pay calculation
-    const driver_base = 2.50;
-    const tip_skim = tip > 0 ? 2.50 : 0; // Operating fund: ads, infrastructure, growth
-    const driver_total = driver_base + (tip - tip_skim);
+    // Driver pay: 56.5% of delivery fee + 40% of tip (ASAP fee → Boufet keeps)
+    const driver_delivery = delivery_fee * 0.565;
+    const driver_tip = tip * 0.40;
+    const driver_total = driver_delivery + driver_tip;
     const boufet_net = total - driver_total - commission_amount;
     
     const orderId = uuidv4();
@@ -780,7 +780,7 @@ const createDriverShiftsTable = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS driver_shifts (
         id SERIAL PRIMARY KEY,
-        driver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        driver_id INTEGER NOT NULL,
         province VARCHAR(10) NOT NULL DEFAULT 'BC',
         started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         ended_at TIMESTAMP WITH TIME ZONE,
