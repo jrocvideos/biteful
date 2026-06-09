@@ -32,6 +32,8 @@ export const ShiftTimer: React.FC<ShiftTimerProps> = ({
       if (res.ok) {
         setShiftState(data);
         if (data.status === 'max_reached' || data.status === 'forced_break') onBlock?.();
+      } else if (res.status === 401 || res.status === 403) {
+        setError('Session expired — please log out and log back in.');
       } else setError(data.error || 'Failed');
     } catch { setError('Network error'); }
     finally { setLoading(false); }
