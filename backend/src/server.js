@@ -246,8 +246,9 @@ app.post("/api/orders", auth, async (req, res) => {
     const commission = restResult.rows[0]?.commission_rate || 20.00;
     const commission_amount = subtotal * (commission / 100);
     
-    // Driver pay: 56.5% of delivery fee + 40% of tip (ASAP fee → Boufet keeps)
-    const driver_delivery = delivery_fee * 0.565;
+    // Driver pay: $0.35/km (50% of $0.70/km customer charge) + 40% of tip
+    // Boufet charges customer $0.70/km, pays driver $0.35/km, keeps $0.35/km
+    const driver_delivery = delivery_fee * 0.50;
     const driver_tip = tip * 0.40;
     const driver_total = driver_delivery + driver_tip;
     const boufet_net = total - driver_total - commission_amount;
