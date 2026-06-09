@@ -821,9 +821,9 @@ function getShiftLimits(province) {
 const createDriverShiftsTable = async () => {
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS driver_shifts (
+      DROP TABLE IF EXISTS driver_shifts; CREATE TABLE IF NOT EXISTS driver_shifts (
         id SERIAL PRIMARY KEY,
-        driver_id INTEGER NOT NULL,
+        driver_id VARCHAR(36) NOT NULL,
         province VARCHAR(10) NOT NULL DEFAULT 'BC',
         started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         ended_at TIMESTAMP WITH TIME ZONE,
