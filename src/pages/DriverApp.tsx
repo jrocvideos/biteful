@@ -9,12 +9,15 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { ShiftTimer } from '../components/ShiftTimer';
+import PickupTimer from '../components/PickupTimer';
+import EarningsDetail from '../components/EarningsDetail';
 const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 interface DeliveryJob {
   id: string; order_id?: string; restaurant: string; restaurantAddress: string;
   customer: string; customerAddress: string; distance: string;
-  earnings: number; tip: number; items: string[];
+  earnings: number; accepted_at?: string; tip: number; items: string[];
   status: "available"|"accepted"|"arrived-restaurant"|"picked-up"|"arrived-customer"|"delivered"|"cancelled";
   timeLeft: string; orderTime: string; instructions?: string; phone?: string;
 }
@@ -84,10 +87,12 @@ export const DriverApp = () => {
   const [activeScreen, setActiveScreen] = useState<"home"|"schedule"|"account"|"earnings"|"ratings"|"preferences">("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [jobs, setJobs] = useState<DeliveryJob[]>(initialJobs);
-  const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
+  const 
+[activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
   const [waitSeconds, setWaitSeconds] = useState(0);
   const waitIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showEarningsDetail, setShowEarningsDetail] = useState<string | null>(null);
   const [earnings, setEarnings] = useState({ today: 87.50, week: 693, trips: 45, rating: 4.92 });
   const [preferences, setPreferences] = useState({ vapeDelivery: false, cashOnDelivery: false });
 
@@ -368,7 +373,8 @@ export const DriverApp = () => {
               className={`w-full py-4 rounded-2xl font-bold text-lg mb-4 ${isOnline ? "bg-gray-700 text-white" : "bg-teal-600 text-white shadow-lg shadow-teal-500/30"}`}>
               {isOnline ? "Go Offline" : "Go Online"}
             </button>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+              <ShiftTimer token={localStorage.getItem("boufet_token") || ""} province="BC" />           
+ <div className="grid grid-cols-3 gap-3 mb-4">
               {[["Today", `$${sf(earnings.today)}`, "text-teal-400"], ["Trips", `${earnings.trips}`, ""], ["Rating", `${earnings.rating}★`, "text-yellow-400"]].map(([label, val, color]) => (
                 <div key={label} className={`${darkMode ? "bg-gray-800" : "bg-gray-50"} rounded-2xl p-3 text-center`}>
                   <p className={`text-xs ${muted} mb-1`}>{label}</p><p className={`font-bold ${color}`}>{val}</p>
@@ -383,6 +389,13 @@ export const DriverApp = () => {
                   <div className="flex flex-col items-center"><div className="w-3 h-3 rounded-full bg-teal-500" /><div className="w-0.5 h-8 bg-gray-600 my-1" /><div className="w-3 h-3 rounded-full bg-orange-500" /></div>
                   <div className="flex-1">
                     <p className="font-bold text-sm">{activeJob.restaurant}</p><p className={`text-xs ${muted} mb-2`}>{activeJob.restaurantAddress}</p>
+                    {activeJob.status === "accepted" && (
+                      <PickupTimer
+                        acceptedAt={activeJob.accepted_at || new Date().toISOString()}
+                        restaurantAddress={activeJob.restaurantAddress || activeJob.restaurant}
+                        estimatedDriveMinutes={Number(activeJob.distance) || 12}
+                      />
+                    )}
                     <p className="font-bold text-sm">{activeJob.customer}</p><p className={`text-xs ${muted}`}>{activeJob.customerAddress}</p>
                   </div>
                   <div className="text-right"><p className="font-bold text-teal-400">${sf((Number(activeJob.earnings || 0)))}</p><p className={`text-xs ${muted}`}>{activeJob.distance}</p></div>
@@ -479,9 +492,16 @@ export const DriverApp = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[["Base Pay","$62.50",""],["Tips","$25.00","text-teal-400"],["Peak Pay","$12.00","text-orange-400"],["Total",`$${sf(earnings.today)}`,"text-teal-400"]].map(([l,v,c])=>(
-              <div key={l} className={`${cardBg} border rounded-2xl p-4`}><p className={`text-xs ${muted} mb-1`}>{l}</p><p className={`text-xl font-bold ${c}`}>{v}</p></div>
+              <div key={l} className={`${cardBg} border rounded-2xl p-4 cursor-pointer`} onClick={() => setShowEarningsDetail("week")}><p className={`text-xs ${muted} mb-1`}>{l}</p><p className={`text-xl font-bold ${c}`}>{v}</p></div>
             ))}
           </div>
+          {showEarningsDetail && (
+            <EarningsDetail
+              token={localStorage.getItem("boufet_token") || ""}
+              period={showEarningsDetail as "today" | "week" | "month"}
+              onClose={() => setShowEarningsDetail(null)}
+            />
+          )}
         </div>
       )}
 
