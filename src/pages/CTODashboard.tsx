@@ -91,7 +91,7 @@ const SystemHealth = () => {
     setChecking(true);
     setApiStatus('checking');
     try {
-      const res = await fetch('https://api.boufet.com/health', { signal: AbortSignal.timeout(5000) });
+      const res = await fetch('https://boufet-backend-production-e170.up.railway.app/health', { signal: AbortSignal.timeout(5000) });
       setApiStatus(res.ok ? 'up' : 'down');
     } catch {
       setApiStatus('down');

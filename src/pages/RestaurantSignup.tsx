@@ -16,7 +16,7 @@ export const RestaurantSignup = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await fetch('https://api.boufet.com/api/restaurant/apply', {
+      await fetch('https://boufet-backend-production-e170.up.railway.app/api/restaurant/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

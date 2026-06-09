@@ -34,7 +34,7 @@ export const OrderTracking = () => {
     if (saved) setOrderData(JSON.parse(saved));
     
     // Socket.io for real-time status updates
-    const socket = io('https://api.boufet.com', { withCredentials: true, transports: ['polling', 'websocket'] });
+    const socket = io('https://boufet-backend-production-e170.up.railway.app', { withCredentials: true, transports: ['polling', 'websocket'] });
     socket.on('connect', () => {
       console.log('Socket connected for order tracking');
     });
@@ -84,7 +84,7 @@ export const OrderTracking = () => {
     if (!id) return;
     // Poll real order status from backend every 5 seconds
     const fetchStatus = () => {
-      fetch(`https://api.boufet.com/api/orders/${id}/track`)
+      fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${id}/track`)
         .then(r => r.json())
         .then(data => {
           if (data.status) {

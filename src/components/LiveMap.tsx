@@ -31,7 +31,7 @@ export const LiveMap = ({ status, express, orderId, restaurantCoords = [49.2827,
   // Connect to Socket.io and listen for real driver location
   useEffect(() => {
     if (!orderId) return;
-    const socket = io('https://api.boufet.com', { transports: ['websocket'] });
+    const socket = io('https://boufet-backend-production-e170.up.railway.app', { transports: ['websocket'] });
     socket.emit('join_order', orderId);
     socket.on('driver_location', (data: { lat: number; lng: number }) => {
       setDriverCoords([data.lat, data.lng]);

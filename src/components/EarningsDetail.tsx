@@ -25,7 +25,7 @@ const EarningsDetail: React.FC<EarningsDetailProps> = ({ token, period, onClose 
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`https://api.boufet.com/api/drivers/earnings/detail?period=${period}`, {
+    fetch(`https://boufet-backend-production-e170.up.railway.app/api/drivers/earnings/detail?period=${period}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.json())

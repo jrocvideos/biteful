@@ -17,7 +17,7 @@ export const BusinessSignup = () => {
 
   const handleSubmit = async () => {
     try {
-      await fetch('https://api.boufet.com/api/business/apply', {
+      await fetch('https://boufet-backend-production-e170.up.railway.app/api/business/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

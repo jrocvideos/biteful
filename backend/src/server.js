@@ -11,10 +11,10 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initIvrs } from "./ivrs.js";
 
 const { Pool } = pkg;
 const app = express();
-export { app, pool, io };
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
@@ -796,7 +796,6 @@ setInterval(async () => {
 }, 4 * 60 * 1000);
 
 // ==================== IVRS ====================
-import { initIvrs } from "./ivrs.js";
 initIvrs(app);
 
 // ==================== START ====================
@@ -1655,9 +1654,8 @@ app.post("/api/orders/:id/messages/read", async (req, res) => {
     console.error('[MARK READ]', err);
     res.status(500).json({ error: err.message });
   }
-});
 
-app.listen(PORT, () => {
-  console.log(`[Server] Running on port ${PORT}`);
 });
-
+// deploy Tue  9 Jun 2026 01:47:35 PDT
+// deploy Tue  9 Jun 2026 01:56:37 PDT
+export { app, pool, io };

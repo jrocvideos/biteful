@@ -8,7 +8,7 @@ import {
   Zap, Calendar, Users, RefreshCw, Package
 } from 'lucide-react';
 import { sf } from './RestaurantDashboard';
-const API_URL = 'https://api.boufet.com';
+const API_URL = 'https://boufet-backend-production-e170.up.railway.app';
 
 const RESTAURANT_NAMES: Record<string, string> = {
   'burger-vault': 'Burger Vault',
