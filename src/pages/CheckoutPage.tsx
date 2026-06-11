@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, CreditCard, Clock, ChevronRight, Minus, Plus, Trash2, Tag, Bike, Shield, Star, TrendingDown, Info } from 'lucide-react';
@@ -33,11 +33,6 @@ const getStandardFee = (subtotal: number): number => subtotal * 0.02;
 export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClearCart }: CheckoutPageProps) => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
-  if (!user || !token) {
-    navigate('/signin?redirect=/checkout');
-    return null;
-  }
-
   const [step, setStep] = useState<'cart' | 'delivery' | 'payment'>('cart');
   const [address, setAddress] = useState('');
   const [apt, setApt] = useState('');
@@ -51,6 +46,12 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [showSavingsBreakdown, setShowSavingsBreakdown] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
+
+  useEffect(() => {
+    if (!user || !token) {
+      navigate('/login');
+    }
+  }, [user, token]);
 
   const subtotal = total;
   const hasSmoke2Snack = items.some(item => item.restaurantName === 'Smoke2Snack');
