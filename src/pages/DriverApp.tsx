@@ -12,6 +12,7 @@ import 'leaflet/dist/leaflet.css';
 import { ShiftTimer } from '../components/ShiftTimer';
 import PickupTimer from '../components/PickupTimer';
 import EarningsDetail from '../components/EarningsDetail';
+import { useAuth } from '../lib/auth';
 const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 interface DeliveryJob {
@@ -82,6 +83,8 @@ const ZoneMap = ({ isOnline, darkMode }: { isOnline: boolean; darkMode: boolean 
 };
 
 export const DriverApp = () => {
+  const { user } = useAuth();
+  const driverId = user?.id || localStorage.getItem("driver_id") || "drv_anon";
   const [darkMode, setDarkMode] = useState(true);
   const [isOnline, setIsOnline] = useState(false);
   const [activeScreen, setActiveScreen] = useState<"home"|"schedule"|"account"|"earnings"|"ratings"|"preferences">("home");
@@ -105,7 +108,7 @@ export const DriverApp = () => {
     socket.on("connect", () => {
       console.log("Driver socket connected:", socket.id);
       socket.emit("driver_online", {
-        driver_id: localStorage.getItem("driver_id") || "drv_anon",
+        driver_id: driverId,
         vehicle_type: "car"
       });
       // Fetch existing ready orders
@@ -204,7 +207,7 @@ export const DriverApp = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
-          driver_id: localStorage.getItem("driver_id") || "drv_anon",
+          driver_id: driverId,
           driver_name: localStorage.getItem("driver_name") || "Boufet Driver",
           accepted_at: new Date().toISOString()
         })
@@ -229,7 +232,7 @@ export const DriverApp = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
-          driver_id: localStorage.getItem("driver_id") || "drv_anon",
+          driver_id: driverId,
           declined_at: new Date().toISOString()
         })
       });
