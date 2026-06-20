@@ -90,8 +90,41 @@ export const DriverApp = () => {
   const [activeScreen, setActiveScreen] = useState<"home"|"schedule"|"account"|"earnings"|"ratings"|"preferences">("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [jobs, setJobs] = useState<DeliveryJob[]>(initialJobs);
-  const 
-[activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
+  const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
+
+  // Resume active job from backend on mount/refresh
+  useEffect(() => {
+    if (!driverId || driverId === "drv_anon") return;
+    fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders?status=driver_assigned,picked_up,out_for_delivery&driver_id=${driverId}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const o = data[0];
+          const statusMap: Record<string, DeliveryJob["status"]> = {
+            driver_assigned: "accepted",
+            picked_up: "picked-up",
+            out_for_delivery: "arrived-customer",
+          };
+          setActiveJob({
+            id: o.id,
+            order_id: o.id,
+            restaurant: o.restaurant_name || "Restaurant",
+            restaurantAddress: o.restaurant_address || "",
+            customer: o.customer_name || "Customer",
+            customerAddress: o.customer_address || "",
+            distance: "2.3 km",
+            earnings: parseFloat(o.driver_total) || 0,
+            accepted_at: o.accepted_at,
+            tip: parseFloat(o.tip) || 0,
+            items: (o.items || []).map((i: any) => `${i.quantity}x ${i.name}`),
+            status: statusMap[o.status] || "accepted",
+            timeLeft: "20:00",
+            orderTime: o.created_at,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [driverId]);
   const [waitSeconds, setWaitSeconds] = useState(0);
   const waitIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
