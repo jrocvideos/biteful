@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { HomePage } from './pages/HomePage';
 import { RestaurantDetail } from './pages/RestaurantDetail';
 import { OrderHistory } from './pages/OrderHistory';
-import { DriverApp } from './pages/DriverApp';
 import { DriverSignup } from './pages/DriverSignup';
 import { BusinessSignup } from './pages/BusinessSignup';
 import { LoginPage } from './pages/LoginPage';
@@ -47,7 +46,7 @@ function AppInner() {
           } />
           <Route path="/order/:id" element={<OrderTracking />} />
           <Route path="/orders" element={<OrderHistory />} />
-          <Route path="/driver" element={<DriverApp />} />
+          <Route path="/driver" element={<Navigate to="https://REPLACE_WITH_DRIVER_APP_URL" />} />
           <Route path="/driver/signup" element={<DriverSignup />} />
           <Route path="/business" element={<BusinessSignup />} />
           <Route path="/login" element={<LoginPage />} />

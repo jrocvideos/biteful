@@ -17,7 +17,7 @@ const { Pool } = pkg;
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
+  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
   transports: ["polling", "websocket"],
   allowEIO3: true,
   pingTimeout: 20000,
@@ -88,7 +88,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
+app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
 app.use(express.json());
 
 // Auth middleware
@@ -183,6 +183,12 @@ app.get("/api/orders", async (req, res) => {
       paramIdx++;
     }
     
+    if (req.query.driver_id) {
+      where += " AND o.driver_id = $" + paramIdx;
+      params.push(req.query.driver_id);
+      paramIdx++;
+    }
+    
     const query = `
       SELECT o.*,
         COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name,
@@ -257,7 +263,7 @@ app.post("/api/orders", auth, async (req, res) => {
     await client.query(
       `INSERT INTO orders (id, customer_id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total, driver_base_pay, driver_total, commission_amount, biteful_net, status, customer_address, customer_lat, customer_lng, special_instructions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [orderId, req.user.id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total,
-       driver_base, driver_total, commission_amount, boufet_net, "pending_payment", customer_address, customer_lat || 0, customer_lng || 0, special_instructions]
+       driver_delivery, driver_total, commission_amount, boufet_net, "pending_payment", customer_address, customer_lat || 0, customer_lng || 0, special_instructions]
     );
     
     for (const item of orderItems) {
@@ -336,7 +342,7 @@ app.post("/api/orders/:id/pay", auth, async (req, res) => {
 // Confirm payment & notify restaurant
 app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'paid' WHERE id = $1", [req.params.id]);
+    await pool.query("UPDATE orders SET status = 'incoming' WHERE id = $1", [req.params.id]);
     
     // Fetch full order for KDS
     const orderResult = await pool.query(
@@ -500,7 +506,10 @@ app.post("/api/orders/:id/status", async (req, res) => {
   if (!kdsSecret && !hasAuth) return res.status(401).json({ error: "Unauthorized" });
   if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026")) return res.status(401).json({ error: "Invalid KDS secret" });
   const { status } = req.body;
-  const validStatuses = ['driver_assigned','picked_up','out_for_delivery','arrived','delivered'];
+  const validStatuses = ['preparing','ready','driver_assigned','picked_up','out_for_delivery','arrived','delivered','cancelled'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: `Invalid status: "${status}". Must be one of: ${validStatuses.join(', ')}` });
+  }
   
   try {
     let query = "UPDATE orders SET status = $1";

@@ -34,7 +34,7 @@ export const OrderTracking = () => {
     if (saved) setOrderData(JSON.parse(saved));
     
     // Socket.io for real-time status updates
-    const socket = io('https://boufet-backend-production-e170.up.railway.app', { transports: ['polling', 'websocket'] });
+    const socket = io('https://boufet-backend-production-e170.up.railway.app', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => {
       console.log('Socket connected for order tracking');
     });
