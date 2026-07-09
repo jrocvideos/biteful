@@ -414,7 +414,7 @@ export const RestaurantKDS = () => {
             orderType: 'delivery',
             isExpress: order.delivery_type === 'asap',
           };
-          if (!newOrder.restaurantSlug || newOrder.restaurantSlug === slug) {
+          if (newOrder.restaurantSlug === slug) {
             setOrders(prev => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
             syncOrderToCGO(newOrder);
           }
