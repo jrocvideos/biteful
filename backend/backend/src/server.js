@@ -1407,15 +1407,20 @@ app.get("/api/all-orders-debug", async (req, res) => {
 });
 
 // REJECT ORDER (restaurant declines incoming order)
-app.post("/api/orders/:id/reject", auth, async (req, res) => {
+app.post("/api/orders/:id/reject", async (req, res) => {
   const { reason } = req.body;
   const orderId = req.params.id;
   const validReasons = [
+    'Item Unavailable',
+    'Restaurant Too Busy',
+    'Closing Soon',
+    'Kitchen Issue',
+    'Order Too Large',
+    'Other',
     'Restaurant is closed',
     'No time to prepare',
     'Out of ingredients',
     'Kitchen at capacity',
-    'Other'
   ];
   
   if (!validReasons.includes(reason)) {

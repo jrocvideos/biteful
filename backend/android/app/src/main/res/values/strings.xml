@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Biteful</string>
+    <string name="title_activity_main">Biteful</string>
+    <string name="package_name">com.biteful.app</string>
+    <string name="custom_url_scheme">com.biteful.app</string>
+</resources>
