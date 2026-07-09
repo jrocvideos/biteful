@@ -48,7 +48,7 @@ function AppInner() {
           } />
           <Route path="/order/:id" element={<OrderTracking />} />
           <Route path="/orders" element={<OrderHistory />} />
-          <Route path="/driver" element={<Navigate to="https://REPLACE_WITH_DRIVER_APP_URL" />} />
+          <Route path="/driver" element={<DriverDashboard />} />
           <Route path="/driver/signup" element={<DriverSignup />} />
           <Route path="/business" element={<BusinessSignup />} />
           <Route path="/login" element={<LoginPage />} />
@@ -56,8 +56,9 @@ function AppInner() {
           <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/r/:slug/orders" element={<RestaurantKDS />} />
           <Route path="/kds" element={<RestaurantKDS />} />
+          <Route path="/kds/:slug" element={<RestaurantKDS />} />
           <Route path="/biz" element={<YolandaDashboard />} />
-          <Route path="/cgo" element={<PeterDashboard />} />
+          <Route path="/cgo" element={<CGOCommandCenter />} />
           <Route path="/cto" element={<CTODashboard />} />
           <Route path="/driver-download" element={<DriverDownload />} />
           <Route path="/kds-download" element={<KDSDownload />} />
