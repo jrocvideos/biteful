@@ -238,7 +238,8 @@ export const RestaurantKDS = () => {
   const { slug } = useParams<{ slug: string }>();
   const restaurantName = RESTAURANT_NAMES[slug || ''] || slug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Restaurant';
 
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<'kitchen'|'earnings'|'advanced'>('kitchen');
@@ -302,6 +303,33 @@ export const RestaurantKDS = () => {
     });
 
     return () => { socket.disconnect(); };
+  }, [slug]);
+
+
+  // Fetch existing orders on mount
+  useEffect(() => {
+    if (!slug) return;
+    const restaurantId = RESTAURANT_IDS[slug] || slug;
+    fetch(`${API_URL}/api/orders?restaurant_id=${restaurantId}&status=incoming,preparing,ready,driver_assigned`)
+      .then(r => r.json())
+      .then(data => {
+        const fetched = (data.orders || []).map((o: any) => ({
+          id: o.id,
+          orderNumber: `ORD-${o.id.slice(0, 6).toUpperCase()}`,
+          customerName: o.customer_name || 'Customer',
+          status: o.status || 'incoming',
+          items: (o.items || []).map((i: any) => ({ id: i.id, name: i.name, quantity: i.quantity })),
+          total: o.total || 0,
+          tip: o.tip || 0,
+          createdAt: new Date(o.created_at || Date.now()),
+          address: o.customer_address || '',
+          orderType: o.order_type || 'delivery',
+          isExpress: o.delivery_type === 'asap',
+        }));
+        setOrders(fetched);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [slug]);
 
   const handleAction = (id: string, newStatus: OrderStatus) => {
