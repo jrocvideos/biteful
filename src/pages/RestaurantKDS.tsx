@@ -158,7 +158,7 @@ async function syncOrderToCGO(order: Order) {
   try {
     await fetch(`${CGO_API_URL}/orders/${order.id}/status`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: order.status, restaurantSlug: order.restaurantSlug, orderNumber: order.orderNumber, updatedAt: new Date().toISOString() }),
+      body: JSON.stringify({ status: order.status, restaurantSlug: order.restaurantSlug, orderNumber: order.orderNumber, total: order.total, tip: order.tip, revenue: order.total, updatedAt: new Date().toISOString() }),
     });
   } catch (e) { console.error('CGO sync failed:', e); }
 }

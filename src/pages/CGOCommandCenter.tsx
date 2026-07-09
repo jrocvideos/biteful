@@ -56,6 +56,23 @@ export function CGOCommandCenter() {
         <div className="bg-slate-800 rounded-lg p-4 text-center"><div className="text-3xl font-bold text-orange-400">{stats.active}</div><div className="text-slate-400 text-sm">Active</div></div>
       </div>
       <div className="p-4 max-w-6xl mx-auto">
+        <h2 className="text-xl font-bold mb-3">Revenue by Restaurant</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {Object.entries(orders.reduce((acc, o) => {
+            if (o.status === 'delivered') {
+              acc[o.restaurantSlug] = (acc[o.restaurantSlug] || 0) + o.total;
+            }
+            return acc;
+          }, {} as Record<string, number>)).map(([slug, rev]) => (
+            <div key={slug} className="bg-slate-800 rounded-lg p-3 border border-slate-700">
+              <div className="text-lg font-bold text-green-400">${rev.toFixed(2)}</div>
+              <div className="text-xs text-slate-400 uppercase">{slug.replace(/-/g, ' ')}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-4 max-w-6xl mx-auto">
         <h2 className="text-xl font-bold mb-3">Live Order Stream</h2>
         <div className="bg-slate-800 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
