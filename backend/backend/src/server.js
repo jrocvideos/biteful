@@ -11,13 +11,13 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initIvrs } from "./ivrs.js";
 
 const { Pool } = pkg;
 const app = express();
-export { app, pool, io };
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
+  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
   transports: ["polling", "websocket"],
   allowEIO3: true,
   pingTimeout: 20000,
@@ -88,7 +88,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
+app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
 app.use(express.json());
 
 // Auth middleware
@@ -183,6 +183,12 @@ app.get("/api/orders", async (req, res) => {
       paramIdx++;
     }
     
+    if (req.query.driver_id) {
+      where += " AND o.driver_id = $" + paramIdx;
+      params.push(req.query.driver_id);
+      paramIdx++;
+    }
+    
     const query = `
       SELECT o.*,
         COALESCE(u.first_name || ' ' || LEFT(u.last_name,1) || '.', 'Customer') as customer_name,
@@ -246,8 +252,9 @@ app.post("/api/orders", auth, async (req, res) => {
     const commission = restResult.rows[0]?.commission_rate || 20.00;
     const commission_amount = subtotal * (commission / 100);
     
-    // Driver pay: 56.5% of delivery fee + 40% of tip (ASAP fee → Boufet keeps)
-    const driver_delivery = delivery_fee * 0.565;
+    // Driver pay: $0.35/km (50% of $0.70/km customer charge) + 40% of tip
+    // Boufet charges customer $0.70/km, pays driver $0.35/km, keeps $0.35/km
+    const driver_delivery = delivery_fee * 0.50;
     const driver_tip = tip * 0.40;
     const driver_total = driver_delivery + driver_tip;
     const boufet_net = total - driver_total - commission_amount;
@@ -256,7 +263,7 @@ app.post("/api/orders", auth, async (req, res) => {
     await client.query(
       `INSERT INTO orders (id, customer_id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total, driver_base_pay, driver_total, commission_amount, biteful_net, status, customer_address, customer_lat, customer_lng, special_instructions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [orderId, req.user.id, restaurant_id, subtotal, tax, delivery_fee, service_fee, tip, total,
-       driver_base, driver_total, commission_amount, boufet_net, "pending_payment", customer_address, customer_lat || 0, customer_lng || 0, special_instructions]
+       driver_delivery, driver_total, commission_amount, boufet_net, "pending_payment", customer_address, customer_lat || 0, customer_lng || 0, special_instructions]
     );
     
     for (const item of orderItems) {
@@ -335,7 +342,7 @@ app.post("/api/orders/:id/pay", auth, async (req, res) => {
 // Confirm payment & notify restaurant
 app.post("/api/orders/:id/confirm-payment", auth, async (req, res) => {
   try {
-    await pool.query("UPDATE orders SET status = 'paid' WHERE id = $1", [req.params.id]);
+    await pool.query("UPDATE orders SET status = 'incoming' WHERE id = $1", [req.params.id]);
     
     // Fetch full order for KDS
     const orderResult = await pool.query(
@@ -499,7 +506,10 @@ app.post("/api/orders/:id/status", async (req, res) => {
   if (!kdsSecret && !hasAuth) return res.status(401).json({ error: "Unauthorized" });
   if (kdsSecret && kdsSecret !== (process.env.KDS_SECRET || "BoufetKDS2026")) return res.status(401).json({ error: "Invalid KDS secret" });
   const { status } = req.body;
-  const validStatuses = ['driver_assigned','picked_up','out_for_delivery','arrived','delivered'];
+  const validStatuses = ['preparing','ready','driver_assigned','picked_up','out_for_delivery','arrived','delivered','cancelled'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: `Invalid status: "${status}". Must be one of: ${validStatuses.join(', ')}` });
+  }
   
   try {
     let query = "UPDATE orders SET status = $1";
@@ -795,7 +805,6 @@ setInterval(async () => {
 }, 4 * 60 * 1000);
 
 // ==================== IVRS ====================
-import { initIvrs } from "./ivrs.js";
 initIvrs(app);
 
 // ==================== START ====================
@@ -820,10 +829,11 @@ function getShiftLimits(province) {
 // Auto-create driver_shifts table on startup
 const createDriverShiftsTable = async () => {
   try {
+    await pool.query(`DROP TABLE IF EXISTS driver_shifts`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS driver_shifts (
         id SERIAL PRIMARY KEY,
-        driver_id INTEGER NOT NULL,
+        driver_id VARCHAR(36) NOT NULL,
         province VARCHAR(10) NOT NULL DEFAULT 'BC',
         started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         ended_at TIMESTAMP WITH TIME ZONE,
@@ -1397,15 +1407,20 @@ app.get("/api/all-orders-debug", async (req, res) => {
 });
 
 // REJECT ORDER (restaurant declines incoming order)
-app.post("/api/orders/:id/reject", auth, async (req, res) => {
+app.post("/api/orders/:id/reject", async (req, res) => {
   const { reason } = req.body;
   const orderId = req.params.id;
   const validReasons = [
+    'Item Unavailable',
+    'Restaurant Too Busy',
+    'Closing Soon',
+    'Kitchen Issue',
+    'Order Too Large',
+    'Other',
     'Restaurant is closed',
     'No time to prepare',
     'Out of ingredients',
     'Kitchen at capacity',
-    'Other'
   ];
   
   if (!validReasons.includes(reason)) {
@@ -1535,3 +1550,126 @@ app.get("/api/orders/history", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============================================
+// ============================================
+// RESTAURANT-TO-CUSTOMER MESSAGING
+// ============================================
+
+const createMessagesTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS order_messages (
+        id            SERIAL PRIMARY KEY,
+        order_id      VARCHAR(36) NOT NULL,
+        restaurant_id VARCHAR(36),
+        sender_type   VARCHAR(20) NOT NULL CHECK (sender_type IN ('restaurant','customer')),
+        message       TEXT NOT NULL,
+        message_type  VARCHAR(30) DEFAULT 'text' CHECK (message_type IN ('out_of_stock','delay','substitution','confirmation','custom')),
+        status        VARCHAR(20) DEFAULT 'sent' CHECK (status IN ('sent','read','responded')),
+        response      TEXT,
+        created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    console.log('[DB] order_messages table ready');
+  } catch (err) {
+    console.error('[DB] Failed to create order_messages table:', err.message);
+  }
+};
+createMessagesTable();
+
+// POST /api/orders/:id/message — restaurant sends message to customer
+app.post("/api/orders/:id/message", async (req, res) => {
+  try {
+    const { message, message_type = 'custom', sender_type = 'restaurant' } = req.body;
+    const orderId = req.params.id;
+
+    const orderCheck = await pool.query("SELECT * FROM orders WHERE id = $1", [orderId]);
+    if (orderCheck.rows.length === 0) return res.status(404).json({ error: "Order not found" });
+    const order = orderCheck.rows[0];
+
+    const result = await pool.query(
+      `INSERT INTO order_messages (order_id, restaurant_id, sender_type, message, message_type, status)
+       VALUES ($1, $2, $3, $4, $5, 'sent') RETURNING *`,
+      [orderId, order.restaurant_id, sender_type, message, message_type]
+    );
+    const msg = result.rows[0];
+
+    io.to(`order:${orderId}`).emit("order_message", {
+      order_id: orderId, message_id: msg.id, sender_type, message, message_type,
+      restaurant_id: order.restaurant_id, created_at: msg.created_at
+    });
+
+    io.to(`restaurant:${order.restaurant_id}`).emit("message_sent", {
+      order_id: orderId, message_id: msg.id, message, status: 'sent'
+    });
+
+    res.json({ success: true, message: msg });
+  } catch (err) {
+    console.error('[SEND MESSAGE]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/orders/:id/messages — get all messages for an order
+app.get("/api/orders/:id/messages", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM order_messages WHERE order_id = $1 ORDER BY created_at ASC`,
+      [req.params.id]
+    );
+    res.json({ messages: result.rows });
+  } catch (err) {
+    console.error('[GET MESSAGES]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/orders/:id/message/:messageId/respond — customer responds
+app.post("/api/orders/:id/message/:messageId/respond", async (req, res) => {
+  try {
+    const { response } = req.body;
+    const { id: orderId, messageId } = req.params;
+
+    await pool.query(
+      `UPDATE order_messages SET status = 'responded', response = $1 WHERE id = $2 AND order_id = $3`,
+      [response, messageId, orderId]
+    );
+
+    const orderCheck = await pool.query("SELECT restaurant_id FROM orders WHERE id = $1", [orderId]);
+    const restaurantId = orderCheck.rows[0]?.restaurant_id;
+
+    io.to(`restaurant:${restaurantId}`).emit("message_response", {
+      order_id: orderId, message_id: parseInt(messageId), response,
+      responded_at: new Date().toISOString()
+    });
+
+    io.to(`order:${orderId}`).emit("message_response", {
+      order_id: orderId, message_id: parseInt(messageId), response,
+      responded_at: new Date().toISOString()
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[MESSAGE RESPONSE]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/orders/:id/messages/read — mark messages as read
+app.post("/api/orders/:id/messages/read", async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE order_messages SET status = 'read' WHERE order_id = $1 AND sender_type = 'restaurant' AND status = 'sent'`,
+      [req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[MARK READ]', err);
+    res.status(500).json({ error: err.message });
+  }
+
+});
+// deploy Tue  9 Jun 2026 01:47:35 PDT
+// deploy Tue  9 Jun 2026 01:56:37 PDT
+export { app, pool, io };

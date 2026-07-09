@@ -1,0 +1,729 @@
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { io, Socket } from 'socket.io-client';
+import {
+  CheckCircle, Clock, ChefHat, Phone, MapPin,
+  DollarSign, Bell, BellOff, Wifi, WifiOff,
+  Zap, Calendar, Users, RefreshCw, Package
+} from 'lucide-react';
+
+const API_URL = 'https://api.boufet.com';
+
+const RESTAURANT_NAMES: Record<string, string> = {
+  'burger-vault': 'Burger Vault',
+  'papa-johns': 'Papa Johns',
+  'smoke2snack': 'Smoke2Snack',
+  'blue-water-cafe': 'Blue Water Cafe',
+  'sakura-sushi': 'Sakura Sushi',
+  'cuba-street-food': 'Cuba Street Food',
+};
+
+const RESTAURANT_IDS: Record<string, string> = {
+  'burger-vault': 'cb8b55eb-118b-4895-9277-93847a329533',
+  'papa-johns': '5a3ac06e-7a5d-4e5c-ba4c-4dac89a2e79d',
+  'smoke2snack': 'a93bbf8f-4895-4908-8a71-87d390989300',
+  'blue-water-cafe': 'ec544790-3d6b-4fb8-97ab-bc4725271e75',
+  'sakura-sushi': '8eaf9ff4-2f47-4ac5-a2b2-f76860b4f6c6',
+  'cuba-street-food': 'bd67f62d-cdd9-4541-b6cd-d140be14fe1a',
+};
+
+type OrderStatus = 'incoming' | 'preparing' | 'ready' | 'driver_assigned' | 'picked_up' | 'out_for_delivery' | 'processed' | 'cancelled' | 'advanced';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  modifiers?: string[];
+  special_instructions?: string;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone?: string;
+  status: OrderStatus;
+  items: OrderItem[];
+  total: number;
+  tip: number;
+  restaurantSlug?: string;
+  createdAt: Date;
+  address: string;
+  orderType: 'delivery' | 'pickup' | 'advanced';
+  isExpress?: boolean;
+  eventType?: string;
+  guestCount?: number;
+  eventDate?: Date;
+  specialInstructions?: string;
+}
+
+const RESTAURANTS: Record<string, { name: string; cuisine: string; menu: Array<{name: string; price: number; category: string}> }> = {
+  'burger-vault': {
+    name: 'Burger Vault', cuisine: 'American',
+    menu: [
+      { name: 'Double Smash Burger', price: 14.99, category: 'burger' },
+      { name: 'Truffle Fries', price: 8.99, category: 'side' },
+      { name: 'Chocolate Shake', price: 6.99, category: 'drink' },
+      { name: 'Classic Burger', price: 11.99, category: 'burger' },
+      { name: 'Onion Rings', price: 7.99, category: 'side' },
+      { name: 'Vanilla Shake', price: 6.99, category: 'drink' },
+      { name: 'BBQ Bacon Burger', price: 16.99, category: 'burger' },
+      { name: 'Sweet Potato Fries', price: 9.99, category: 'side' },
+    ]
+  },
+  'papa-johns': {
+    name: 'Papa Johns', cuisine: 'Pizza',
+    menu: [
+      { name: 'Pepperoni Pizza', price: 18.99, category: 'pizza' },
+      { name: 'Cheese Pizza', price: 16.99, category: 'pizza' },
+      { name: 'Garlic Knots', price: 8.99, category: 'side' },
+      { name: 'Buffalo Wings', price: 12.99, category: 'wing' },
+      { name: 'Breadsticks', price: 7.99, category: 'side' },
+      { name: '2-Liter Soda', price: 3.99, category: 'drink' },
+      { name: 'Supreme Pizza', price: 21.99, category: 'pizza' },
+      { name: 'Chicken Parmesan', price: 15.99, category: 'entree' },
+    ]
+  },
+  'sakura-sushi': {
+    name: 'Sakura Sushi', cuisine: 'Japanese',
+    menu: [
+      { name: 'Salmon Roll', price: 8.99, category: 'roll' },
+      { name: 'Tuna Sashimi', price: 14.99, category: 'sashimi' },
+      { name: 'Dragon Roll', price: 16.99, category: 'roll' },
+      { name: 'Miso Soup', price: 3.99, category: 'soup' },
+      { name: 'Edamame', price: 5.99, category: 'appetizer' },
+      { name: 'Green Tea', price: 2.99, category: 'drink' },
+      { name: 'Spicy Tuna Roll', price: 10.99, category: 'roll' },
+      { name: 'Tempura Udon', price: 13.99, category: 'noodle' },
+    ]
+  },
+  'taco-bout-it': {
+    name: 'Taco Bout It', cuisine: 'Mexican',
+    menu: [
+      { name: 'Carne Asada Tacos', price: 12.99, category: 'taco' },
+      { name: 'Fish Tacos', price: 11.99, category: 'taco' },
+      { name: 'Chips & Guac', price: 7.99, category: 'side' },
+      { name: 'Horchata', price: 4.99, category: 'drink' },
+      { name: 'Burrito Bowl', price: 13.99, category: 'bowl' },
+      { name: 'Quesadilla', price: 10.99, category: 'entree' },
+      { name: 'Elote', price: 5.99, category: 'side' },
+    ]
+  },
+  'curry-leaf': {
+    name: 'Curry Leaf', cuisine: 'Indian',
+    menu: [
+      { name: 'Butter Chicken', price: 17.99, category: 'curry' },
+      { name: 'Garlic Naan', price: 3.99, category: 'bread' },
+      { name: 'Vegetable Biryani', price: 14.99, category: 'rice' },
+      { name: 'Mango Lassi', price: 4.99, category: 'drink' },
+      { name: 'Samosas', price: 6.99, category: 'appetizer' },
+      { name: 'Palak Paneer', price: 15.99, category: 'curry' },
+    ]
+  }
+};
+
+const CUSTOMER_NAMES = ['Alex M.', 'Priya S.', 'Sarah K.', 'James L.', 'Maria G.', 'David Chen', 'Emma Wilson', 'Raj Patel', 'Lisa Wong', 'Mike Ross', 'Nina Kowalski', 'Tom Bradley', 'Olivia Park', 'Jordan Smith', 'Aisha Johnson'];
+const ADDRESSES = ['888 Cambie St, Suite 400', '1028 Alberni St, Penthouse', '555 W Hastings St, Floor 12', '1234 Robson St, Apt 805', '777 Richards St, Suite 1200', '999 Seymour St, Unit 501', '444 Burrard St, Floor 8', '1111 Homer St, Apt 302', '2222 Granville St, Suite 100', '3333 Main St, House 15', '6666 Commercial Dr, Apt 701', '1010 Davie St, Suite 505'];
+const SPECIAL_INSTRUCTIONS = ['Extra napkins please', 'Ring doorbell twice', 'Leave at door', 'No onions', 'Extra sauce on side', 'Call upon arrival', 'Allergic to nuts', 'Double wrap for delivery', 'Include utensils'];
+
+function getRandomItem<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateMockOrder(restaurantSlug: string, seed: number): Order {
+  const restaurant = RESTAURANTS[restaurantSlug];
+  if (!restaurant) throw new Error('Unknown restaurant: ' + restaurantSlug);
+  const itemCount = Math.floor(Math.random() * 3) + 1;
+  const items: OrderItem[] = [];
+  let subtotal = 0;
+  for (let i = 0; i < itemCount; i++) {
+    const menuItem = getRandomItem(restaurant.menu);
+    const qty = Math.floor(Math.random() * 2) + 1;
+    items.push({ id: `${restaurantSlug}-${seed}-${i}`, name: menuItem.name, quantity: qty });
+    subtotal += menuItem.price * qty;
+  }
+  const tax = Math.round(subtotal * 0.12 * 100) / 100;
+  const tip = Math.round(subtotal * 0.15 * 100) / 100;
+  const total = Math.round((subtotal + tax + tip) * 100) / 100;
+  return {
+    id: `${restaurantSlug}-order-${seed}`, orderNumber: `ORD-${2000 + seed}`,
+    customerName: getRandomItem(CUSTOMER_NAMES), status: 'incoming', restaurantSlug,
+    items, total, tip, createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 60000),
+    address: getRandomItem(ADDRESSES), orderType: Math.random() > 0.3 ? 'delivery' : 'pickup',
+    isExpress: Math.random() > 0.85, specialInstructions: Math.random() > 0.6 ? getRandomItem(SPECIAL_INSTRUCTIONS) : undefined,
+  };
+}
+
+const CGO_API_URL = 'https://boufet.com/cgo/api';
+async function syncOrderToCGO(order: Order) {
+  try {
+    await fetch(`${CGO_API_URL}/orders/${order.id}/status`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: order.status, restaurantSlug: order.restaurantSlug, orderNumber: order.orderNumber, updatedAt: new Date().toISOString() }),
+    });
+  } catch (e) { console.error('CGO sync failed:', e); }
+}
+
+const MOCK_ORDERS: Order[] = [
+  {
+    id: '1', orderNumber: 'ORD-2054', customerName: 'Alex M.', status: 'incoming',
+    restaurantSlug: 'burger-vault',
+    items: [{ id: 'i1', name: 'Double Smash Burger', quantity: 2 }, { id: 'i2', name: 'Truffle Fries', quantity: 1 }, { id: 'i3', name: 'Chocolate Shake', quantity: 2 }],
+    total: 62.50, tip: 8.00, createdAt: new Date(Date.now() - 2 * 60000),
+    address: '888 Cambie St, Suite 400', orderType: 'delivery', isExpress: true,
+  },
+  {
+    id: '2', orderNumber: 'ORD-2055', customerName: 'Priya S.', status: 'incoming',
+    restaurantSlug: 'burger-vault',
+    items: [{ id: 'i4', name: 'Classic Burger', quantity: 1 }, { id: 'i5', name: 'Onion Rings', quantity: 1 }],
+    total: 34.75, tip: 5.00, createdAt: new Date(Date.now() - 1 * 60000),
+    address: '1028 Alberni St, Penthouse', orderType: 'delivery',
+  },
+  {
+    id: '3', orderNumber: 'ORD-2049', customerName: 'Sarah K.', status: 'preparing',
+    restaurantSlug: 'burger-vault',
+    items: [{ id: 'i6', name: 'BBQ Bacon Burger', quantity: 2 }, { id: 'i7', name: 'Sweet Potato Fries', quantity: 2 }, { id: 'i8', name: 'Lemonade', quantity: 2 }],
+    total: 78.50, tip: 10.00, createdAt: new Date(Date.now() - 8 * 60000),
+    address: '555 W Hastings St, Floor 12', orderType: 'delivery',
+  },
+  {
+    id: '4', orderNumber: 'ORD-2050', customerName: 'James L.', status: 'preparing',
+    restaurantSlug: 'papa-johns',
+    items: [{ id: 'i9', name: 'Veggie Burger', quantity: 1 }, { id: 'i10', name: 'Side Salad', quantity: 1 }],
+    total: 28.65, tip: 3.00, createdAt: new Date(Date.now() - 12 * 60000),
+    address: '1234 Robson St, Apt 805', orderType: 'pickup',
+  },
+  {
+    id: '5', orderNumber: 'ORD-2051', customerName: 'Maria G.', status: 'ready',
+    restaurantSlug: 'papa-johns',
+    items: [{ id: 'i11', name: 'Double Smash Burger', quantity: 3 }, { id: 'i12', name: 'Truffle Fries', quantity: 3 }, { id: 'i13', name: 'Vanilla Shake', quantity: 2 }],
+    total: 112.40, tip: 15.00, createdAt: new Date(Date.now() - 20 * 60000),
+    address: '999 W Pender St, Apt 302', orderType: 'delivery',
+  },
+  {
+    id: '6', orderNumber: 'ORD-2052', customerName: 'David W.', status: 'ready',
+    items: [{ id: 'i14', name: 'Classic Burger', quantity: 2 }, { id: 'i15', name: 'Fries', quantity: 2 }],
+    total: 45.20, tip: 6.00, createdAt: new Date(Date.now() - 18 * 60000),
+    address: '777 Seymour St, Apt 1503', orderType: 'delivery',
+  },
+  {
+    id: '7', orderNumber: 'ADV-1001', customerName: 'Rebecca & Tom', status: 'advanced',
+    items: [{ id: 'i16', name: 'Wedding Burger Package', quantity: 80 }, { id: 'i17', name: 'Premium Sides', quantity: 80 }],
+    total: 4355.06, tip: 500.00, createdAt: new Date(Date.now() - 3 * 86400000),
+    address: 'Vancouver Yacht Club, 450 Stanley Park Dr', orderType: 'advanced',
+    eventType: 'wedding', guestCount: 80, eventDate: new Date('2026-06-15'),
+  },
+];
+
+const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string }> = {
+  incoming: { label: 'Incoming', color: '#EF4444', bg: 'border-red-500 bg-red-500/5' },
+  preparing: { label: 'Preparing', color: '#F59E0B', bg: 'border-yellow-500 bg-yellow-500/5' },
+  ready: { label: 'Ready', color: '#10B981', bg: 'border-emerald-500 bg-emerald-500/5' },
+  picked_up: { label: 'Picked Up', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  driver_assigned: { label: 'With Driver', color: '#6366F1', bg: 'border-indigo-500 bg-indigo-500/5' },
+  out_for_delivery: { label: 'Out for Delivery', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  processed: { label: 'Processed', color: '#3B82F6', bg: 'border-blue-500 bg-blue-500/5' },
+  cancelled: { label: 'Cancelled', color: '#6B7280', bg: 'border-gray-500 bg-gray-500/5' },
+  advanced: { label: 'Advanced', color: '#8B5CF6', bg: 'border-purple-500 bg-purple-500/5' },
+};
+
+const getElapsed = (date: Date) => {
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
+};
+
+const KDSCard = ({ order, onAction }: { order: Order; onAction: (id: string, status: OrderStatus) => void }) => {
+  const cfg = STATUS_CONFIG[order.status];
+  const isIncoming = order.status === 'incoming';
+  const isPreparing = order.status === 'preparing';
+  const isReady = order.status === 'ready';
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`rounded-2xl border-2 ${cfg.bg} ${isIncoming ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : `border-opacity-50 ${cfg.bg}`} p-4 flex flex-col gap-3 relative overflow-hidden`}
+    >
+      {/* Incoming pulse animation */}
+      {isIncoming && (
+        <div className="absolute inset-0 rounded-2xl border-2 border-red-500 animate-ping opacity-20" />
+      )}
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs text-gray-400 font-mono">{order.orderNumber}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: cfg.color + '20', color: cfg.color }}>{cfg.label}</span>
+            {order.isExpress && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400">⚡ EXPRESS</span>}
+            {order.orderType === 'pickup' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">🏃 Pickup</span>}
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xl font-bold text-white">${order.total.toFixed(2)}</p>
+
+        </div>
+      </div>
+
+      {/* Customer + time */}
+      <div className="flex items-center justify-between">
+        <p className="font-bold text-white text-lg">{order.customerName}</p>
+        <div className="flex items-center gap-1 text-gray-400 text-xs">
+          <Clock className="w-3 h-3" />
+          <span>{getElapsed(order.createdAt)}</span>
+        </div>
+      </div>
+
+      {/* Event badge */}
+      {order.eventType && (
+        <div className="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30">
+          <p className="text-xs font-bold text-purple-400 capitalize">
+            {order.eventType} • {order.guestCount} guests • {order.eventDate?.toLocaleDateString()}
+          </p>
+        </div>
+      )}
+
+      {/* Items */}
+      <div className="space-y-1 flex-1">
+        {order.items.slice(0, 5).map(item => (
+          <div key={item.id} className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-gray-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{item.quantity}</span>
+            <span className="text-sm text-gray-200">{item.name}</span>
+          </div>
+        ))}
+        {order.items.length > 5 && <p className="text-xs text-gray-500 italic">+{order.items.length - 5} more items</p>}
+      </div>
+
+      {/* Special instructions */}
+      {order.specialInstructions && (
+        <div className="px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+          <p className="text-xs text-yellow-400">📝 {order.specialInstructions}</p>
+        </div>
+      )}
+
+      {/* Address */}
+      <div className="flex items-center gap-1 text-gray-500 text-xs">
+        <MapPin className="w-3 h-3 flex-shrink-0" />
+        <span className="truncate">{order.address}</span>
+      </div>
+
+      {/* Action button */}
+      <div>
+        {isIncoming && (
+          <button onClick={() => onAction(order.id, 'preparing')}
+            className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-colors">
+            ✓ Accept & Start
+          </button>
+        )}
+        {isPreparing && (
+          <button onClick={() => onAction(order.id, 'ready')}
+            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors">
+            🍽️ Ready for Pickup
+          </button>
+        )}
+        {isReady && (
+          <div className="w-full py-3 rounded-xl bg-gray-700 text-center">
+            <p className="text-emerald-400 font-bold text-sm">⏳ Waiting for driver...</p>
+          </div>
+        )}
+        {order.status === 'processed' && (
+          <div className="w-full py-3 rounded-xl bg-blue-500/10 text-center">
+            <p className="text-blue-400 font-bold text-sm">✓ Completed</p>
+          </div>
+        )}
+        {order.status === 'advanced' && (
+          <button onClick={() => onAction(order.id, 'preparing')}
+            className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm transition-colors">
+            🎉 Start Preparing
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export const RestaurantKDS = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const restaurantName = RESTAURANT_NAMES[slug || ''] || slug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Restaurant';
+
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [connected, setConnected] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<'kitchen'|'earnings'|'advanced'>('kitchen');
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const socketRef = useRef<Socket | null>(null);
+
+  // Auto-archive processed orders after 2 hours
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOrders(prev => prev.filter(o => {
+        if (o.status !== 'processed') return true;
+        const age = Date.now() - o.createdAt.getTime();
+        return age < 2 * 60 * 60 * 1000;
+      }));
+    }, 60000);
+    return () => clearInterval(interval);
+      {/* Boufet Unified Ops Nav */}
+      <div className="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-sm border-b border-slate-700">
+        <div className="flex items-center gap-4">
+          <span className="font-bold text-lg tracking-tight">Boufet KDS</span>
+          <span className="text-slate-500">|</span>
+          <a href="https://boufet.com/cgo" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">CGO</a>
+          <a href="https://boufet.com/driver" target="_blank" rel="noopener noreferrer" className="hover:text-green-400 transition-colors">Driver</a>
+          <a href="https://boufet.com" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Main Site</a>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-slate-400">Kitchen:</span>
+          <span className="text-white font-semibold">{RESTAURANTS[slug || ""]?.name || slug}</span>
+          <span className="text-xs text-slate-500 px-2 py-1 bg-slate-800 rounded-full">{RESTAURANTS[slug || ""]?.cuisine || 'General'}</span>
+        </div>
+      </div>
+  }, []);
+
+  // Socket.io connection
+  useEffect(() => {
+    const socket = io(API_URL, { transports: ['polling', 'websocket'], reconnection: true });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      setConnected(true);
+      const restaurantId = RESTAURANT_IDS[slug || ''] || slug || 'restaurant_1';
+      socket.emit('join_restaurant', restaurantId);
+    });
+
+    socket.on('disconnect', () => setConnected(false));
+
+    socket.on('new_order', (data: any) => {
+      setLastUpdate(new Date());
+      fetch(`${API_URL}/api/orders/${data.order_id}`)
+        .then(r => r.json())
+        .then(order => {
+          const newOrder: Order = {
+            id: order.id,
+            orderNumber: `ORD-${order.id.slice(0, 6).toUpperCase()}`,
+            customerName: order.customer_name || 'Customer',
+            status: 'incoming',
+            items: (order.items || []).map((i: any) => ({ id: i.id, name: i.name, quantity: i.quantity })),
+            total: order.total || 0,
+            tip: order.tip || 0,
+            createdAt: new Date(order.created_at || Date.now()),
+            address: order.customer_address || '',
+            orderType: 'delivery',
+            isExpress: order.delivery_type === 'asap',
+          };
+          if (!newOrder.restaurantSlug || newOrder.restaurantSlug === slug) {
+            setOrders(prev => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
+            syncOrderToCGO(newOrder);
+          }
+          if (soundEnabled) new Audio('/sounds/bell.mp3').play().catch(() => {});
+        })
+        .catch(() => {});
+    });
+
+    socket.on('order_update', (data: any) => {
+      if (data.order_id && data.status) {
+        setOrders(prev => prev.map(o => o.id === data.order_id ? { ...o, status: data.status } : o));
+        setLastUpdate(new Date());
+      }
+    });
+
+    return () => { socket.disconnect(); };
+  }, [slug]);
+
+  const handleAction = (id: string, newStatus: OrderStatus) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    fetch(`${API_URL}/api/orders/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(() => {});
+    setLastUpdate(new Date());
+  };
+
+  const addTestOrder = () => {
+    const names = ['Chris P.', 'Amanda L.', 'Kevin S.', 'Jessica T.', 'Ryan M.'];
+    const items = [['Double Smash Burger', 'Truffle Fries'], ['Classic Burger', 'Onion Rings', 'Coke'], ['BBQ Bacon Burger', 'Sweet Potato Fries']];
+    const pick = items[Math.floor(Math.random() * items.length)];
+    const newOrder: Order = {
+      id: Date.now().toString(),
+      orderNumber: `ORD-${Math.floor(Math.random() * 9000 + 1000)}`,
+      customerName: names[Math.floor(Math.random() * names.length)],
+      status: 'incoming',
+      items: pick.map((name, i) => ({ id: `${i}`, name, quantity: Math.ceil(Math.random() * 2) })),
+      total: Math.floor(Math.random() * 60 + 20),
+      tip: Math.floor(Math.random() * 12 + 3),
+      createdAt: new Date(),
+      address: `${Math.floor(Math.random() * 9000 + 1000)} Robson St, Vancouver`,
+      orderType: Math.random() > 0.7 ? 'pickup' : 'delivery',
+      isExpress: Math.random() > 0.7,
+    };
+    setOrders(prev => [newOrder, ...prev]);
+  };
+
+  // Column data
+  const incoming = orders.filter(o => o.status === 'incoming');
+  const preparing = orders.filter(o => o.status === 'preparing');
+  const ready = orders.filter(o => o.status === 'ready');
+  const pickedUp = orders.filter(o => ['picked_up', 'out_for_delivery'].includes(o.status));
+  const withDriver = orders.filter(o => ['driver_assigned','picked_up','out_for_delivery'].includes(o.status));
+  const advanced = orders.filter(o => o.status === 'advanced');
+  const processed = orders.filter(o => o.status === 'processed');
+
+  const todayRevenue = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0);
+  const completedOrders = orders.filter(o => o.status === 'processed');
+  const restaurantEarnings = todayRevenue * 0.80;
+  const boufetCommission = todayRevenue * 0.20;
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      {/* Header */}
+      <div className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center font-bold text-lg">B</div>
+          <div>
+            <h1 className="font-bold text-lg leading-tight">{restaurantName}</h1>
+            <p className="text-xs text-gray-400">Kitchen Display System · boufet.com/r/{slug}/orders</p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="hidden md:flex items-center gap-6">
+          <div className="text-center"><p className="text-xs text-gray-400">Revenue</p><p className="font-bold text-teal-400">${todayRevenue.toFixed(0)}</p></div>
+          <div className="text-center"><p className="text-xs text-gray-400">Orders</p><p className="font-bold">{orders.filter(o => o.status !== 'cancelled').length}</p></div>
+          <div className="text-center"><p className="text-xs text-gray-400">Active</p><p className="font-bold text-yellow-400">{preparing.length}</p></div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700">
+            {connected ? <Wifi className="w-4 h-4 text-teal-400" /> : <WifiOff className="w-4 h-4 text-red-400" />}
+            <span className={`text-xs font-medium ${connected ? 'text-teal-400' : 'text-red-400'}`}>{connected ? 'Live' : 'Demo'}</span>
+          </div>
+          <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 rounded-lg bg-gray-800 border border-gray-700">
+            {soundEnabled ? <Bell className="w-4 h-4 text-teal-400" /> : <BellOff className="w-4 h-4 text-gray-500" />}
+          </button>
+          <button onClick={addTestOrder} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl font-medium text-sm transition-colors">
+            <Package className="w-4 h-4" /> + Test Order
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Bar */}
+      <div className="bg-gray-900 border-b border-gray-800 flex px-4 gap-2 py-2 flex-shrink-0">
+        <button onClick={() => setActiveTab('kitchen')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='kitchen' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          🍳 Kitchen
+        </button>
+        <button onClick={() => setActiveTab('advanced')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors relative ${activeTab==='advanced' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          🎉 Advanced {advanced.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full text-xs text-white flex items-center justify-center">{advanced.length}</span>}
+        </button>
+        <button onClick={() => setActiveTab('earnings')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab==='earnings' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+          💰 Earnings
+        </button>
+      </div>
+
+      {/* 3-Column Staggered Grid */}
+      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-3 gap-0 overflow-hidden">
+
+        {/* COLUMN 1 — INCOMING */}
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 bg-red-500/10 border-b border-red-500/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-bold text-red-400">INCOMING</span>
+              </div>
+              <span className="text-2xl font-bold text-red-400">{incoming.length}</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {incoming.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {incoming.length === 0 && advanced.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+                <ChefHat className="w-8 h-8 mb-2" />
+                <p className="text-sm">No incoming orders</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 2 — PREPARING */}
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 bg-yellow-500/10 border-b border-yellow-500/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <span className="font-bold text-yellow-400">PREPARING</span>
+              </div>
+              <span className="text-2xl font-bold text-yellow-400">{preparing.length}</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {preparing.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {preparing.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+                <Clock className="w-8 h-8 mb-2" />
+                <p className="text-sm">Kitchen is clear</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 3 — WITH DRIVER */}
+        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-400"/>
+              <span className="text-xs font-bold tracking-widest text-blue-400">WITH DRIVER</span>
+            </div>
+            <span className="text-2xl font-bold text-blue-400">{withDriver.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            {withDriver.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-700">
+                <span className="text-3xl mb-2">🚗</span>
+                <p className="text-xs">No orders with driver</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 4 — READY + PROCESSED */}
+        <div className="flex flex-col overflow-hidden">
+          <div className="px-4 py-3 bg-emerald-500/10 border-b border-emerald-500/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="font-bold text-emerald-400">READY</span>
+              </div>
+              <span className="text-2xl font-bold text-emerald-400">{ready.length}</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {ready.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+              {processed.slice(0, 3).map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            </AnimatePresence>
+            {ready.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+                <CheckCircle className="w-8 h-8 mb-2" />
+                <p className="text-sm">No orders ready</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      }
+
+      {/* Advanced Orders Tab */}
+      {activeTab === 'advanced' && (
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {advanced.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+              <span className="text-4xl mb-3">🎉</span>
+              <p className="text-sm">No advanced orders scheduled</p>
+            </div>
+          )}
+          {advanced.map(order => (
+            <div key={order.id} className="bg-gray-900 border-2 border-purple-500/50 rounded-2xl p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-xs font-mono text-gray-400">{order.orderNumber}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-bold capitalize">{order.eventType}</span>
+                    {order.guestCount && <span className="text-xs text-gray-400">{order.guestCount} guests</span>}
+                    {order.eventDate && <span className="text-xs text-gray-400">📅 {new Date(order.eventDate).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-purple-400">${order.total.toFixed(2)}</p>
+                  <p className="text-xs text-yellow-400">${order.tip.toFixed(2)} tip</p>
+                </div>
+              </div>
+              <p className="font-bold text-lg mb-2">{order.customerName}</p>
+              <div className="space-y-1 mb-3">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-purple-800 text-white text-xs font-bold flex items-center justify-center">{item.quantity}</span>
+                    <span className="text-sm text-gray-200">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mb-3">📍 {order.address}</p>
+              <button onClick={() => handleAction(order.id, 'preparing')}
+                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">
+                🎉 Start Preparing Event Order
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Earnings Tab */}
+      {activeTab === 'earnings' && (
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Today Revenue', value: `$${todayRevenue.toFixed(2)}`, color: 'text-teal-400' },
+              { label: 'Your Earnings (80%)', value: `$${restaurantEarnings.toFixed(2)}`, color: 'text-emerald-400' },
+              { label: 'Boufet Fee (20%)', value: `$${boufetCommission.toFixed(2)}`, color: 'text-gray-400' },
+              { label: 'Orders Completed', value: `${completedOrders.length}`, color: 'text-blue-400' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                <p className="text-xs text-gray-400 mb-2">{label}</p>
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <h3 className="font-bold mb-4 text-gray-200">Completed Orders Today</h3>
+            <div className="space-y-2">
+              {completedOrders.length === 0 && <p className="text-gray-500 text-sm">No completed orders yet</p>}
+              {completedOrders.map(o => (
+                <div key={o.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
+                  <div>
+                    <p className="font-medium text-sm">{o.orderNumber}</p>
+                    <p className="text-xs text-gray-400">{o.customerName} · {o.items.length} items</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-teal-400">${o.total.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">${(o.total * 0.80).toFixed(2)} yours</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {completedOrders.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between font-bold">
+                <span>Total Your Earnings</span>
+                <span className="text-emerald-400">${restaurantEarnings.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gradient-to-r from-teal-900/40 to-gray-900 border border-teal-800/40 rounded-2xl p-5">
+            <p className="text-xs text-gray-400 mb-1">vs DoorDash (30% fee)</p>
+            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${(todayRevenue * 0.70).toFixed(2)}</span></p>
+            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${restaurantEarnings.toFixed(2)}</span></p>
+            <p className="text-teal-400 font-bold mt-2">You saved ${(todayRevenue * 0.10).toFixed(2)} today by using Boufet 🎉</p>
+          </div>
+        </div>
+      )}
+
+      {/* Footer status bar */}
+      <div className="bg-gray-900 border-t border-gray-800 px-6 py-2 flex items-center justify-between text-xs text-gray-500 flex-shrink-0">
+        <span>Last updated: {lastUpdate.toLocaleTimeString()}</span>
+        <span className="text-gray-600">boufet.com/r/{slug}/orders · Kitchen Display System</span>
+        <span>{new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+      </div>
+    </div>
+  );
+};

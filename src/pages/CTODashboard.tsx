@@ -1,3 +1,4 @@
+import { io } from 'socket.io-client';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +12,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const sf = (n:any) => { const v=Number(n); return isNaN(v)?"0.00":v.toFixed(2); };
 
 /* ============ MOCK LIVE DATA ============ */
+const CGO_API_URL = 'https://boufet.com/cgo/api';
+
 const revenueData = [
   { time: '8am', revenue: 120, orders: 8 },
   { time: '10am', revenue: 340, orders: 22 },
@@ -91,7 +94,7 @@ const SystemHealth = () => {
     setChecking(true);
     setApiStatus('checking');
     try {
-      const res = await fetch('https://api.boufet.com/health', { signal: AbortSignal.timeout(5000) });
+      const res = await fetch('https://boufet-backend-production-e170.up.railway.app/health', { signal: AbortSignal.timeout(5000) });
       setApiStatus(res.ok ? 'up' : 'down');
     } catch {
       setApiStatus('down');
@@ -140,6 +143,34 @@ const SystemHealth = () => {
 
 /* ============ MAIN DASHBOARD ============ */
 export const CTODashboard = () => {
+  const [liveRevenue, setLiveRevenue] = useState(0);
+  const [liveCommission, setLiveCommission] = useState(0);
+  const [liveOrders, setLiveOrders] = useState(0);
+  const [activeRestaurants, setActiveRestaurants] = useState(0);
+
+  useEffect(() => {
+    const s = io('wss://boufet.com/cgo/ws');
+    s.on('new_order', (order: any) => {
+      setLiveOrders(prev => prev + 1);
+      setLiveRevenue(prev => prev + (order.total || 0));
+      setLiveCommission(prev => prev + (order.total || 0) * 0.15);
+    });
+    s.on('order_status_change', ({ status, total }: any) => {
+      if (status === 'delivered') {
+        setLiveRevenue(prev => prev + (total || 0));
+        setLiveCommission(prev => prev + (total || 0) * 0.15);
+      }
+    });
+    fetch(`${CGO_API_URL}/orders`).then(r => r.json()).then((orders: any[]) => {
+      const delivered = orders.filter(o => o.status === 'delivered');
+      const totalRev = delivered.reduce((a, o) => a + (o.total || 0), 0);
+      setLiveRevenue(totalRev);
+      setLiveCommission(totalRev * 0.15);
+      setLiveOrders(orders.length);
+      setActiveRestaurants(new Set(orders.map(o => o.restaurantSlug)).size);
+    });
+    return () => { s.disconnect(); };
+  }, []);
   const [authed, setAuthed] = useState(false);
   const liveStats = useLiveStats();
   const [tab, setTab] = useState<'overview'|'technical'|'backlog'|'team'|'drivers'>('overview');
@@ -208,7 +239,7 @@ export const CTODashboard = () => {
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
             <h3 className="font-bold mb-4">Today's Revenue + Orders</h3>
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={revenueData}>
+              <AreaChart data={[...revenueData, { time: "Live", revenue: liveRevenue, orders: liveOrders }]}>
                 <defs>
                   <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0d9488" stopOpacity={0.3}/><stop offset="95%" stopColor="#0d9488" stopOpacity={0}/></linearGradient>
                 </defs>
