@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const API_URL = 'https://boufet-backend-production-e170.up.railway.app';
+const API_URL = 'http://localhost:3001';
 
 const RESTAURANT_NAMES: Record<string, string> = {
   'burger-vault': 'Burger Vault',
