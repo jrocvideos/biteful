@@ -12,6 +12,8 @@ import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './lib/auth';
 import { RestaurantDashboard } from './pages/RestaurantDashboard';
 import { RestaurantKDS } from './pages/RestaurantKDS';
+import { DriverDashboard } from './pages/DriverDashboard';
+import { CGOCommandCenter } from './pages/CGOCommandCenter';
 import { KDSDownload } from './pages/KDSDownload';
 import { RestaurantsPage } from './pages/RestaurantsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -25,7 +27,7 @@ import { CTODashboard } from './pages/CTODashboard';
 function AppInner() {
   const cart = useCart();
   const location = useLocation();
-  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto' || location.pathname.startsWith('/r/') || location.pathname === '/kds';
+  const isBiz = location.pathname === '/biz' || location.pathname === '/cgo' || location.pathname === '/cto' || location.pathname.startsWith('/r/') || location.pathname === '/kds' || location.pathname.startsWith('/kds/') || location.pathname === '/driver';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
