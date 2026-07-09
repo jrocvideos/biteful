@@ -7,8 +7,8 @@ import {
   DollarSign, Bell, BellOff, Wifi, WifiOff,
   Zap, Calendar, Users, RefreshCw, Package
 } from 'lucide-react';
-import { sf } from './RestaurantDashboard';
-const API_URL = 'https://boufet-backend-production-e170.up.railway.app';
+
+const API_URL = 'https://api.boufet.com';
 
 const RESTAURANT_NAMES: Record<string, string> = {
   'burger-vault': 'Burger Vault',
@@ -47,6 +47,7 @@ interface Order {
   items: OrderItem[];
   total: number;
   tip: number;
+  restaurantSlug?: string;
   createdAt: Date;
   address: string;
   orderType: 'delivery' | 'pickup' | 'advanced';
@@ -57,33 +58,143 @@ interface Order {
   specialInstructions?: string;
 }
 
+const RESTAURANTS: Record<string, { name: string; cuisine: string; menu: Array<{name: string; price: number; category: string}> }> = {
+  'burger-vault': {
+    name: 'Burger Vault', cuisine: 'American',
+    menu: [
+      { name: 'Double Smash Burger', price: 14.99, category: 'burger' },
+      { name: 'Truffle Fries', price: 8.99, category: 'side' },
+      { name: 'Chocolate Shake', price: 6.99, category: 'drink' },
+      { name: 'Classic Burger', price: 11.99, category: 'burger' },
+      { name: 'Onion Rings', price: 7.99, category: 'side' },
+      { name: 'Vanilla Shake', price: 6.99, category: 'drink' },
+      { name: 'BBQ Bacon Burger', price: 16.99, category: 'burger' },
+      { name: 'Sweet Potato Fries', price: 9.99, category: 'side' },
+    ]
+  },
+  'papa-johns': {
+    name: 'Papa Johns', cuisine: 'Pizza',
+    menu: [
+      { name: 'Pepperoni Pizza', price: 18.99, category: 'pizza' },
+      { name: 'Cheese Pizza', price: 16.99, category: 'pizza' },
+      { name: 'Garlic Knots', price: 8.99, category: 'side' },
+      { name: 'Buffalo Wings', price: 12.99, category: 'wing' },
+      { name: 'Breadsticks', price: 7.99, category: 'side' },
+      { name: '2-Liter Soda', price: 3.99, category: 'drink' },
+      { name: 'Supreme Pizza', price: 21.99, category: 'pizza' },
+      { name: 'Chicken Parmesan', price: 15.99, category: 'entree' },
+    ]
+  },
+  'sakura-sushi': {
+    name: 'Sakura Sushi', cuisine: 'Japanese',
+    menu: [
+      { name: 'Salmon Roll', price: 8.99, category: 'roll' },
+      { name: 'Tuna Sashimi', price: 14.99, category: 'sashimi' },
+      { name: 'Dragon Roll', price: 16.99, category: 'roll' },
+      { name: 'Miso Soup', price: 3.99, category: 'soup' },
+      { name: 'Edamame', price: 5.99, category: 'appetizer' },
+      { name: 'Green Tea', price: 2.99, category: 'drink' },
+      { name: 'Spicy Tuna Roll', price: 10.99, category: 'roll' },
+      { name: 'Tempura Udon', price: 13.99, category: 'noodle' },
+    ]
+  },
+  'taco-bout-it': {
+    name: 'Taco Bout It', cuisine: 'Mexican',
+    menu: [
+      { name: 'Carne Asada Tacos', price: 12.99, category: 'taco' },
+      { name: 'Fish Tacos', price: 11.99, category: 'taco' },
+      { name: 'Chips & Guac', price: 7.99, category: 'side' },
+      { name: 'Horchata', price: 4.99, category: 'drink' },
+      { name: 'Burrito Bowl', price: 13.99, category: 'bowl' },
+      { name: 'Quesadilla', price: 10.99, category: 'entree' },
+      { name: 'Elote', price: 5.99, category: 'side' },
+    ]
+  },
+  'curry-leaf': {
+    name: 'Curry Leaf', cuisine: 'Indian',
+    menu: [
+      { name: 'Butter Chicken', price: 17.99, category: 'curry' },
+      { name: 'Garlic Naan', price: 3.99, category: 'bread' },
+      { name: 'Vegetable Biryani', price: 14.99, category: 'rice' },
+      { name: 'Mango Lassi', price: 4.99, category: 'drink' },
+      { name: 'Samosas', price: 6.99, category: 'appetizer' },
+      { name: 'Palak Paneer', price: 15.99, category: 'curry' },
+    ]
+  }
+};
+
+const CUSTOMER_NAMES = ['Alex M.', 'Priya S.', 'Sarah K.', 'James L.', 'Maria G.', 'David Chen', 'Emma Wilson', 'Raj Patel', 'Lisa Wong', 'Mike Ross', 'Nina Kowalski', 'Tom Bradley', 'Olivia Park', 'Jordan Smith', 'Aisha Johnson'];
+const ADDRESSES = ['888 Cambie St, Suite 400', '1028 Alberni St, Penthouse', '555 W Hastings St, Floor 12', '1234 Robson St, Apt 805', '777 Richards St, Suite 1200', '999 Seymour St, Unit 501', '444 Burrard St, Floor 8', '1111 Homer St, Apt 302', '2222 Granville St, Suite 100', '3333 Main St, House 15', '6666 Commercial Dr, Apt 701', '1010 Davie St, Suite 505'];
+const SPECIAL_INSTRUCTIONS = ['Extra napkins please', 'Ring doorbell twice', 'Leave at door', 'No onions', 'Extra sauce on side', 'Call upon arrival', 'Allergic to nuts', 'Double wrap for delivery', 'Include utensils'];
+
+function getRandomItem<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateMockOrder(restaurantSlug: string, seed: number): Order {
+  const restaurant = RESTAURANTS[restaurantSlug];
+  if (!restaurant) throw new Error('Unknown restaurant: ' + restaurantSlug);
+  const itemCount = Math.floor(Math.random() * 3) + 1;
+  const items: OrderItem[] = [];
+  let subtotal = 0;
+  for (let i = 0; i < itemCount; i++) {
+    const menuItem = getRandomItem(restaurant.menu);
+    const qty = Math.floor(Math.random() * 2) + 1;
+    items.push({ id: `${restaurantSlug}-${seed}-${i}`, name: menuItem.name, quantity: qty });
+    subtotal += menuItem.price * qty;
+  }
+  const tax = Math.round(subtotal * 0.12 * 100) / 100;
+  const tip = Math.round(subtotal * 0.15 * 100) / 100;
+  const total = Math.round((subtotal + tax + tip) * 100) / 100;
+  return {
+    id: `${restaurantSlug}-order-${seed}`, orderNumber: `ORD-${2000 + seed}`,
+    customerName: getRandomItem(CUSTOMER_NAMES), status: 'incoming', restaurantSlug,
+    items, total, tip, createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 60000),
+    address: getRandomItem(ADDRESSES), orderType: Math.random() > 0.3 ? 'delivery' : 'pickup',
+    isExpress: Math.random() > 0.85, specialInstructions: Math.random() > 0.6 ? getRandomItem(SPECIAL_INSTRUCTIONS) : undefined,
+  };
+}
+
+const CGO_API_URL = 'https://boufet.com/cgo/api';
+async function syncOrderToCGO(order: Order) {
+  try {
+    await fetch(`${CGO_API_URL}/orders/${order.id}/status`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: order.status, restaurantSlug: order.restaurantSlug, orderNumber: order.orderNumber, updatedAt: new Date().toISOString() }),
+    });
+  } catch (e) { console.error('CGO sync failed:', e); }
+}
+
 const MOCK_ORDERS: Order[] = [
   {
     id: '1', orderNumber: 'ORD-2054', customerName: 'Alex M.', status: 'incoming',
+    restaurantSlug: 'burger-vault',
     items: [{ id: 'i1', name: 'Double Smash Burger', quantity: 2 }, { id: 'i2', name: 'Truffle Fries', quantity: 1 }, { id: 'i3', name: 'Chocolate Shake', quantity: 2 }],
     total: 62.50, tip: 8.00, createdAt: new Date(Date.now() - 2 * 60000),
     address: '888 Cambie St, Suite 400', orderType: 'delivery', isExpress: true,
   },
   {
     id: '2', orderNumber: 'ORD-2055', customerName: 'Priya S.', status: 'incoming',
+    restaurantSlug: 'burger-vault',
     items: [{ id: 'i4', name: 'Classic Burger', quantity: 1 }, { id: 'i5', name: 'Onion Rings', quantity: 1 }],
     total: 34.75, tip: 5.00, createdAt: new Date(Date.now() - 1 * 60000),
     address: '1028 Alberni St, Penthouse', orderType: 'delivery',
   },
   {
     id: '3', orderNumber: 'ORD-2049', customerName: 'Sarah K.', status: 'preparing',
+    restaurantSlug: 'burger-vault',
     items: [{ id: 'i6', name: 'BBQ Bacon Burger', quantity: 2 }, { id: 'i7', name: 'Sweet Potato Fries', quantity: 2 }, { id: 'i8', name: 'Lemonade', quantity: 2 }],
     total: 78.50, tip: 10.00, createdAt: new Date(Date.now() - 8 * 60000),
     address: '555 W Hastings St, Floor 12', orderType: 'delivery',
   },
   {
     id: '4', orderNumber: 'ORD-2050', customerName: 'James L.', status: 'preparing',
+    restaurantSlug: 'papa-johns',
     items: [{ id: 'i9', name: 'Veggie Burger', quantity: 1 }, { id: 'i10', name: 'Side Salad', quantity: 1 }],
     total: 28.65, tip: 3.00, createdAt: new Date(Date.now() - 12 * 60000),
     address: '1234 Robson St, Apt 805', orderType: 'pickup',
   },
   {
     id: '5', orderNumber: 'ORD-2051', customerName: 'Maria G.', status: 'ready',
+    restaurantSlug: 'papa-johns',
     items: [{ id: 'i11', name: 'Double Smash Burger', quantity: 3 }, { id: 'i12', name: 'Truffle Fries', quantity: 3 }, { id: 'i13', name: 'Vanilla Shake', quantity: 2 }],
     total: 112.40, tip: 15.00, createdAt: new Date(Date.now() - 20 * 60000),
     address: '999 W Pender St, Apt 302', orderType: 'delivery',
@@ -152,7 +263,7 @@ const KDSCard = ({ order, onAction }: { order: Order; onAction: (id: string, sta
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xl font-bold text-white">${sf(order.total)}</p>
+          <p className="text-xl font-bold text-white">${order.total.toFixed(2)}</p>
 
         </div>
       </div>
@@ -255,6 +366,21 @@ export const RestaurantKDS = () => {
       }));
     }, 60000);
     return () => clearInterval(interval);
+      {/* Boufet Unified Ops Nav */}
+      <div className="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-sm border-b border-slate-700">
+        <div className="flex items-center gap-4">
+          <span className="font-bold text-lg tracking-tight">Boufet KDS</span>
+          <span className="text-slate-500">|</span>
+          <a href="https://boufet.com/cgo" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">CGO</a>
+          <a href="https://boufet.com/driver" target="_blank" rel="noopener noreferrer" className="hover:text-green-400 transition-colors">Driver</a>
+          <a href="https://boufet.com" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Main Site</a>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-slate-400">Kitchen:</span>
+          <span className="text-white font-semibold">{RESTAURANTS[slug || ""]?.name || slug}</span>
+          <span className="text-xs text-slate-500 px-2 py-1 bg-slate-800 rounded-full">{RESTAURANTS[slug || ""]?.cuisine || 'General'}</span>
+        </div>
+      </div>
   }, []);
 
   // Socket.io connection
@@ -288,7 +414,10 @@ export const RestaurantKDS = () => {
             orderType: 'delivery',
             isExpress: order.delivery_type === 'asap',
           };
-          setOrders(prev => [newOrder, ...prev]);
+          if (!newOrder.restaurantSlug || newOrder.restaurantSlug === slug) {
+            setOrders(prev => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
+            syncOrderToCGO(newOrder);
+          }
           if (soundEnabled) new Audio('/sounds/bell.mp3').play().catch(() => {});
         })
         .catch(() => {});
@@ -335,16 +464,13 @@ export const RestaurantKDS = () => {
   };
 
   // Column data
-  const now = Date.now();
-  const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000;
-  const freshOrders = orders.filter(o => (now - o.createdAt.getTime()) < STALE_THRESHOLD_MS);
-  const incoming = freshOrders.filter(o => o.status === 'incoming');
-  const preparing = freshOrders.filter(o => o.status === 'preparing');
-  const ready = freshOrders.filter(o => o.status === 'ready');
+  const incoming = orders.filter(o => o.status === 'incoming');
+  const preparing = orders.filter(o => o.status === 'preparing');
+  const ready = orders.filter(o => o.status === 'ready');
   const pickedUp = orders.filter(o => ['picked_up', 'out_for_delivery'].includes(o.status));
   const withDriver = orders.filter(o => ['driver_assigned','picked_up','out_for_delivery'].includes(o.status));
   const advanced = orders.filter(o => o.status === 'advanced');
-  const processed = freshOrders.filter(o => o.status === 'processed');
+  const processed = orders.filter(o => o.status === 'processed');
 
   const todayRevenue = orders.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0);
   const completedOrders = orders.filter(o => o.status === 'processed');
@@ -365,7 +491,7 @@ export const RestaurantKDS = () => {
 
         {/* Stats */}
         <div className="hidden md:flex items-center gap-6">
-          <div className="text-center"><p className="text-xs text-gray-400">Revenue</p><p className="font-bold text-teal-400">${sf(todayRevenue)}</p></div>
+          <div className="text-center"><p className="text-xs text-gray-400">Revenue</p><p className="font-bold text-teal-400">${todayRevenue.toFixed(0)}</p></div>
           <div className="text-center"><p className="text-xs text-gray-400">Orders</p><p className="font-bold">{orders.filter(o => o.status !== 'cancelled').length}</p></div>
           <div className="text-center"><p className="text-xs text-gray-400">Active</p><p className="font-bold text-yellow-400">{preparing.length}</p></div>
         </div>
@@ -398,8 +524,8 @@ export const RestaurantKDS = () => {
         </button>
       </div>
 
-      {/* 6-Column Staggered Grid */}
-      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-0 overflow-hidden">
+      {/* 3-Column Staggered Grid */}
+      {activeTab === 'kitchen' && <div className="flex-1 grid grid-cols-3 gap-0 overflow-hidden">
 
         {/* COLUMN 1 — INCOMING */}
         <div className="border-r border-gray-800 flex flex-col overflow-hidden">
@@ -449,8 +575,28 @@ export const RestaurantKDS = () => {
           </div>
         </div>
 
-        {/* COLUMN 3 — READY */}
+        {/* COLUMN 3 — WITH DRIVER */}
         <div className="border-r border-gray-800 flex flex-col overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-400"/>
+              <span className="text-xs font-bold tracking-widest text-blue-400">WITH DRIVER</span>
+            </div>
+            <span className="text-2xl font-bold text-blue-400">{withDriver.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+            {withDriver.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-700">
+                <span className="text-3xl mb-2">🚗</span>
+                <p className="text-xs">No orders with driver</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMN 4 — READY + PROCESSED */}
+        <div className="flex flex-col overflow-hidden">
           <div className="px-4 py-3 bg-emerald-500/10 border-b border-emerald-500/20 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -463,6 +609,7 @@ export const RestaurantKDS = () => {
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             <AnimatePresence>
               {ready.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
+              {processed.slice(0, 3).map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
             </AnimatePresence>
             {ready.length === 0 && (
               <div className="flex flex-col items-center justify-center h-40 text-gray-600">
@@ -472,79 +619,8 @@ export const RestaurantKDS = () => {
             )}
           </div>
         </div>
-
-        {/* COLUMN 4 — PICKED UP */}
-        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
-          <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-                <span className="font-bold text-blue-400">PICKED UP</span>
-              </div>
-              <span className="text-2xl font-bold text-blue-400">{pickedUp.length}</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            <AnimatePresence>
-              {pickedUp.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-            </AnimatePresence>
-            {pickedUp.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
-                <span className="text-3xl mb-2">📦</span>
-                <p className="text-sm">No orders picked up</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* COLUMN 5 — WITH DRIVER */}
-        <div className="border-r border-gray-800 flex flex-col overflow-hidden">
-          <div className="px-4 py-3 bg-indigo-500/10 border-b border-indigo-500/20 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-                <span className="font-bold text-indigo-400">WITH DRIVER</span>
-              </div>
-              <span className="text-2xl font-bold text-indigo-400">{withDriver.length}</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            <AnimatePresence>
-              {withDriver.map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-            </AnimatePresence>
-            {withDriver.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
-                <span className="text-3xl mb-2">🚗</span>
-                <p className="text-sm">No orders with driver</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* COLUMN 6 — PROCESSED */}
-        <div className="flex flex-col overflow-hidden">
-          <div className="px-4 py-3 bg-gray-500/10 border-b border-gray-500/20 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-gray-500" />
-                <span className="font-bold text-gray-400">PROCESSED</span>
-              </div>
-              <span className="text-2xl font-bold text-gray-400">{processed.length}</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            <AnimatePresence>
-              {processed.slice(0, 5).map(order => <KDSCard key={order.id} order={order} onAction={handleAction} />)}
-            </AnimatePresence>
-            {processed.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
-                <span className="text-3xl mb-2">✅</span>
-                <p className="text-sm">No processed orders</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
+
       }
 
       {/* Advanced Orders Tab */}
@@ -568,8 +644,8 @@ export const RestaurantKDS = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-purple-400">${sf(order.total)}</p>
-                  <p className="text-xs text-yellow-400">${sf(order.tip)} tip</p>
+                  <p className="text-2xl font-bold text-purple-400">${order.total.toFixed(2)}</p>
+                  <p className="text-xs text-yellow-400">${order.tip.toFixed(2)} tip</p>
                 </div>
               </div>
               <p className="font-bold text-lg mb-2">{order.customerName}</p>
@@ -596,9 +672,9 @@ export const RestaurantKDS = () => {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Today Revenue', value: `$${sf(todayRevenue)}`, color: 'text-teal-400' },
-              { label: 'Your Earnings (80%)', value: `$${sf(restaurantEarnings)}`, color: 'text-emerald-400' },
-              { label: 'Boufet Fee (20%)', value: `$${sf(boufetCommission)}`, color: 'text-gray-400' },
+              { label: 'Today Revenue', value: `$${todayRevenue.toFixed(2)}`, color: 'text-teal-400' },
+              { label: 'Your Earnings (80%)', value: `$${restaurantEarnings.toFixed(2)}`, color: 'text-emerald-400' },
+              { label: 'Boufet Fee (20%)', value: `$${boufetCommission.toFixed(2)}`, color: 'text-gray-400' },
               { label: 'Orders Completed', value: `${completedOrders.length}`, color: 'text-blue-400' },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
@@ -619,8 +695,8 @@ export const RestaurantKDS = () => {
                     <p className="text-xs text-gray-400">{o.customerName} · {o.items.length} items</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-teal-400">${sf(o.total)}</p>
-                    <p className="text-xs text-gray-500">${sf((o.total * 0.80))} yours</p>
+                    <p className="font-bold text-teal-400">${o.total.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">${(o.total * 0.80).toFixed(2)} yours</p>
                   </div>
                 </div>
               ))}
@@ -628,16 +704,16 @@ export const RestaurantKDS = () => {
             {completedOrders.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between font-bold">
                 <span>Total Your Earnings</span>
-                <span className="text-emerald-400">${sf(restaurantEarnings)}</span>
+                <span className="text-emerald-400">${restaurantEarnings.toFixed(2)}</span>
               </div>
             )}
           </div>
 
           <div className="bg-gradient-to-r from-teal-900/40 to-gray-900 border border-teal-800/40 rounded-2xl p-5">
             <p className="text-xs text-gray-400 mb-1">vs DoorDash (30% fee)</p>
-            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${sf((todayRevenue * 0.70))}</span></p>
-            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${sf(restaurantEarnings)}</span></p>
-            <p className="text-teal-400 font-bold mt-2">You saved ${sf((todayRevenue * 0.10))} today by using Boufet 🎉</p>
+            <p className="text-sm text-gray-300">With DoorDash you would keep <span className="text-red-400 font-bold">${(todayRevenue * 0.70).toFixed(2)}</span></p>
+            <p className="text-sm text-gray-300 mt-1">With Boufet you keep <span className="text-teal-400 font-bold">${restaurantEarnings.toFixed(2)}</span></p>
+            <p className="text-teal-400 font-bold mt-2">You saved ${(todayRevenue * 0.10).toFixed(2)} today by using Boufet 🎉</p>
           </div>
         </div>
       )}
