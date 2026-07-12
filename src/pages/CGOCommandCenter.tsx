@@ -7,8 +7,8 @@ import {
   Calendar, Filter, Download, RefreshCw
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:3001';
-const SOCKET_URL = 'http://localhost:3001';
+const API_URL = 'https://boufet-relay-production.up.railway.app';
+const SOCKET_URL = 'https://boufet-relay-production.up.railway.app';
 
 // ─── TYPES ───
 interface Order {
