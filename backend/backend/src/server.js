@@ -299,6 +299,7 @@ app.post("/api/orders", auth, async (req, res) => {
     };
     io.emit("new_order", orderPayload);
     io.to(`restaurant:${restaurant_id}`).emit("new_order", orderPayload);
+    io.to("cgo").emit("new_order", orderPayload);
 
     // Also emit to admin dashboards
     io.emit("order_update", {
@@ -773,6 +774,11 @@ io.on("connection", (socket) => {
     console.log("Socket joined restaurant room:", restaurantId);
   });
   
+  socket.on("join_cgo", () => {
+    socket.join("cgo");
+    console.log("Socket joined cgo room:", socket.id);
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
@@ -1125,6 +1131,7 @@ app.post('/api/orders/:id/status', async (req, res) => {
     if (status === 'delivered') {
       const revResult = await pool.query('SELECT total FROM orders WHERE id = $1', [orderId]);
       io.emit('dashboard_update', { type: 'order_status_change', order_id: orderId, status, revenue: revResult.rows[0]?.total || 0 });
+      io.to("cgo").emit("status_change", { order_id: orderId, status, revenue: revResult.rows[0]?.total || 0 });
     }
 
     res.json({ success: true, status });
