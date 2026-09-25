@@ -244,7 +244,7 @@ export function CGOCommandCenter() {
 
       return {
         slug,
-        name: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        name: slug?.replace(/-/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown',
         totalOrders: list.length,
         revenue,
         avgOrderValue: delivered.length > 0 ? revenue / delivered.length : 0,
@@ -363,7 +363,7 @@ export function CGOCommandCenter() {
           >
             <option value="all">All Restaurants</option>
             {restaurants.map(r => (
-              <option key={r} value={r}>{r.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
+              <option key={r} value={r}>{r?.replace(/-/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown'}</option>
             ))}
           </select>
 
@@ -502,7 +502,7 @@ export function CGOCommandCenter() {
                         <div className="font-mono text-xs text-slate-300">{o.orderNumber}</div>
                         <div className="text-[10px] text-slate-500">{o.orderType}{o.isExpress ? ' · Express' : ''}</div>
                       </td>
-                      <td className="p-3 text-xs">{o.restaurantSlug?.replace(/-/g, ' ')}</td>
+                      <td className="p-3 text-xs">{o.restaurantSlug?.replace(/-/g, ' ') || 'Unknown'}</td>
                       <td className="p-3 text-xs">{o.customerName}</td>
                       <td className="p-3 text-xs text-slate-400">{o.items?.length || 0} items</td>
                       <td className="p-3 text-xs font-medium">${(o.grandTotal || o.total || 0).toFixed(2)}</td>
