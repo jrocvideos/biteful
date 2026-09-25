@@ -170,7 +170,7 @@ app.get("/api/orders", async (req, res) => {
     const params = [];
     let paramIdx = 1;
     
-    if (status) {
+    if (status && status !== "all") {
       const statuses = status.split(',');
       where += " AND o.status = ANY($" + paramIdx + ")";
       params.push(statuses);
@@ -1508,7 +1508,7 @@ app.get("/api/orders/history", async (req, res) => {
     let paramIdx = 2;
 
     // Default to completed orders if no status specified
-    if (status) {
+    if (status && status !== "all") {
       query += ` AND o.status = $${paramIdx}`;
       params.push(status);
       paramIdx++;
