@@ -194,10 +194,10 @@ export function CGOCommandCenter() {
   // ─── GROWTH METRICS ───
   const growthMetrics: GrowthMetrics = useMemo(() => {
     const delivered = filteredOrders.filter(o => o.status === 'delivered' || o.status === 'processed');
-    const totalRev = delivered.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
+    const totalRev = filteredOrders.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
     const totalOrders = filteredOrders.length;
     const activeOrders = filteredOrders.filter(o => !['delivered', 'processed', 'cancelled'].includes(o.status)).length;
-    const avgOrderValue = totalOrders > 0 ? totalRev / delivered.length : 0;
+    const avgOrderValue = totalOrders > 0 ? totalRev / totalOrders : 0;
 
     // Customer metrics
     const customers = new Map<string, number>();
