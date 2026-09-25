@@ -7,6 +7,7 @@ import { useCity } from '../hooks/useCity';
 export const Hero = () => {
   const { city, setCity, cities } = useCity();
   const [showCityMenu, setShowCityMenu] = useState(false);
+  const [postalCode, setPostalCode] = useState("");
 
   return (
     <section className="relative pt-32 pb-20 overflow-hidden">
@@ -59,12 +60,14 @@ export const Hero = () => {
                 <input
                   type="text"
                   placeholder="Enter your postal code"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value.toUpperCase())}
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
                   maxLength={10}
                 />
 n              </div>
               <Link
-                to="/restaurants"
+                to={postalCode ? `/restaurants?postal=${encodeURIComponent(postalCode)}` : "/restaurants"}
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25 whitespace-nowrap"
               >
                 Find Restaurants

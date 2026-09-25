@@ -25,6 +25,7 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
+  const postalCode = searchParams.get('postal') || '';
   useEffect(() => { const q = searchParams.get('search'); if (q) setSearchQuery(q); }, [searchParams]);
  const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
@@ -120,6 +121,7 @@ export const RestaurantsPage = ({ onAddToCart }: RestaurantsPageProps) => {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {postalCode && <div className="mb-4 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary font-medium flex items-center gap-2"><MapPin className="w-4 h-4" />Showing restaurants near {postalCode}</div>}
         <p className="text-sm text-muted-foreground mb-6">{filtered.length} {filtered.length === 1 ? 'restaurant' : 'restaurants'} found</p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((restaurant) => (
