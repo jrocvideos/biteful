@@ -17,7 +17,7 @@ const { Pool } = pkg;
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173"], methods: ["GET", "POST"], credentials: true },
+  cors: { origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "https://boufet-driver-standalone.vercel.app"], methods: ["GET", "POST"], credentials: true },
   transports: ["polling", "websocket"],
   allowEIO3: true,
   pingTimeout: 20000,
@@ -88,7 +88,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006"], credentials: true }));
+app.use(cors({ origin: ["https://boufet-kds-app.vercel.app", "https://boufet-kds-standalone.vercel.app", "https://biteful.vercel.app", "https://boufet.com", "https://www.boufet.com", "http://localhost:5173", "http://localhost:19006", "https://boufet-driver-standalone.vercel.app"], credentials: true }));
 app.use(express.json());
 
 // Auth middleware
