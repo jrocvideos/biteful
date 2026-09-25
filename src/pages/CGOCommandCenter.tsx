@@ -137,8 +137,32 @@ export function CGOCommandCenter() {
     // Initial fetch
     fetch(`${API_URL}/api/orders?limit=200&status=all`)
       .then(r => r.json())
-      .then((data: Order[]) => {
-        setOrders(data);
+      .then((data: any[]) => {
+        const mapped: Order[] = data.map(o => ({
+          id: o.id,
+          orderNumber: o.order_number || `ORD-${o.id.slice(0,6).toUpperCase()}`,
+          customerName: o.customer_name || 'Customer',
+          customerPhone: o.customer_phone,
+          status: o.status,
+          restaurantSlug: o.restaurant_slug || o.restaurant_id,
+          restaurantName: o.restaurant_name,
+          total: parseFloat(o.total) || 0,
+          subtotal: parseFloat(o.subtotal) || 0,
+          tip: parseFloat(o.tip) || 0,
+          deliveryFee: parseFloat(o.delivery_fee) || 0,
+          serviceFee: parseFloat(o.service_fee) || 0,
+          tax: parseFloat(o.tax) || 0,
+          grandTotal: parseFloat(o.total) || 0,
+          orderType: o.order_type || 'delivery',
+          isExpress: o.is_express,
+          items: o.items || [],
+          createdAt: o.created_at,
+          updatedAt: o.updated_at,
+          driverName: o.driver_name,
+          driverId: o.driver_id,
+          source: o.source,
+        }));
+        setOrders(mapped);
         setLoading(false);
       })
       .catch(() => setLoading(false));
