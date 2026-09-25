@@ -62,10 +62,11 @@ export const Hero = () => {
                   placeholder="Enter your postal code"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === "Enter") { window.location.href = postalCode ? `/restaurants?postal=${encodeURIComponent(postalCode)}` : "/restaurants"; } }}
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
                   maxLength={10}
                 />
-n              </div>
+              </div>
               <Link
                 to={postalCode ? `/restaurants?postal=${encodeURIComponent(postalCode)}` : "/restaurants"}
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25 whitespace-nowrap"
