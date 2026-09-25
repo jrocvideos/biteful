@@ -9,7 +9,7 @@ interface ShiftTimerProps {
   onBlock?: () => void;
 }
 
-const API_URL = 'https://boufet-backend-production-e170.up.railway.app';
+const API_URL = 'https://api.boufet.com';
 
 export const ShiftTimer: React.FC<ShiftTimerProps> = ({
   token,

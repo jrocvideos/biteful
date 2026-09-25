@@ -95,7 +95,7 @@ export const DriverApp = () => {
   // Resume active job from backend on mount/refresh
   useEffect(() => {
     if (!driverId || driverId === "drv_anon") return;
-    fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders?status=driver_assigned,picked_up,out_for_delivery&driver_id=${driverId}&limit=1`)
+    fetch(`https://api.boufet.com/api/orders?status=driver_assigned,picked_up,out_for_delivery&driver_id=${driverId}&limit=1`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -135,7 +135,7 @@ export const DriverApp = () => {
   // SINGLE socket — GPS + job listener merged
   useEffect(() => {
     if (!isOnline) return;
-    const socket = io("https://boufet-backend-production-e170.up.railway.app", { transports: ["polling", "websocket"] });
+    const socket = io("https://api.boufet.com", { transports: ["polling", "websocket"] });
     console.log("Driver going online, connecting socket...");
 
     socket.on("connect", () => {
@@ -145,7 +145,7 @@ export const DriverApp = () => {
         vehicle_type: "car"
       });
       // Fetch existing ready orders
-      fetch("https://boufet-backend-production-e170.up.railway.app/api/orders?status=ready,driver_assigned&limit=20")
+      fetch("https://api.boufet.com/api/orders?status=ready,driver_assigned&limit=20")
         .then(r => r.json())
         .then((orders: any[]) => {
           if (!Array.isArray(orders)) return;
@@ -236,7 +236,7 @@ export const DriverApp = () => {
     const job = jobs.find(j => j.id === id);
     if (!job) return;
     try {
-      const res = await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${id}/driver-accept`, {
+      const res = await fetch(`https://api.boufet.com/api/orders/${id}/driver-accept`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
@@ -261,7 +261,7 @@ export const DriverApp = () => {
   };
   const declineJob = async (id: string) => {
     try {
-      await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${id}/driver-decline`, {
+      await fetch(`https://api.boufet.com/api/orders/${id}/driver-decline`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
@@ -278,7 +278,7 @@ export const DriverApp = () => {
     setActiveJob(updated); setJobs(jobs.map(j => j.id === activeJob.id ? updated : j));
 
     if (status === "arrived-restaurant") {
-      await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${activeJob.id}/driver-arrived-restaurant`, {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/driver-arrived-restaurant`, {
         method: "POST",
         body: JSON.stringify({ status: "driver_at_restaurant", arrived_at: new Date().toISOString() })
       });
@@ -289,7 +289,7 @@ export const DriverApp = () => {
       if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
       const waitMinutes = Math.ceil(waitSeconds / 60);
       const waitFee = waitMinutes > 5 ? (waitMinutes - 5) * 0.50 : 0;
-      await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${activeJob.id}/status`, {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({
@@ -302,7 +302,7 @@ export const DriverApp = () => {
     }
 
     if (status === "arrived-customer") {
-      await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${activeJob.id}/status`, {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({ status: "arrived-customer" })
@@ -310,7 +310,7 @@ export const DriverApp = () => {
     }
 
     if (status === "delivered") {
-      await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${activeJob.id}/status`, {
+      await fetch(`https://api.boufet.com/api/orders/${activeJob.id}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-kds-secret": "BoufetKDS2026" },
         body: JSON.stringify({

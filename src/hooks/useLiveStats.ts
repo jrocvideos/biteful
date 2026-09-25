@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const API_URL = 'https://boufet-backend-production-e170.up.railway.app';
+const API_URL = 'https://api.boufet.com';
 
 export interface LiveStats {
   totalOrders: number;

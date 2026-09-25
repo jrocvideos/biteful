@@ -96,7 +96,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       const tipAmount = subtotal * tip;
       const totalAmount = subtotal + tax + deliveryFee + adminFee + tipAmount;
 
-      const res = await fetch('https://boufet-backend-production-e170.up.railway.app/api/orders', {
+      const res = await fetch('https://api.boufet.com/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
         }));
         // Trigger KDS notification via backend Socket.io
         if (data.id || data.order_id) {
-          await fetch(`https://boufet-backend-production-e170.up.railway.app/api/orders/${orderId}/confirm-payment`, {
+          await fetch(`https://api.boufet.com/api/orders/${orderId}/confirm-payment`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
