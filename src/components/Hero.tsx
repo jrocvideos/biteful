@@ -53,19 +53,30 @@ export const Hero = () => {
             <p className="text-lg text-muted-foreground mb-8 max-w-lg">
               Order from the best local restaurants in your neighborhood. Fresh, fast, and fair — we take less so they keep more.
             </p>
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1 max-w-md">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Enter your postal code"
+                  className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
+                  maxLength={10}
+                />
+n              </div>
+              <Link
+                to="/restaurants"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25 whitespace-nowrap"
+              >
+                Find Restaurants
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/restaurants"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-muted text-foreground rounded-xl font-bold text-base hover:bg-muted/80 transition-colors"
               >
-                Order Now
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/restaurants"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-muted text-foreground rounded-2xl font-bold text-lg hover:bg-muted/80 transition-colors"
-              >
-                View Restaurants
+                View All Restaurants
               </Link>
             </div>
             <div className="flex gap-8 mt-12">

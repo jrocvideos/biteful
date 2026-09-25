@@ -312,7 +312,7 @@ export function CGOCommandCenter() {
               Certified Growth Officer
             </span>
           </div>
-          <nav className="flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1">
             {(['overview', 'orders', 'restaurants', 'growth', 'marketing'] as const).map(tab => (
               <button
                 key={tab}
@@ -379,7 +379,7 @@ export function CGOCommandCenter() {
       {activeTab === 'overview' && (
         <div className="p-4 max-w-7xl mx-auto space-y-4">
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             <KPICard 
               title="Total Revenue" 
               value={`$${growthMetrics.totalRevenue.toFixed(2)}`} 
@@ -425,7 +425,7 @@ export function CGOCommandCenter() {
           </div>
 
           {/* Growth Metrics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
               <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-yellow-400" />
@@ -473,7 +473,7 @@ export function CGOCommandCenter() {
           </div>
 
           {/* Live Order Stream */}
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-x-auto">
             <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-orange-400 animate-pulse" />
@@ -535,7 +535,7 @@ export function CGOCommandCenter() {
       {/* ─── ORDERS TAB ─── */}
       {activeTab === 'orders' && (
         <div className="p-4 max-w-7xl mx-auto">
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-x-auto">
             <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-300">All Orders</h3>
               <div className="flex items-center gap-2">
