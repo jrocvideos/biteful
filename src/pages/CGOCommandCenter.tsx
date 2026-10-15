@@ -90,6 +90,23 @@ const STATUS_LABELS: Record<string, string> = {
   advanced: 'Advanced',
 };
 
+// ONE revenue rule — mirrors the DB view v_revenue:
+// payment captured AND not cancelled.
+// 'incoming' / 'pending_payment' are NOT revenue (money not captured yet).
+const REVENUE_STATUSES: Record<string, true> = {
+  processed: true,
+  paid: true,
+  confirmed: true,
+  preparing: true,
+  ready: true,
+  ready_for_pickup: true,
+  driver_assigned: true,
+  picked_up: true,
+  out_for_delivery: true,
+  delivered: true,
+};
+const isRevenueOrder = (o: Order): boolean => !!REVENUE_STATUSES[o.status];
+
 // ─── SUPERIOR CGO DASHBOARD ───
 export function CGOCommandCenter() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -99,6 +116,7 @@ export function CGOCommandCenter() {
   const [selectedRestaurant, setSelectedRestaurant] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'restaurants' | 'growth' | 'marketing'>('overview');
   const [loading, setLoading] = useState(true);
+  const [restaurantNames, setRestaurantNames] = useState<Record<string, string>>({});
 
   // ─── SOCKET CONNECTION ───
   useEffect(() => {
@@ -145,7 +163,7 @@ export function CGOCommandCenter() {
           customerPhone: o.customer_phone,
           status: o.status,
           restaurantSlug: o.restaurant_slug || o.restaurant_id,
-          restaurantName: o.restaurant_name,
+          restaurantName: o.restaurant_name || o.restaurantName,
           total: parseFloat(o.total) || 0,
           subtotal: parseFloat(o.subtotal) || 0,
           tip: parseFloat(o.tip) || 0,
@@ -167,8 +185,25 @@ export function CGOCommandCenter() {
       })
       .catch(() => setLoading(false));
 
+    // Fetch restaurant names so missing slugs don't show raw UUIDs
+    fetch(`${API_URL}/api/restaurants`)
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const map: Record<string, string> = {};
+        data.forEach((r: any) => {
+          if (r.name) { if (r.id) map[r.id] = r.name; if (r.slug) map[r.slug] = r.name; }
+        });
+        setRestaurantNames(map);
+      })
+      .catch(() => {});
+
     return () => { s.disconnect(); };
   }, []);
+
+  const restaurantDisplayName = (slug: string) =>
+    restaurantNames[slug] ||
+    slug?.replace(/-/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) ||
+    'Unknown';
 
   // ─── FILTERED ORDERS ───
   const filteredOrders = useMemo(() => {
@@ -193,11 +228,11 @@ export function CGOCommandCenter() {
 
   // ─── GROWTH METRICS ───
   const growthMetrics: GrowthMetrics = useMemo(() => {
-    const delivered = filteredOrders.filter(o => o.status === 'delivered' || o.status === 'processed');
-    const totalRev = filteredOrders.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
+    const revenueOrders = filteredOrders.filter(isRevenueOrder);
+    const totalRev = revenueOrders.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
     const totalOrders = filteredOrders.length;
     const activeOrders = filteredOrders.filter(o => !['delivered', 'processed', 'cancelled'].includes(o.status)).length;
-    const avgOrderValue = totalOrders > 0 ? totalRev / totalOrders : 0;
+    const avgOrderValue = revenueOrders.length > 0 ? totalRev / revenueOrders.length : 0;
 
     // Customer metrics
     const customers = new Map<string, number>();
@@ -243,8 +278,8 @@ export function CGOCommandCenter() {
     });
 
     return Array.from(byRestaurant.entries()).map(([slug, list]) => {
-      const delivered = list.filter(o => o.status === 'delivered' || o.status === 'processed');
-      const revenue = delivered.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
+      const revenueOrders = list.filter(isRevenueOrder);
+      const revenue = revenueOrders.reduce((sum, o) => sum + (o.grandTotal || o.total || 0), 0);
       const active = list.filter(o => !['delivered', 'processed', 'cancelled'].includes(o.status)).length;
       const cancelled = list.filter(o => o.status === 'cancelled').length;
       const express = list.filter(o => o.isExpress).length;
@@ -268,10 +303,10 @@ export function CGOCommandCenter() {
 
       return {
         slug,
-        name: slug?.replace(/-/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown',
+        name: restaurantDisplayName(slug),
         totalOrders: list.length,
         revenue,
-        avgOrderValue: delivered.length > 0 ? revenue / delivered.length : 0,
+        avgOrderValue: revenueOrders.length > 0 ? revenue / revenueOrders.length : 0,
         activeOrders: active,
         cancellationRate: list.length > 0 ? (cancelled / list.length) * 100 : 0,
         expressRate: list.length > 0 ? (express / list.length) * 100 : 0,
@@ -279,7 +314,7 @@ export function CGOCommandCenter() {
         hourlyDistribution: hourly,
       };
     }).sort((a, b) => b.revenue - a.revenue);
-  }, [filteredOrders]);
+  }, [filteredOrders, restaurantNames]);
 
   // ─── UNIQUE RESTAURANTS ───
   const restaurants = useMemo(() => {
@@ -387,7 +422,7 @@ export function CGOCommandCenter() {
           >
             <option value="all">All Restaurants</option>
             {restaurants.map(r => (
-              <option key={r} value={r}>{r?.replace(/-/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown'}</option>
+              <option key={r} value={r}>{restaurantDisplayName(r)}</option>
             ))}
           </select>
 
@@ -526,7 +561,7 @@ export function CGOCommandCenter() {
                         <div className="font-mono text-xs text-slate-300">{o.orderNumber}</div>
                         <div className="text-[10px] text-slate-500">{o.orderType}{o.isExpress ? ' · Express' : ''}</div>
                       </td>
-                      <td className="p-3 text-xs">{o.restaurantSlug?.replace(/-/g, ' ') || 'Unknown'}</td>
+                      <td className="p-3 text-xs">{restaurantDisplayName(o.restaurantSlug)}</td>
                       <td className="p-3 text-xs">{o.customerName}</td>
                       <td className="p-3 text-xs text-slate-400">{o.items?.length || 0} items</td>
                       <td className="p-3 text-xs font-medium">${(o.grandTotal || o.total || 0).toFixed(2)}</td>
