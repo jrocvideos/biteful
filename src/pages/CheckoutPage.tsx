@@ -43,6 +43,7 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple' | 'google'>('card');
   const [loading, setLoading] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
   const [showSavingsBreakdown, setShowSavingsBreakdown] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
@@ -77,10 +78,13 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
     return acc;
   }, {} as Record<string, CartItem[]>);
 
+  const API_BASE = 'https://api.boufet.com';
+
   const handlePlaceOrder = async () => {
     setLoading(true);
+    setOrderError(null);
     try {
-      // Group items by restaurant
+      // One restaurant per order (first restaurant in the cart)
       const restaurantId = Object.keys(restaurantGroups)[0];
       const orderItems = items.map(item => ({
         menu_item_id: item.id,
@@ -94,9 +98,8 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
       const deliveryFee = deliveryTime === 'asap' ? getAsapFee() : subtotal * 0.02;
       const adminFee = subtotal * 0.12;
       const tipAmount = subtotal * tip;
-      const totalAmount = subtotal + tax + deliveryFee + adminFee + tipAmount;
 
-      const res = await fetch('https://api.boufet.com/api/orders', {
+      const res = await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,50 +117,54 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
           total: finalTotal,
           customer_address: address + (apt ? `, ${apt}` : ''),
           delivery_type: deliveryTime,
-          customer_name: user?.first_name || "Jose Y.",
+          customer_name: user?.first_name || user?.email || 'Customer',
           special_instructions: '',
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const orderId = data.order_id || data.id || ('ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase());
-        // Save actual checkout values for receipt (API returns recalculated values)
-        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, adminFee, serviceFee,
-          tax, tip: tipAmount, total: finalTotal, items: orderItems,
-        }));
-        // Trigger KDS notification via backend Socket.io
-        if (data.id || data.order_id) {
-          await fetch(`https://api.boufet.com/api/orders/${orderId}/confirm-payment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          });
-        }
-        onClearCart();
-        navigate(`/order/${orderId}`);
-      } else {
-        // Fallback — still navigate so demo works
-        const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-          subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, adminFee, serviceFee,
-          tax, tip: tipAmount, total: finalTotal, items: orderItems,
-        }));
-        onClearCart();
-        navigate(`/order/${orderId}`);
+      // Read the reply once, as text, so a non-JSON error page can't crash us
+      const raw = await res.text();
+      let data: any = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+
+      if (!res.ok) {
+        const reason = data?.error || data?.message || raw.slice(0, 200) || `HTTP ${res.status}`;
+        console.error('[checkout] order rejected', res.status, reason);
+        setOrderError(`We couldn't place your order (${res.status}): ${reason}. You have not been charged. Please try again.`);
+        return; // stay on checkout, cart untouched
       }
-    } catch {
-      // Offline fallback
-      const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+      // Only ever use a real ID from the server — never invent one
+      const orderId = data?.id || data?.order_id;
+      if (!orderId) {
+        console.error('[checkout] server replied without an order id', data);
+        setOrderError("Your order couldn't be confirmed. You have not been charged. Please try again.");
+        return;
+      }
+
       localStorage.setItem(`biteful-order-${orderId}`, JSON.stringify({
-        subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0,
-        adminFee, serviceFee, tax, tip: tipAmount, total: finalTotal, items,
+        subtotal, deliveryFee: 8.29, asapFee: deliveryTime === 'asap' ? getAsapFee() : 0, adminFee, serviceFee,
+        tax, tip: tipAmount, total: finalTotal, items: orderItems,
       }));
+
+      // Tell the backend payment is done, which pushes the order to the KDS.
+      // NOTE: no card is actually charged yet; see launch notes.
+      const confirm = await fetch(`${API_BASE}/api/orders/${orderId}/confirm-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!confirm.ok) {
+        console.error('[checkout] confirm-payment failed', confirm.status, await confirm.text());
+      }
+
       onClearCart();
       navigate(`/order/${orderId}`);
+    } catch (err) {
+      console.error('[checkout] network error', err);
+      setOrderError("We couldn't reach Boufet. Check your connection and try again. You have not been charged.");
     } finally {
       setLoading(false);
     }
@@ -359,6 +366,11 @@ export const CheckoutPage = ({ items, total, onUpdateQuantity, onRemove, onClear
                     <p className="text-sm text-green-700">Your payment is secured with 256-bit encryption</p>
                   </div>
                 </div>
+                {orderError && (
+                  <div role="alert" className="mt-6 p-4 rounded-xl border border-red-500/40 bg-red-500/10 text-sm text-red-600">
+                    {orderError}
+                  </div>
+                )}
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setStep('delivery')} className="flex-1 py-3 border border-border rounded-xl font-medium hover:bg-muted">← Back</button>
                   <button onClick={handlePlaceOrder} disabled={loading} className="flex-1 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-70">
