@@ -20,6 +20,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// True when a JWT's "exp" time has passed. Non-JWT tokens are treated as valid.
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return false;
+    const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' && json.exp * 1000 < Date.now();
+  } catch {
+    return false;
+  }
+};
+
+// Remove everything this site saved in the browser: login, cart, order details.
+const clearSavedSession = () => {
+  for (const store of [localStorage, sessionStorage]) {
+    Object.keys(store)
+      .filter(k => /boufet|biteful|cart|basket/i.test(k))
+      .forEach(k => store.removeItem(k));
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -28,7 +49,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const t = localStorage.getItem('boufet_token');
     const u = localStorage.getItem('boufet_user');
-    if (t && u) { setToken(t); setUser(JSON.parse(u)); }
+    if (t && u) {
+      if (isTokenExpired(t)) {
+        // Expired login: sign out cleanly instead of failing later at checkout
+        clearSavedSession();
+      } else {
+        setToken(t);
+        setUser(JSON.parse(u));
+      }
+    }
     setLoading(false);
   }, []);
 
@@ -61,10 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('boufet_token');
-    localStorage.removeItem('boufet_user');
+    clearSavedSession();
     setToken(null);
     setUser(null);
+    // Full reload so the cart and every other in-memory state starts empty
+    window.location.assign('/');
   };
 
   return (
